@@ -1,2 +1,0 @@
-# ecomweb
-General Ecommerce Website
