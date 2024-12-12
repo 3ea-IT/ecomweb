@@ -30,7 +30,7 @@ class LoginController extends Controller
             // Fetch user by email
             $user = User::where('email', $request->email)->first();
 
-            if ($user && Hash::check($request->password, $user->password)) {
+            if ($user && Hash::check($request->password, $user->password_hash)) {
                 // Generate a token for the user
                 $token = $user->createToken('authToken')->plainTextToken;
 
@@ -40,8 +40,8 @@ class LoginController extends Controller
                 return response()->json([
                     'message' => 'Login successful',
                     'user' => [
-                        'LogId' => $user->id,
-                        'name' => $user->name,
+                        'LogId' => $user->user_id, 
+                        'name' => $user->first_name . ' ' . $user->last_name, 
                         'email' => $user->email,
                     ],
                     'token' => $token,
