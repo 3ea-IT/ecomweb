@@ -79,7 +79,7 @@
     <script src="{{ asset('asset/js/custom.min.js') }}"></script>
     <script src="{{ asset('asset/vendor/rangeslider/rangeslider.js') }}"></script>
     <script src="{{ asset('asset/js/dznav-init.js') }}"></script>
-    <script src="{{ asset('asset/vendor/switcher/switcher.js') }}"></script>
+    <!-- <script src="{{ asset('asset/vendor/switcher/switcher.js') }}"></script> -->
     <script src="{{ asset('asset/vendor/masonry/masonry-4.2.2.js') }}"></script>
     <script src="{{ asset('asset/vendor/masonry/isotope.pkgd.min.js') }}"></script>
     <script src="{{ asset('asset/vendor/nouislider/nouislider.min.js') }}"></script>
@@ -89,8 +89,6 @@
 
     <!-- External JavaScript -->
     <script src="https://www.google.com/recaptcha/api.js"></script> <!-- Google API for Recaptcha -->
-
-
 
 </body>
 
