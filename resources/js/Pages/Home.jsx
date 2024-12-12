@@ -87,14 +87,14 @@ const SpecialMenu = ({ data, countCart }) => {
                                                     dolore magna aliqua.
                                                 </p>
                                                 <div className="banner-btn flex items-center lg:mt-10 mt-[25px] gap-[30px]">
-                                                    <a
+                                                    {/* <a
                                                         href="contact-us.html"
                                                         className="btn btn-primary btn-md btn-hover-1"
                                                     >
                                                         <span>
                                                             Book a Table
                                                         </span>
-                                                    </a>
+                                                    </a> */}
                                                     <a
                                                         href="about-us.html"
                                                         className="btn btn-outline text-primary btn-md btn-hover-1"
@@ -135,7 +135,8 @@ const SpecialMenu = ({ data, countCart }) => {
                         {/* Repeat for additional slides */}
                     </div>
                 </div>
-                <div className="container relative z-[1]">
+
+                {/* <div className="container relative z-[1]">
                     <div className="main-thumb1-area swiper-btn-lr">
                         <div className="swiper main-thumb1 w-[612px] h-auto overflow-hidden">
                             <div className="swiper-wrapper">
@@ -156,7 +157,6 @@ const SpecialMenu = ({ data, countCart }) => {
                                         </div>
                                     </div>
                                 </div>
-                                {/* Repeat for additional thumbnails */}
                             </div>
                         </div>
                         <div className="thumb-button-prev btn-prev-1 top-[50%] absolute translate-y-[-50%] h-[80px] rounded-md w-[27px] leading-[80px] text-center text-[#222222] text-sm duration-500 hover:bg-primary hover:text-white bg-[#2222221a] left-0 right-auto">
@@ -166,7 +166,8 @@ const SpecialMenu = ({ data, countCart }) => {
                             <i className="fa-solid fa-angle-right"></i>
                         </div>
                     </div>
-                </div>
+                </div> */}
+
             </div>
             {/* Banner End */}
 
