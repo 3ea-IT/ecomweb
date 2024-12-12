@@ -154,7 +154,7 @@ function Footer() {
                         </div>
                         <div className="md:w-1/2 w-full md:text-right text-center px-[15px] md:mt-0 mt-[15px]">
                             <span className="text-sm text-[#999999]">
-                                By Harsh Intern
+                                By 3EA Ltd.
                             </span>
                         </div>
                     </div>

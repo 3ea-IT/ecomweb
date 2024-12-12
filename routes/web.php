@@ -15,6 +15,7 @@ Route::inertia('/blogs', 'Blog');
 Route::inertia('/blogsDetail', 'BlogDetail');
 Route::inertia('/outletsDetail', 'OutletsDetail');
 Route::inertia('/contact', 'Contact');
+Route::inertia('/register', 'Register');
 Route::post('/contact', [ContactController::class, 'store']);
 Route::get('/ShopCart', [CartController::class, 'index']);
 Route::get('/check-out', [OrderController::class, 'index']);

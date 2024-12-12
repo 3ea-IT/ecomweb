@@ -47,7 +47,7 @@ const SpecialMenu = ({ data, countCart }) => {
         <MainLayout>
             {/* Banner */}
             <div className="main-bnr-one overflow-hidden relative">
-                <div className="slider-pagination 2xl:left-[50px] xl:left-0 max-xl:left-auto max-xl:right-[20px] z-[2]">
+                {/* <div className="slider-pagination 2xl:left-[50px] xl:left-0 max-xl:left-auto max-xl:right-[20px] z-[2]">
                     <div className="main-button-prev lg:block hidden mx-auto">
                         <i className="fa-solid fa-arrow-up"></i>
                     </div>
@@ -59,7 +59,7 @@ const SpecialMenu = ({ data, countCart }) => {
                     <div className="main-button-next lg:block hidden mx-auto">
                         <i className="fa-solid fa-arrow-down"></i>
                     </div>
-                </div>
+                </div> */}
                 <div className="main-slider-1 overflow-hidden z-[1]">
                     <div className="swiper-wrapper">
                         <div className="swiper-slide">
