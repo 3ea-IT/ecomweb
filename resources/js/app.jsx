@@ -1,11 +1,12 @@
-import React from 'react';
-import { createInertiaApp } from '@inertiajs/react';
-import { createRoot } from 'react-dom/client';
+import React from "react";
+import { createInertiaApp } from "@inertiajs/react";
+import { createRoot } from "react-dom/client";
+import ErrorBoundary from "./Components/ErrorBoundary";
 
 createInertiaApp({
     resolve: async (name) => {
-        const pages = import.meta.glob('./Pages/**/*.jsx');
-        const path = `./Pages/${name.replace('.', '/')}.jsx`;
+        const pages = import.meta.glob("./Pages/**/*.jsx");
+        const path = `./Pages/${name.replace(".", "/")}.jsx`;
         if (!pages[path]) {
             console.error(`Page not found: ${path}`);
             return () => <div>Page not found</div>; // Fallback React component
@@ -15,7 +16,10 @@ createInertiaApp({
     },
     setup({ el, App, props }) {
         const root = createRoot(el);
-        root.render(<App {...props} />);
+        root.render(
+            <ErrorBoundary>
+                <App {...props} />
+            </ErrorBoundary>
+        );
     },
 });
-
