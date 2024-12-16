@@ -37,6 +37,11 @@
     <link rel="stylesheet" href="{{ asset('asset/vendor/switcher/switcher.css') }}">
     <link rel="stylesheet" href="{{ asset('asset/vendor/rangeslider/rangeslider.css') }}">
 
+    <link rel="stylesheet" href="{{ asset('asset/css/custom.css') }}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
     <!-- Vite and Inertia -->
     @viteReactRefresh
     @vite(['resources/js/app.jsx', 'resources/css/style.css'])
@@ -89,6 +94,7 @@
 
     <!-- External JavaScript -->
     <script src="https://www.google.com/recaptcha/api.js"></script> <!-- Google API for Recaptcha -->
+
 
 </body>
 

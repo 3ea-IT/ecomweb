@@ -7,6 +7,16 @@ import CartDetail from "../Pages/CartDetail";
 const SpecialMenu = ({ data, countCart }) => {
     const [cart, setCart] = useState([]); // State to store the cart
 
+    const [showAttributesCard, setShowAttributesCard] = useState(false);
+
+    const handleButtonClick = () => {
+        setShowAttributesCard(true);
+    };
+
+    const closeAttributesCard = () => {
+        setShowAttributesCard(false);
+    };
+
     const handleAddToCart = async (productId) => {
         try {
             const response = await fetch(
@@ -44,22 +54,9 @@ const SpecialMenu = ({ data, countCart }) => {
     };
 
     return (
-        <MainLayout>
+        <>
             {/* Banner */}
             <div className="main-bnr-one overflow-hidden relative">
-                {/* <div className="slider-pagination 2xl:left-[50px] xl:left-0 max-xl:left-auto max-xl:right-[20px] z-[2]">
-                    <div className="main-button-prev lg:block hidden mx-auto">
-                        <i className="fa-solid fa-arrow-up"></i>
-                    </div>
-                    <div className="main-slider-pagination">
-                        <span className="swiper-pagination-bullet">01</span>
-                        <span className="swiper-pagination-bullet">02</span>
-                        <span className="swiper-pagination-bullet">03</span>
-                    </div>
-                    <div className="main-button-next lg:block hidden mx-auto">
-                        <i className="fa-solid fa-arrow-down"></i>
-                    </div>
-                </div> */}
                 <div className="main-slider-1 overflow-hidden z-[1]">
                     <div className="swiper-wrapper">
                         <div className="swiper-slide">
@@ -172,64 +169,99 @@ const SpecialMenu = ({ data, countCart }) => {
             {/* Banner End */}
 
             {/* Special Menu Start */}
-            <section className="lg:pt-[100px] pt-[50px] lg:pb-[70px] pb-[40px] bg-white relative overflow-hidden section-wrapper-2">
-                <div className="container">
-                    <div className="2xl:mb-[50px] mb-[25px] relative mx-auto text-center">
-                        <h2 className="font-lobster">Special Menu</h2>
-                    </div>
-                    <div className="row">
-                        {data.map((product) => (
-                            <div
-                                key={product.id}
-                                className="lg:w-1/4 sm:w-1/2 w-full pl-[15px] pr-[15px] pb-[30px]"
-                            >
-                                <div className="group rounded-lg menu-box box-hover text-center pt-10 px-5 pb-[30px] bg-white border border-grey-border hover:border-primary h-full flex duration-500 flex-col relative overflow-hidden z-[1]">
-                                    <div className="w-[150px] min-w-[150px] h-[150px] mt-0 mx-auto mb-[10px] rounded-full border-[9px] border-white duration-500 z-[1]">
-                                        <img
-                                            src={product.image_url}
-                                            alt={product.name}
-                                            className="rounded-full group-hover:animate-spin"
-                                        />
-                                    </div>
-                                    <div className="mt-auto">
-                                        <h4 className="mb-2.5">
-                                            <a
-                                                href={`/product-detail/${product.id}`}
+                <section className="lg:pt-[100px] pt-[50px] lg:pb-[70px] pb-[40px] bg-white relative overflow-hidden section-wrapper-2">
+                    <div className="container">
+                        <div className="2xl:mb-[50px] mb-[25px] relative mx-auto text-center">
+                            <h2 className="font-lobster">Special Menu</h2>
+                        </div>
+                        <div className="row">
+                            {data.map((product) => (
+                                <div
+                                    key={product.id}
+                                    className="lg:w-1/4 sm:w-1/2 w-full pl-[15px] pr-[15px] pb-[30px]"
+                                >
+                                    <div className="group rounded-lg menu-box box-hover text-center pt-10 px-5 pb-[30px] bg-white border border-grey-border hover:border-primary h-full flex duration-500 flex-col relative overflow-hidden z-[1]">
+                                        <div className="w-[150px] min-w-[150px] h-[150px] mt-0 mx-auto mb-[10px] rounded-full border-[9px] border-white duration-500 z-[1]">
+                                            <img
+                                                src={product.image_url}
+                                                alt={product.name}
+                                                className="rounded-full group-hover:animate-spin"
+                                            />
+                                        </div>
+                                        <div className="mt-auto">
+                                            <h4 className="mb-2.5">
+                                                <a
+                                                    href={`/product-detail/${product.id}`}
+                                                >
+                                                    {product.name}
+                                                </a>
+                                            </h4>
+                                            <p className="mb-2">
+                                                {product.description}
+                                            </p>
+                                            <h5 className="text-primary">
+                                            ₹{product.price}
+                                            </h5>
+                                            {/* <button
+                                                className="btn btn-primary btn-hover-2 mt-[18px]"
+                                                onClick={() =>
+                                                    handleAddToCart(product.id)
+                                                }
                                             >
-                                                {product.name}
-                                            </a>
-                                        </h4>
-                                        <p className="mb-2">
-                                            {product.description}
-                                        </p>
-                                        <h5 className="text-primary">
-                                            ${product.price}
-                                        </h5>
-                                        <button
-                                            className="btn btn-primary btn-hover-2 mt-[18px]"
-                                            onClick={() =>
-                                                handleAddToCart(product.id)
-                                            }
-                                        >
-                                            Add To Cart
-                                        </button>
+                                                Add To Cart
+                                            </button> */}
+                                             {/* Button to show the attributes card */}
+                                             <button onClick={handleButtonClick} className="btn btn-primary">
+                                                Add to Cart
+                                            </button>
+
+                                        {showAttributesCard && (
+                                            <div
+                                            className={`popup-overlay ${showAttributesCard ? "open" : ""}`}
+                                            >
+                                            <div
+                                                className={`popup-content ${showAttributesCard ? "slide-in fade-in" : ""}`}
+                                            >
+                                                <button onClick={closeAttributesCard} className="btn closePopup">
+                                                    <i className="fa fa-close"></i>
+                                                </button><br/><br/>
+                                                    <h6 className="title">Attributes Card</h6>
+                                                    <p className="info">Here are some important details.</p>
+                                                    <p className="info">Here are some important details.</p>
+                                                    <p className="info">Here are some important details.</p>
+                                                    <p className="info">Here are some important details.</p>
+                                                    <p className="info">Here are some important details.</p>
+                                                    <p className="info">Here are some important details.</p>
+                                                    <p className="info">Here are some important details.</p>
+                                                    <p className="info">Here are some important details.</p>
+                                                <button
+                                                className="btn btn-primary btn-hover-2 mt-[18px]"
+                                                    onClick={() =>
+                                                        handleAddToCart(product.id)
+                                                    }
+                                                >
+                                                    Add To Cart
+                                                </button>
+                                            </div>
+                                            </div>
+                                        )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-                <img
-                    src="/asset/images/background/pic2.png"
-                    alt=""
-                    className="bg1 bottom-0 left-[-275px] absolute max-2xl:hidden animate-move"
-                />
-                <img
-                    src="/asset/images/background/pic3.png"
-                    alt=""
-                    className="bg2 right-[40px] max-2xl:right-0 top-[100px] max-2xl:top-[28px] absolute 2xl:block hidden"
-                />
-            </section>
+                    <img
+                        src="/asset/images/background/pic2.png"
+                        alt=""
+                        className="bg1 bottom-0 left-[-275px] absolute max-2xl:hidden animate-move"
+                    />
+                    <img
+                        src="/asset/images/background/pic3.png"
+                        alt=""
+                        className="bg2 right-[40px] max-2xl:right-0 top-[100px] max-2xl:top-[28px] absolute 2xl:block hidden"
+                    />
+                </section>
             {/* Special Menu End */}
 
             {/* <!-- Quality Service Start --> */}
@@ -719,7 +751,7 @@ const SpecialMenu = ({ data, countCart }) => {
                 ></iframe>
             </div>
             {/* Map Iframe Section End */}
-        </MainLayout>
+        </>
     );
 };
 
@@ -742,4 +774,5 @@ const Home = (props) => {
         </MainLayout>
     );
 };
+
 export default Home;

@@ -109,14 +109,16 @@ function Header() {
                                         <>
                                             <li>
                                                 {localStorage.getItem("user")}{" "}
-                                                (Logged In)
+                                                {/* (Logged In) */}
                                             </li>
                                             <li>
                                                 <button
                                                     className="bg-white text-[var(--title)] user-btn white-btn flex items-center justify-center w-[45px] h-[45px] rounded-md shadow-[0_10px_10px_0_rgba(0,0,0,0.1)]"
                                                     onClick={handleLogout}
                                                 >
-                                                    Logout
+                                                   <span style={{ fontSize: '13.33px' }}>
+                                                        <i className="fa fa-sign-out fa-xs"></i>
+                                                    </span>
                                                 </button>
                                             </li>
                                         </>
