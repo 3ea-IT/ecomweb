@@ -232,7 +232,7 @@ function Header() {
                                     Join our 100% remote network of creators and
                                     freelancers.
                                 </p>
-                                <button
+                                {/* <button
                                     name="submit"
                                     value="submit"
                                     type="submit"
@@ -242,7 +242,7 @@ function Header() {
                                 </button>
                                 <h6 className="login-title">
                                     <span className="px-2.5">OR</span>
-                                </h6>
+                                </h6> */}
                             </div>
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-[18px]">
@@ -303,7 +303,7 @@ function Header() {
                                 <a
                                     id="register"
                                     className="register text-primary font-medium"
-                                    href="#offcanvasLogin"
+                                    href="/register"
                                 >
                                     Register here
                                 </a>

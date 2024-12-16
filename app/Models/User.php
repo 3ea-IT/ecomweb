@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Address;
 
 class User extends Authenticatable
 {
@@ -21,9 +22,10 @@ class User extends Authenticatable
         'first_name',
         'last_name',
         'email',
-        'phone',
+        'phone', // Ensure phone is fillable
         'password_hash',
         'user_role_id',
+        'is_active',
     ];
 
     /**
@@ -56,5 +58,10 @@ class User extends Authenticatable
     public function setPasswordAttribute($value)
     {
         $this->attributes['password_hash'] = Hash::make($value);
+    }
+
+    public function addresses()
+    {
+        return $this->hasMany(Address::class, 'user_id', 'user_id');
     }
 }

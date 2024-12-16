@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import MainLayout from "../Layouts/MainLayout"; // Assuming this layout exists
+import { usePage } from "@inertiajs/react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import toast styles
 import { Link } from "@inertiajs/react";
 import Header from "../Components/Header";
 import CartDetail from "../Pages/CartDetail";
@@ -7,15 +10,16 @@ import CartDetail from "../Pages/CartDetail";
 const SpecialMenu = ({ data, countCart }) => {
     const [cart, setCart] = useState([]); // State to store the cart
 
-    const [showAttributesCard, setShowAttributesCard] = useState(false);
+    const { flash = {} } = usePage().props; // Provide default empty object
 
-    const handleButtonClick = () => {
-        setShowAttributesCard(true);
-    };
-
-    const closeAttributesCard = () => {
-        setShowAttributesCard(false);
-    };
+    useEffect(() => {
+        if (flash.success) {
+            toast.success(flash.success);
+        }
+        if (flash.error) {
+            toast.error(flash.error);
+        }
+    }, [flash]);
 
     const handleAddToCart = async (productId) => {
         try {
@@ -164,7 +168,6 @@ const SpecialMenu = ({ data, countCart }) => {
                         </div>
                     </div>
                 </div> */}
-
             </div>
             {/* Banner End */}
 
