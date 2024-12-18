@@ -13,7 +13,7 @@ function Register() {
         last_name: "",
         email: "",
         phone: "",
-        password: "",
+        password_hash: "",
         password_confirmation: "",
         address_line_1: "",
         address_line_2: "",

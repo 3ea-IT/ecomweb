@@ -16,7 +16,7 @@ class OrderController extends Controller
 {
     public function index(){
         $data = Product::all();
-        $countCart = Cart::where('user_id', 1)->where('status',1)->count();
+        $countCart = Cart::where('user_id', 1)->count();
         $UserData = User::where('user_id', 1)->first();
         $CartList = Cart::where('user_id', 1)
                     ->join('products', 'carts.product_id', '=', 'products.id')

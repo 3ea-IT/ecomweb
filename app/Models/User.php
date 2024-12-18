@@ -23,7 +23,7 @@ class User extends Authenticatable
         'last_name',
         'email',
         'phone', // Ensure phone is fillable
-        'password',
+        'password_hash',
         'user_role_id',
         'is_active',
     ];
@@ -32,7 +32,7 @@ class User extends Authenticatable
      * The attributes that should be hidden for serialization.
      */
     protected $hidden = [
-        'password',
+        'password_hash',
         'remember_token',
     ];
 
@@ -48,7 +48,7 @@ class User extends Authenticatable
      */
     public function getAuthPassword()
     {
-        return $this->password;
+        return $this->password_hash;
     }
 
     /**
@@ -57,7 +57,7 @@ class User extends Authenticatable
      */
     public function setPasswordAttribute($value)
     {
-        $this->attributes['password'] = Hash::make($value);
+        $this->attributes['password_hash'] = Hash::make($value);
     }
 
     public function addresses()
