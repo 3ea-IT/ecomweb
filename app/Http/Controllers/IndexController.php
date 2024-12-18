@@ -11,7 +11,7 @@ class IndexController extends Controller
     public function index()
     {
         $data = Product::all();
-        $countCart = Cart::where('user_id', 1)->where('status',1)->count();
+        $countCart = Cart::where('user_id', 1)->count();
         return Inertia::render('Home', [
             'data' => $data,
             'countCart' => $countCart
