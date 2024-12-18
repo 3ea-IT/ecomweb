@@ -37,14 +37,15 @@ function checkout({ countCart, CartList = [], data = [], UserData = [] }) {
 
           // Collect order details from form inputs and state
           const payload = {
-            user_id: userId, // Include user_id dynamically
-            address_id: addressId, // Include address_id dynamically
-            item_total: itemTotal,
-            delivery_charge: deliveryCharge,
-            tax_charge: taxCharge,
+            user_id: userId,
+            shipping_address_id: addressId,
+            shipping_charges: deliveryCharge,
+            tax_amount: taxCharge,
             coupon_amount: couponAmount,
             total_amount: totalAmount,
             payment_method: paymentMethod,
+            order_number:"3445",
+            order_status: "Pending",
             card_number: paymentMethod === "card" ? formData.cardNumber : null,
             expiry_date: paymentMethod === "card" ? formData.expiryDate : null,
             cvv: paymentMethod === "card" ? formData.cvv : null,
@@ -132,8 +133,8 @@ function checkout({ countCart, CartList = [], data = [], UserData = [] }) {
 
                 <form className="shop-form widget" onSubmit={handleAddToOrder}>
 
-                    <input type="text" name="UserID" id="UserID" value="1" />
-                    <input type="text" name="AddressID" id="AddressID" value="1" />
+                    <input type="hidden" name="UserID" id="UserID" value="1" />
+                    <input type="hidden" name="AddressID" id="AddressID" value="10" />
 
                     <h4 className="widget-title xl:mb-[30px] mb-5 pb-3 relative">Order Total</h4>
                     <table className="mb-5 border border-[#00000020] align-middle w-full">
@@ -167,6 +168,7 @@ function checkout({ countCart, CartList = [], data = [], UserData = [] }) {
                         className="form-select nice-select after:border-black2 after:h-2 after:w-2 after:right-5 after:top-[60%]"
                         value={paymentMethod}
                         onChange={handlePaymentChange}
+                        required
                       >
                         <option value="">Payment Method</option>
                         <option value="cod">Cash on Delivery</option>

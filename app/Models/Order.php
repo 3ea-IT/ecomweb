@@ -11,22 +11,17 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
-        'address_id',
-        'total_item',
-        'item_total',
-        'delivery_charge',
+        'shipping_address_id',
+        'shipping_charges',
         'wallet_balance',
         'promo_code',
+        'order_number',
+        'order_status',
         'promo_discount',
         'discount',
-        'total_payable',
+        'total_amount',
         'payment_method',
-        'lat',
-        'long',
-        'delivery_time',
-        'delivery_date',
-        'otp',
-        'notes',
+        'tax_amount',
         'status',
     ];
 }

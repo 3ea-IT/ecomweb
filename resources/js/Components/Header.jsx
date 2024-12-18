@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, usePage } from "@inertiajs/react";
 
+
 function Header() {
     const { countCart } = usePage().props;
 
@@ -13,10 +14,12 @@ function Header() {
     const [isLoading, setIsLoading] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [user, setUser] = useState(null);
+    const [userId, setUserID] = useState(null);
 
     // Check localStorage for user info on component mount
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
+        const storedUserId = localStorage.getItem("userId");
         const storedToken = localStorage.getItem("authToken");
         if (storedUser && storedToken) {
             setIsLoggedIn(true);
@@ -55,7 +58,9 @@ function Header() {
 
             if (result.user && result.user.name) {
                 localStorage.setItem("user", result.user.name);
+                localStorage.setItem("userId", result.user.LogId);  // Store id
                 setUser(result.user.name);
+                setUserID(result.user.LogId);
                 setIsLoggedIn(true);
             }
 
@@ -109,14 +114,16 @@ function Header() {
                                         <>
                                             <li>
                                                 {localStorage.getItem("user")}{" "}
-                                                (Logged In)
+                                                {/* (Logged In) */}
                                             </li>
                                             <li>
                                                 <button
                                                     className="bg-white text-[var(--title)] user-btn white-btn flex items-center justify-center w-[45px] h-[45px] rounded-md shadow-[0_10px_10px_0_rgba(0,0,0,0.1)]"
                                                     onClick={handleLogout}
                                                 >
-                                                    Logout
+                                                   <span style={{ fontSize: '13.33px' }}>
+                                                        <i className="fa fa-sign-out fa-xs"></i>
+                                                    </span>
                                                 </button>
                                             </li>
                                         </>
@@ -136,7 +143,7 @@ function Header() {
                                         <Link href="/ShopCart">
                                             <button className="cart-btn bg-white white-btn flex items-center justify-center w-[45px] h-[45px] rounded-md shadow-[0_10px_10px_0_rgba(0,0,0,0.1)]">
                                                 <i className="flaticon-shopping-bag-1 text-2xl inline-flex ping-bag-1"></i>
-                                                <span className="badge absolute top-[3px] right-[-6px] p-0 h-5 w-5 font-medium text-xs leading-5 bg-[#666666] text-white rounded-[10px]">
+                                                <span className="badge absolute top-[3px] right-[-6px] p-0 h-5 w-5 font-medium text-xs leading-5 bg-[#666666] text-white rounded-[10px]" >
                                                     {countCart > 0
                                                         ? countCart
                                                         : 0}

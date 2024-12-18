@@ -1,7 +1,6 @@
 import React from 'react'
 import MainLayout from '../Layouts/MainLayout';
 import { Link } from '@inertiajs/react';
-import { usePage } from '@inertiajs/react'; // Import the usePage hook
 
 const CartDetail = () => {
 

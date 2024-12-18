@@ -28,7 +28,7 @@ function CartDetail({ countCart, CartList = [], data = [] }) {
           )
         );
          // Show alert after successful update
-        alert(`Quantity decreased to ${response.cartItem.qty}`);
+        // alert(`Quantity decreased to ${response.cartItem.qty}`);
         setTimeout(() => {
           window.location.reload();
         }, 1000); // Reload after 1 second
@@ -49,7 +49,7 @@ function CartDetail({ countCart, CartList = [], data = [] }) {
           )
         );
         // Show alert after successful update
-        alert(`Quantity increased to ${response.cartItem.qty}`);
+        // alert(`Quantity increased to ${response.cartItem.qty}`);
         setTimeout(() => {
           window.location.reload();
         }, 1000); // Reload after 1 second
@@ -152,8 +152,8 @@ function CartDetail({ countCart, CartList = [], data = [] }) {
                         </div>
                         <div className="dz-body sm:flex block justify-between">
                             <ul className="dz-meta flex mx-[-10px]">
-                                <li className="leading-[21px] mx-[10px] text-sm text-[#727272]">By <span className="text-primary font-medium"> Burger Farm</span></li>
-                                <li className="leading-[21px] mx-[10px] text-sm text-[#727272]"><i className="flaticon-scooter mr-1 text-xl text-primary"></i> 55 min</li>
+                                <li className="leading-[21px] mx-[10px] text-sm text-[#727272]"><span className="text-primary font-medium">{product.description}</span></li>
+                                <li className="leading-[21px] mx-[10px] text-sm text-[#727272]"><i className="flaticon-scooter mr-1 text-xl text-primary"></i> 30 min</li>
                             </ul>
                             <p className="mb-0"><span className="text-primary font-weight-500">{product.price}</span> For a one</p>
                         </div>
