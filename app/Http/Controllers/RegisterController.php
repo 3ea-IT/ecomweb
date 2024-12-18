@@ -27,7 +27,6 @@ class RegisterController extends Controller
             'email'            => 'required|email|unique:users,email',
             'phone'            => 'required|string|max:50',
             'password'         => 'required|string|min:6|confirmed',
-            
             // Address fields
             'address_line_1'   => 'required|string|max:255',
             'address_line_2'   => 'nullable|string|max:255',
@@ -55,7 +54,7 @@ class RegisterController extends Controller
                 'last_name'       => $request->last_name,
                 'email'           => $request->email,
                 'phone'           => $request->phone,
-                'password_hash'   => Hash::make($request->password),
+                'password'      => Hash::make($request->password), // Correct usage
                 'user_role_id'    => 1, // Adjust as needed
                 'is_active'       => 1,
             ]);

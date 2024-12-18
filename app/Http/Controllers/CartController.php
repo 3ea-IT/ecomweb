@@ -8,16 +8,13 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Cart;
-use Illuminate\Support\Facades\Auth;
-
-
-
+use Illuminate\Support\Facades\Session;
 class CartController extends Controller
 {
 
     public function index(){
         $data = Product::all();
-        $countCart = Cart::where('user_id', 1)->count();
+        $countCart = Cart::where('user_id', 1)->where('status',1)->count();
         $CartList = Cart::where('user_id', 1)
                     ->join('products', 'carts.product_id', '=', 'products.id')
                     ->select('carts.*', 'products.name as product_name', 'products.price as product_price', 'products.image_url as product_image_url')
@@ -38,6 +35,7 @@ class CartController extends Controller
             ]);
 
             // Get the currently authenticated user's ID
+            // $userId = $request->userId;
             $userId = '1';
 
             if (!$userId) {

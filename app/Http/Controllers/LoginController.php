@@ -8,14 +8,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
-
+use Illuminate\Support\Facades\Session;
 class LoginController extends Controller
 {
 
     public function UserLogin(Request $request)
     {
         try {
-            // Validate incoming request
+            // 1. Validate incoming request
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email',
                 'password' => 'required|min:6',
@@ -27,28 +27,33 @@ class LoginController extends Controller
                 ], 400); // Bad Request
             }
 
-            // Fetch user by email
+            // 2. Fetch user by email
             $user = User::where('email', $request->email)->first();
 
-            if ($user && Hash::check($request->password, $user->password_hash)) {
+            // 3. Check if user exists and password matches
+            if ($user && Hash::check($request->password, $user->password)) {
                 // Generate a token for the user
                 $token = $user->createToken('authToken')->plainTextToken;
 
+                // Log the user in (optional for session-based systems)
                 Auth::login($user);
 
-                // Return user data along with the token
+                // session(['user_id' => $user->user_id]);
+
+                // 4. Return user data along with the token
                 return response()->json([
                     'message' => 'Login successful',
                     'user' => [
-                        'LogId' => $user->user_id, 
-                        'name' => $user->first_name . ' ' . $user->last_name, 
+                        'LogId' => $user->user_id, // Assuming 'id' is the unique user ID
+                        'name' => $user->first_name . ' ' . $user->last_name,
                         'email' => $user->email,
                     ],
                     'token' => $token,
+                    // 'session_user_id' => session('user_id'),
                 ], 200); // OK
             }
 
-            // If login attempt fails (Invalid credentials)
+            // 5. Invalid credentials
             return response()->json([
                 'message' => 'Invalid credentials',
             ], 401); // Unauthorized
@@ -69,3 +74,4 @@ class LoginController extends Controller
 
 
 }
+

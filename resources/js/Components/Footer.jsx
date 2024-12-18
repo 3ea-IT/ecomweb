@@ -2,6 +2,12 @@ import React from "react";
 import { Link } from "@inertiajs/react";
 
 function Footer() {
+
+    const showAlert = (e) => {
+        e.preventDefault(); // Prevents default link behavior (like page jump for "#")
+        alert("Coming Soon!");
+    };
+
     return (
         <section className="site-footer style-1 bg-black2 relative">
             <div className="xl:pt-[85px] md:pt-[80px] pt-[60px] lg:pb-10 md:pb-5 pb-0 relative z-[2]">
@@ -16,24 +22,22 @@ function Footer() {
                                     <li className="relative mb-[25px] pl-10">
                                         <i className="flaticon-placeholder absolute text-3xl leading-[30px] left-0 top-[5px] text-primary w-[30px] h-[30px]"></i>
                                         <p className="text-[#CCCCCC] tracking-wide leading-6">
-                                            1247/Plot No. 39, 15th Phase,
-                                            Colony, Kkatpally, Hyderabad
+                                        5, Kapoorthla Complex, Novelty Cinema Road, behind Indian oil Building, Kapoorthla, Sector A, Aliganj, Lucknow, Uttar Pradesh 226024
                                         </p>
                                     </li>
                                     <li className="relative mb-[25px] pl-10">
                                         <i className="flaticon-telephone absolute text-3xl leading-[30px] left-0 top-[5px] text-primary w-[30px] h-[30px]"></i>
                                         <p className="text-[#CCCCCC] tracking-wide leading-6">
-                                            +91 987-654-3210
+                                            +91 9839334430
                                             <br />
-                                            +91 123-456-7890
+                                            05224238357
                                         </p>
                                     </li>
                                     <li className="relative mb-[25px] pl-10">
                                         <i className="flaticon-email-1 absolute text-3xl leading-[30px] left-0 top-[5px] text-primary w-[30px] h-[30px]"></i>
                                         <p className="text-[#CCCCCC] tracking-wide leading-6">
-                                            info@example.com
-                                            <br />
-                                            info@example.com
+                                        order@pizzaportindia.com
+
                                         </p>
                                     </li>
                                 </ul>
@@ -50,23 +54,29 @@ function Footer() {
                                             <span>Home</span>
                                         </Link>
                                     </li>
+
+                                    <li>
+                                        <Link href="/outlets">
+                                            <span>Outlets</span>
+                                        </Link>
+                                    </li>
+
+
                                     <li>
                                         <Link href="/about">
                                             <span>About Us</span>
                                         </Link>
                                     </li>
+
                                     <li>
-                                        <Link href="/services">
-                                            <span>Services</span>
+                                        <Link href="/menu">
+                                            <span>Menu</span>
                                         </Link>
                                     </li>
+
+
                                     <li>
-                                        <Link href="/team">
-                                            <span>Team</span>
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link href="/blog-standard">
+                                        <Link href="/blogs">
                                             <span>Blog</span>
                                         </Link>
                                     </li>
@@ -79,31 +89,23 @@ function Footer() {
                                     Our Services
                                 </h5>
                                 <ul>
-                                    <li>
-                                        <Link href="/blog-open-gutenberg">
+                                    <li onClick={showAlert} style={{ cursor: "pointer" }}>
+                                        <Link href="#">
                                             <span>Strategy & Research</span>
                                         </Link>
                                     </li>
-                                    <li>
-                                        <Link href="/services">
+                                    <li onClick={showAlert} style={{ cursor: "pointer" }}>
+                                        <Link href="#">
                                             <span>Fast Delivery</span>
                                         </Link>
                                     </li>
-                                    <li>
-                                        <Link href="/contact-us">
-                                            <span>Seat Reservation</span>
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link href="/shop-style-1">
+
+                                    <li onClick={showAlert} style={{ cursor: "pointer" }}>
+                                        <Link href="#">
                                             <span>Pickup In Store</span>
                                         </Link>
                                     </li>
-                                    <li>
-                                        <Link href="/our-menu-1">
-                                            <span>Our Menu</span>
-                                        </Link>
-                                    </li>
+
                                 </ul>
                             </div>
                         </div>
@@ -113,28 +115,20 @@ function Footer() {
                                     Help Center
                                 </h5>
                                 <ul>
+
                                     <li>
-                                        <Link href="/faq">
-                                            <span>FAQ</span>
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link href="/shop-style-1">
+                                        <Link href="/outlets">
                                             <span>Shop</span>
                                         </Link>
                                     </li>
+
                                     <li>
-                                        <Link href="/shop-style-2">
-                                            <span>Category Filter</span>
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link href="/testimonial">
+                                        <Link href="#testimonials">
                                             <span>Testimonials</span>
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link href="/contact-us">
+                                        <Link href="/contact">
                                             <span>Contact Us</span>
                                         </Link>
                                     </li>
@@ -154,7 +148,7 @@ function Footer() {
                         </div>
                         <div className="md:w-1/2 w-full md:text-right text-center px-[15px] md:mt-0 mt-[15px]">
                             <span className="text-sm text-[#999999]">
-                                By 3EA Ltd.
+                               Powered By 3EA Ltd.
                             </span>
                         </div>
                     </div>

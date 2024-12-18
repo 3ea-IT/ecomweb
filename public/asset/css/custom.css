@@ -62,3 +62,7 @@
     .close-button i {
         margin: 0;
     }
+
+    #ClosePopup{
+        padding: 0px 24px !important;
+    }

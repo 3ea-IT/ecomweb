@@ -11,7 +11,7 @@ class CartHelper
     {
         $user = Auth::user();
         if ($user) {
-            return Cart::where('user_id', '1')->count();
+            return Cart::where('user_id', '1')->where('status',1)->count();
         }
         return 0;
     }

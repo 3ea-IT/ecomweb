@@ -4,11 +4,43 @@ import { usePage } from "@inertiajs/react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import toast styles
 import { Link } from "@inertiajs/react";
-import Header from "../Components/Header";
-import CartDetail from "../Pages/CartDetail";
 
 const SpecialMenu = ({ data, countCart }) => {
     const [cart, setCart] = useState([]); // State to store the cart
+
+    const [showAttributesCard, setShowAttributesCard] = useState(false);
+
+    const [selectedProductId, setSelectedProductId] = useState("");
+
+    const [userId, setUserId] = useState("");
+
+    // Fetch userId from localStorage on component mount
+    useEffect(() => {
+      const storedUserId = localStorage.getItem("userId");
+      if (storedUserId) {
+        setUserId(storedUserId);
+      }
+    }, []);
+
+    const handleButtonClick = (id) => {
+        setSelectedProductId(id); // Set the product ID
+        setShowAttributesCard(true); // Show the modal
+    };
+
+    const closeAttributesCard = () => {
+        setShowAttributesCard(false); // Close the modal
+        setSelectedProductId(""); // Clear the product ID
+    };
+
+    const [selectedSweets, setSelectedSweets] = useState([]);
+
+    const handleCheckboxChange = (sweet) => {
+        setSelectedSweets((prevSweets) =>
+            prevSweets.includes(sweet)
+                ? prevSweets.filter((item) => item !== sweet) // Remove if already selected
+                : [...prevSweets, sweet] // Add if not selected
+        );
+    };
 
     const { flash = {} } = usePage().props; // Provide default empty object
 
@@ -21,7 +53,7 @@ const SpecialMenu = ({ data, countCart }) => {
         }
     }, [flash]);
 
-    const handleAddToCart = async (productId) => {
+    const handleAddToCart = async (productId, userId) => {
         try {
             const response = await fetch(
                 "http://localhost:8000/api/add-to-cart",
@@ -32,6 +64,7 @@ const SpecialMenu = ({ data, countCart }) => {
                     },
                     body: JSON.stringify({
                         product_id: productId,
+                        userId: userId,
                     }),
                 }
             );
@@ -88,20 +121,12 @@ const SpecialMenu = ({ data, countCart }) => {
                                                     dolore magna aliqua.
                                                 </p>
                                                 <div className="banner-btn flex items-center lg:mt-10 mt-[25px] gap-[30px]">
-                                                    {/* <a
-                                                        href="contact-us.html"
-                                                        className="btn btn-primary btn-md btn-hover-1"
-                                                    >
-                                                        <span>
-                                                            Book a Table
-                                                        </span>
-                                                    </a> */}
-                                                    <a
-                                                        href="about-us.html"
+                                                    <Link
+                                                        href="/menu"
                                                         className="btn btn-outline text-primary btn-md btn-hover-1"
                                                     >
                                                         <span>View More</span>
-                                                    </a>
+                                                    </Link>
                                                 </div>
                                             </div>
                                         </div>
@@ -136,38 +161,6 @@ const SpecialMenu = ({ data, countCart }) => {
                         {/* Repeat for additional slides */}
                     </div>
                 </div>
-
-                {/* <div className="container relative z-[1]">
-                    <div className="main-thumb1-area swiper-btn-lr">
-                        <div className="swiper main-thumb1 w-[612px] h-auto overflow-hidden">
-                            <div className="swiper-wrapper">
-                                <div className="swiper-slide">
-                                    <div className="food-card flex items-center">
-                                        <div className="dz-media w-[80px] min-w-[80px] rounded-md relative overflow-hidden">
-                                            <img
-                                                src="/asset/images/main-slider/slider1/thumb/pic1.jpg"
-                                                alt="Thumbnail 1"
-                                            />
-                                        </div>
-                                        <div className="dz-content ml-[15px]">
-                                            <h5 className="mb-1">Breakfast</h5>
-                                            <p>
-                                                Lorem ipsum dolor sit amet,
-                                                consectetur adipiscing elit
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="thumb-button-prev btn-prev-1 top-[50%] absolute translate-y-[-50%] h-[80px] rounded-md w-[27px] leading-[80px] text-center text-[#222222] text-sm duration-500 hover:bg-primary hover:text-white bg-[#2222221a] left-0 right-auto">
-                            <i className="fa-solid fa-angle-left"></i>
-                        </div>
-                        <div className="thumb-button-next btn-next-1 top-[50%] absolute translate-y-[-50%] h-[80px] rounded-md w-[27px] leading-[80px] text-center text-[#222222] text-sm duration-500 hover:bg-primary hover:text-white bg-[#2222221a] right-0">
-                            <i className="fa-solid fa-angle-right"></i>
-                        </div>
-                    </div>
-                </div> */}
             </div>
             {/* Banner End */}
 
@@ -214,7 +207,7 @@ const SpecialMenu = ({ data, countCart }) => {
                                                 Add To Cart
                                             </button> */}
                                              {/* Button to show the attributes card */}
-                                             <button onClick={handleButtonClick} className="btn btn-primary">
+                                             <button onClick={() => handleButtonClick(product.id)} className="btn btn-primary">
                                                 Add to Cart
                                             </button>
 
@@ -225,24 +218,113 @@ const SpecialMenu = ({ data, countCart }) => {
                                             <div
                                                 className={`popup-content ${showAttributesCard ? "slide-in fade-in" : ""}`}
                                             >
-                                                <button onClick={closeAttributesCard} className="btn closePopup">
+                                                <button onClick={closeAttributesCard} className="btn closePopup" id="ClosePopup">
                                                     <i className="fa fa-close"></i>
-                                                </button><br/><br/>
-                                                    <h6 className="title">Attributes Card</h6>
-                                                    <p className="info">Here are some important details.</p>
-                                                    <p className="info">Here are some important details.</p>
-                                                    <p className="info">Here are some important details.</p>
-                                                    <p className="info">Here are some important details.</p>
-                                                    <p className="info">Here are some important details.</p>
-                                                    <p className="info">Here are some important details.</p>
-                                                    <p className="info">Here are some important details.</p>
-                                                    <p className="info">Here are some important details.</p>
-                                                <button
-                                                className="btn btn-primary btn-hover-2 mt-[18px]"
-                                                    onClick={() =>
-                                                        handleAddToCart(product.id)
-                                                    }
-                                                >
+                                                </button><br/>
+                                                    {/* Title */}
+                                                    {/* <h6 className="title">Special Veg Thali</h6> */}
+
+                                                    {/* Sweet Selection */}
+                                                    <div className="sweet-selection">
+                                                        <h5>Choose Your Sweet</h5>
+                                                        <table className="table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Select</th>
+                                                                    <th>Sweet</th>
+                                                                    <th>Price</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            value="Gulab Jamun"
+                                                                            onChange={() => handleCheckboxChange("Gulab Jamun")}
+                                                                            checked={selectedSweets.includes("Gulab Jamun")}
+                                                                        />
+                                                                    </td>
+                                                                    <td>Gulab Jamun</td>
+                                                                    <td>₹15</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            value="Rasgulla"
+                                                                            onChange={() => handleCheckboxChange("Rasgulla")}
+                                                                            checked={selectedSweets.includes("Rasgulla")}
+                                                                        />
+                                                                    </td>
+                                                                    <td>Rasgulla</td>
+                                                                    <td>₹20</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            value="Rasmalai"
+                                                                            onChange={() => handleCheckboxChange("Rasmalai")}
+                                                                            checked={selectedSweets.includes("Rasmalai")}
+                                                                        />
+                                                                    </td>
+                                                                    <td>Rasmalai</td>
+                                                                    <td>₹50</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            value="Rajbhog"
+                                                                            onChange={() => handleCheckboxChange("Rajbhog")}
+                                                                            checked={selectedSweets.includes("Rajbhog")}
+                                                                        />
+                                                                    </td>
+                                                                    <td>Rajbhog</td>
+                                                                    <td>₹45</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            value="Chena Kheer"
+                                                                            onChange={() => handleCheckboxChange("Chena Kheer")}
+                                                                            checked={selectedSweets.includes("Chena Kheer")}
+                                                                        />
+                                                                    </td>
+                                                                    <td>Chena Kheer</td>
+                                                                    <td>₹70</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                        {/* Display Selected Sweets */}
+                                                        <div className="selected-items">
+                                                            <h6>Selected Items:</h6>
+                                                            <ul>
+                                                                {selectedSweets.map((sweet, index) => (
+                                                                    <li key={index}>{sweet}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <input
+                                                        type="hidden"
+                                                        id={selectedProductId}
+                                                        value={selectedProductId}
+                                                        readOnly
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        id={userId}
+                                                        value={userId}
+                                                    />
+                                                    <button
+                                                        className="btn btn-primary btn-hover-2 mt-[18px]"
+                                                        onClick={() => handleAddToCart(selectedProductId, userId)}
+                                                    >
                                                     Add To Cart
                                                 </button>
                                             </div>
@@ -351,7 +433,7 @@ const SpecialMenu = ({ data, countCart }) => {
             {/* <!-- Quality Service End--> */}
 
             {/* <!-- Testimonial's Start  --> */}
-            <section class="sm:py-[100px] py-[40px] bg-white relative overflow-hidden">
+            <section id="testimonials" class="sm:py-[100px] py-[40px] bg-white relative overflow-hidden">
                 <div class="container">
                     <div class="2xl:mb-[50px] mb-[25px] relative mx-auto text-center">
                         <h2 class="font-lobster">Customer's Comment</h2>
@@ -746,7 +828,9 @@ const SpecialMenu = ({ data, countCart }) => {
             <div className="map-iframe style-1 relative">
                 <iframe
                     className="w-full lg:h-[400px] sm:h-[350px] h-[300px] mb-[-10px]"
-                    src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d244934.17139458598!2d75.27787773507539!3d25.125368923263647!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sin!4v1678086292169!5m2!1sen!2sin"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3558.656913465935!2d80.94247997527054!3d26.88263937666514!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399bfd7fd5e8d487%3A0x5c3761f18a185ba3!2sPizzaport%20%26%20Cafe!5e0!3m2!1sen!2sin!4v1734323022706!5m2!1sen!2sin"
+                     width="400"
+                 height="350"
                     style={{ border: 0 }}
                     allowFullScreen=""
                     loading="lazy"
