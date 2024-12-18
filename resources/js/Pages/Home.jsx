@@ -181,24 +181,50 @@ const SpecialMenu = ({ data, countCart }) => {
                                     <div className="w-[150px] min-w-[150px] h-[150px] mt-0 mx-auto mb-[10px] rounded-full border-[9px] border-white duration-500 z-[1]">
                                         <img
                                             src={product.main_image_url}
-                                            alt={product.name}
+                                            alt={product.product_name}
                                             className="rounded-full group-hover:animate-spin"
                                         />
                                     </div>
                                     <div className="mt-auto">
-                                        <h4 className="mb-2.5">
+                                        <h5 className="mb-2.5">
                                             <a
                                                 href={`/product-detail/${product.id}`}
                                             >
-                                                {product.name}
+                                                {product.product_name}
                                             </a>
-                                        </h4>
+                                        </h5>
                                         <p className="mb-2">
-                                            {product.description}
+                                            {product.product_description
+                                                .split(" ")
+                                                .slice(0, 10)
+                                                .join(" ") +
+                                                (product.product_description.split(
+                                                    " "
+                                                ).length > 10
+                                                    ? "..."
+                                                    : "")}
                                         </p>
                                         <h5 className="text-primary">
-                                            ₹{product.price}
+                                            {product.base_sale_price ? (
+                                                <>
+                                                    ₹
+                                                    <del
+                                                        style={{
+                                                            fontSize: "14px",
+                                                        }}
+                                                    >
+                                                        {product.base_mrp}
+                                                    </del>
+                                                </>
+                                            ) : (
+                                                `₹${product.base_mrp}`
+                                            )}
                                         </h5>
+                                        {product.base_sale_price && (
+                                            <h5 className="text-primary">
+                                                ₹{product.base_sale_price}
+                                            </h5>
+                                        )}
                                         {/* <button
                                                 className="btn btn-primary btn-hover-2 mt-[18px]"
                                                 onClick={() =>
