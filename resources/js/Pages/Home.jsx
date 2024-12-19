@@ -104,7 +104,7 @@ const SpecialMenu = ({ data, countCart }) => {
                                         <div className="md:w-7/12 px-[15px]">
                                             <div className="banner-content md:mb-[60px] mb-0">
                                                 <span className="font-medium md:text-xl text-base text-[var(--secondary-dark)] mb-[10px] block">
-                                                    High Quality Test Station
+                                                    High Quality Test Stations
                                                 </span>
                                                 <h1 className="font-lobster mb-2.5 text-black2">
                                                     Choosing The
