@@ -31,7 +31,7 @@ class LoginController extends Controller
             $user = User::where('email', $request->email)->first();
 
             // 3. Check if user exists and password matches
-            if ($user && Hash::check($request->password, $user->password)) {
+            if ($user && Hash::check($request->password, $user->password_hash)) {
                 // Generate a token for the user
                 $token = $user->createToken('authToken')->plainTextToken;
 
