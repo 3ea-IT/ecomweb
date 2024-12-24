@@ -26,3 +26,7 @@ Route::post('/update-quantity/{productId}', [CartController::class, 'updateQuant
 Route::post('/remove-item', [CartController::class, 'removeItem']);
 
 Route::post('/orders', [OrderController::class, 'store']);
+
+Route::get('/cart-items', [CartController::class, 'cartItems']);
+
+Route::post('/check-code', [CartController::class, 'checkCode']);

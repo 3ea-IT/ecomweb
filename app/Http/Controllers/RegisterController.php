@@ -8,6 +8,7 @@ use App\Models\Address;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
@@ -83,7 +84,7 @@ class RegisterController extends Controller
             DB::rollBack();
 
             // Log the error for debugging
-            \Log::error('Registration Error: ' . $e->getMessage());
+            Log::error('Registration Error: ' . $e->getMessage());
 
             // Redirect back with an error flash message
             return redirect()->back()->with('error', 'An error occurred during registration. Please try again.');
