@@ -24,6 +24,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Route to fetch a specific product by its ID
     Route::get('/products/{id}', [ProductController::class, 'show']);
+
+    Route::get('/cart-items', [CartController::class, 'cartItems']);
+
+    Route::post('/check-code', [CartController::class, 'checkCode']);
 });
 
 Route::post('/UserLogin', [LoginController::class, 'UserLogin']);
