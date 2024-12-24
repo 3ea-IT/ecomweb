@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, usePage } from "@inertiajs/react";
 
-
 function Header() {
     const { countCart } = usePage().props;
 
@@ -15,7 +14,9 @@ function Header() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [user, setUser] = useState(null);
     const [userId, setUserID] = useState(null);
-
+    const csrfToken = document.head.querySelector(
+        'meta[name="csrf-token"]'
+    ).content;
     // Check localStorage for user info on component mount
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
@@ -33,20 +34,29 @@ function Header() {
         setIsLoading(true);
 
         try {
+            // First, get CSRF cookie
+            await fetch(`${import.meta.env.VITE_API_URL}/sanctum/csrf-cookie`, {
+                method: "GET",
+                credentials: "include",
+            });
+
+            // Then, make the login request
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/UserLogin`,
+                `${import.meta.env.VITE_API_URL}/UserLogin`, // Ensure /api prefix
                 {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
+                    credentials: "include", // Important for sending cookies
                     body: JSON.stringify({ email, password }),
                 }
             );
 
             if (!response.ok) {
-                const errorResult = await response.json();
-                throw new Error(errorResult.message || "Failed to sign in");
+                const text = await response.text(); // Log the full HTML response
+                console.error("Response Error:", text);
+                throw new Error("Failed to sign in");
             }
 
             const result = await response.json();
@@ -58,7 +68,7 @@ function Header() {
 
             if (result.user && result.user.name) {
                 localStorage.setItem("user", result.user.name);
-                localStorage.setItem("userId", result.user.LogId);  // Store id
+                localStorage.setItem("userId", result.user.LogId); // Store id
                 setUser(result.user.name);
                 setUserID(result.user.LogId);
                 setIsLoggedIn(true);
@@ -77,6 +87,7 @@ function Header() {
     const handleLogout = () => {
         localStorage.removeItem("authToken");
         localStorage.removeItem("user");
+        localStorage.removeItem("userId");
         setIsLoggedIn(false);
     };
 
@@ -121,7 +132,11 @@ function Header() {
                                                     className="bg-white text-[var(--title)] user-btn white-btn flex items-center justify-center w-[45px] h-[45px] rounded-md shadow-[0_10px_10px_0_rgba(0,0,0,0.1)]"
                                                     onClick={handleLogout}
                                                 >
-                                                   <span style={{ fontSize: '13.33px' }}>
+                                                    <span
+                                                        style={{
+                                                            fontSize: "13.33px",
+                                                        }}
+                                                    >
                                                         <i className="fa fa-sign-out fa-xs"></i>
                                                     </span>
                                                 </button>
@@ -143,7 +158,7 @@ function Header() {
                                         <Link href="/ShopCart">
                                             <button className="cart-btn bg-white white-btn flex items-center justify-center w-[45px] h-[45px] rounded-md shadow-[0_10px_10px_0_rgba(0,0,0,0.1)]">
                                                 <i className="flaticon-shopping-bag-1 text-2xl inline-flex ping-bag-1"></i>
-                                                <span className="badge absolute top-[3px] right-[-6px] p-0 h-5 w-5 font-medium text-xs leading-5 bg-[#666666] text-white rounded-[10px]" >
+                                                <span className="badge absolute top-[3px] right-[-6px] p-0 h-5 w-5 font-medium text-xs leading-5 bg-[#666666] text-white rounded-[10px]">
                                                     {countCart > 0
                                                         ? countCart
                                                         : 0}
@@ -238,16 +253,16 @@ function Header() {
                                     freelancers.
                                 </p>
                                 {/* <button
-                                    name="submit"
-                                    value="submit"
-                                    type="submit"
-                                    className="btn google-btn w-full block"
-                                >
-                                    Sign Up with Google
-                                </button>
-                                <h6 className="login-title">
-                                    <span className="px-2.5">OR</span>
-                                </h6> */}
+                                        name="submit"
+                                        value="submit"
+                                        type="submit"
+                                        className="btn google-btn w-full block"
+                                    >
+                                        Sign Up with Google
+                                    </button>
+                                    <h6 className="login-title">
+                                        <span className="px-2.5">OR</span>
+                                    </h6> */}
                             </div>
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-[18px]">
@@ -270,6 +285,7 @@ function Header() {
                                         placeholder="Enter Your Email"
                                     />
                                 </div>
+
                                 <div className="mb-[30px]">
                                     <label
                                         htmlFor="dzPassword"
@@ -281,11 +297,11 @@ function Header() {
                                         name="dzPassword"
                                         id="dzPassword"
                                         required
+                                        type="password"
                                         value={password}
                                         onChange={(e) =>
                                             setPassword(e.target.value)
                                         }
-                                        type="password"
                                         className="input-group flex relative border border-[#dddddd] w-full rounded-md py-2.5 px-5 focus:ring-primary"
                                         placeholder="Enter Your Password"
                                     />
@@ -293,6 +309,7 @@ function Header() {
                                 {error && (
                                     <p style={{ color: "red" }}>{error}</p>
                                 )}
+
                                 <button
                                     name="submit"
                                     value="submit"

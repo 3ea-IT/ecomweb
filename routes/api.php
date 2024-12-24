@@ -5,8 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
-use App\Http\Controllers\RegisterController;
-
+use App\Http\Controllers\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,15 +13,17 @@ use App\Http\Controllers\RegisterController;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/update-quantity/{productId}', [CartController::class, 'updateQuantityInDatabase']);
+    Route::post('/remove-item', [CartController::class, 'removeItem']);
+    Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/products/{product}/variations', [CartController::class, 'getVariations']);
+    Route::get('/products/{product}/addons', [CartController::class, 'getAddons']);
+    Route::post('/cart/add', [CartController::class, 'addToCart']);
+    Route::get('/products', [ProductController::class, 'index']);
+
+    // Route to fetch a specific product by its ID
+    Route::get('/products/{id}', [ProductController::class, 'show']);
 });
 
 Route::post('/UserLogin', [LoginController::class, 'UserLogin']);
-// Route::post('/register', [RegisterController::class, 'register']); // Registration Route
-Route::post('/add-to-cart', [CartController::class, 'addToCart']);
-
-Route::post('/update-quantity/{productId}', [CartController::class, 'updateQuantityInDatabase']);
-Route::post('/remove-item', [CartController::class, 'removeItem']);
-
-Route::post('/orders', [OrderController::class, 'store']);

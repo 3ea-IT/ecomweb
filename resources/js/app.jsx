@@ -2,6 +2,7 @@ import React from "react";
 import { createInertiaApp } from "@inertiajs/react";
 import { createRoot } from "react-dom/client";
 import ErrorBoundary from "./Components/ErrorBoundary";
+import "../css/app.css";
 
 createInertiaApp({
     resolve: async (name) => {
