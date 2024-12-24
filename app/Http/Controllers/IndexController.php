@@ -1,17 +1,22 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Cart;
-use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 class IndexController extends Controller
 {
     public function index()
     {
-        $data = Product::where('stock_quantity',1)->where('isaddon',0)->where('is_active',1)->get();
-        $countCart = Cart::where('user_id', 1)->count();
+        $data = Product::all();
+
+        $user = Auth::user();
+        $countCart = $user ? Cart::where('user_id', $user->user_id)->count() : 0;
+
         return Inertia::render('Home', [
             'data' => $data,
             'countCart' => $countCart

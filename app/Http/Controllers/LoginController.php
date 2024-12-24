@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use Illuminate\Support\Facades\Session;
+
 class LoginController extends Controller
 {
 
@@ -67,11 +68,4 @@ class LoginController extends Controller
             ], 500); // Internal Server Error
         }
     }
-
-
-
-
-
-
 }
-

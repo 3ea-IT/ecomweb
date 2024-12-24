@@ -1,95 +1,28 @@
-import React, { useState, useEffect } from "react";
-import MainLayout from "../Layouts/MainLayout"; // Assuming this layout exists
+import React, { useEffect } from "react";
+import MainLayout from "../Layouts/MainLayout";
+import { handleAddToCartClick } from "../utils/cart_model"; // Correct path to cart_model.js
 import { usePage } from "@inertiajs/react";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import toast styles
 import { Link } from "@inertiajs/react";
 
-const SpecialMenu = ({ data, countCart }) => {
-    const [cart, setCart] = useState([]); // State to store the cart
-
-    const [showAttributesCard, setShowAttributesCard] = useState(false);
-
-    const [selectedProductId, setSelectedProductId] = useState("");
-
-    const [userId, setUserId] = useState("");
-
-    // Fetch userId from localStorage on component mount
-    useEffect(() => {
-        const storedUserId = localStorage.getItem("userId");
-        if (storedUserId) {
-            setUserId(storedUserId);
-        }
-    }, []);
-
-    const handleButtonClick = (id) => {
-        setSelectedProductId(id); // Set the product ID
-        setShowAttributesCard(true); // Show the modal
-    };
-
-    const closeAttributesCard = () => {
-        setShowAttributesCard(false); // Close the modal
-        setSelectedProductId(""); // Clear the product ID
-    };
-
-    const [selectedSweets, setSelectedSweets] = useState([]);
-
-    const handleCheckboxChange = (sweet) => {
-        setSelectedSweets(
-            (prevSweets) =>
-                prevSweets.includes(sweet)
-                    ? prevSweets.filter((item) => item !== sweet) // Remove if already selected
-                    : [...prevSweets, sweet] // Add if not selected
-        );
-    };
-
-    const { flash = {} } = usePage().props; // Provide default empty object
+const SpecialMenu = ({ data }) => {
+    const { flash } = usePage().props;
 
     useEffect(() => {
+        console.log("Received Product Data:", data); // Debugging
         if (flash.success) {
             toast.success(flash.success);
         }
         if (flash.error) {
             toast.error(flash.error);
         }
-    }, [flash]);
+    }, [flash, data]);
 
-    const handleAddToCart = async (productId, userId) => {
-        try {
-            const response = await fetch(
-                "http://localhost:8000/api/add-to-cart",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        product_id: productId,
-                        userId: userId,
-                    }),
-                }
-            );
-
-            // Check if the response is ok
-            if (!response.ok) {
-                // If response is not ok, get the error message from the response
-                const data = await response.json();
-                alert(data.error || "Could not update the cart.");
-                throw new Error("Could not update the cart.");
-            }
-
-            // Handle successful response
-            const data = await response.json();
-            alert("Product added to cart!");
-            // Optionally, update the cart state or UI here
-            // Reload the page after showing the alert
-            location.reload();
-        } catch (error) {
-            // Handle errors (network errors, JSON parsing errors, etc.)
-            console.error("Error:", error);
-            alert("Error: Could not update the cart. Please try again later.");
-        }
-    };
+    // const handleAddToCartClick = (product) => {
+    //     console.log("Add to Cart Clicked for Product:", product);
+    //     OpenCart("Add to Cart", product);
+    // };
 
     return (
         <>
@@ -174,24 +107,30 @@ const SpecialMenu = ({ data, countCart }) => {
                     <div className="row">
                         {data.map((product) => (
                             <div
-                                key={product.id}
+                                key={product.product_id}
                                 className="lg:w-1/4 sm:w-1/2 w-full pl-[15px] pr-[15px] pb-[30px]"
                             >
                                 <div className="group rounded-lg menu-box box-hover text-center pt-10 px-5 pb-[30px] bg-white border border-grey-border hover:border-primary h-full flex duration-500 flex-col relative overflow-hidden z-[1]">
                                     <div className="w-[150px] min-w-[150px] h-[150px] mt-0 mx-auto mb-[10px] rounded-full border-[9px] border-white duration-500 z-[1]">
                                         <img
-                                            src={product.main_image_url}
+                                            src={
+                                                product.main_image_url.startsWith(
+                                                    "http"
+                                                )
+                                                    ? product.main_image_url
+                                                    : `/${product.main_image_url}`
+                                            }
                                             alt={product.product_name}
                                             className="rounded-full group-hover:animate-spin"
                                         />
                                     </div>
                                     <div className="mt-auto">
-                                        <h5 className="mb-2.5">
-                                            <a
-                                                href={`/product-detail/${product.id}`}
+                                        <h5 className="mb-2">
+                                            <Link
+                                                href={`/product-detail/${product.product_id}`}
                                             >
                                                 {product.product_name}
-                                            </a>
+                                            </Link>
                                         </h5>
                                         <p className="mb-2">
                                             {product.product_description
@@ -225,229 +164,17 @@ const SpecialMenu = ({ data, countCart }) => {
                                                 ₹{product.base_sale_price}
                                             </h5>
                                         )}
-                                        {/* <button
-                                                className="btn btn-primary btn-hover-2 mt-[18px]"
-                                                onClick={() =>
-                                                    handleAddToCart(product.id)
-                                                }
-                                            >
-                                                Add To Cart
-                                            </button> */}
-                                        {/* Button to show the attributes card */}
+                                        {/* "Add to Cart" Button */}
                                         <button
                                             onClick={() =>
-                                                handleButtonClick(product.id)
+                                                handleAddToCartClick(
+                                                    product.product_id
+                                                )
                                             }
-                                            className="btn btn-primary"
+                                            className="btn btn-primary mt-[18px] bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition duration-200"
                                         >
                                             Add to Cart
                                         </button>
-
-                                        {showAttributesCard && (
-                                            <div
-                                                className={`popup-overlay ${
-                                                    showAttributesCard
-                                                        ? "open"
-                                                        : ""
-                                                }`}
-                                            >
-                                                <div
-                                                    className={`popup-content ${
-                                                        showAttributesCard
-                                                            ? "slide-in fade-in"
-                                                            : ""
-                                                    }`}
-                                                >
-                                                    <button
-                                                        onClick={
-                                                            closeAttributesCard
-                                                        }
-                                                        className="btn closePopup"
-                                                        id="ClosePopup"
-                                                    >
-                                                        <i className="fa fa-close"></i>
-                                                    </button>
-                                                    <br />
-                                                    {/* Title */}
-                                                    {/* <h6 className="title">Special Veg Thali</h6> */}
-
-                                                    {/* Sweet Selection */}
-                                                    <div className="sweet-selection">
-                                                        <h5>
-                                                            Choose Your Sweet
-                                                        </h5>
-                                                        <table className="table">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>
-                                                                        Select
-                                                                    </th>
-                                                                    <th>
-                                                                        Sweet
-                                                                    </th>
-                                                                    <th>
-                                                                        Price
-                                                                    </th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            value="Gulab Jamun"
-                                                                            onChange={() =>
-                                                                                handleCheckboxChange(
-                                                                                    "Gulab Jamun"
-                                                                                )
-                                                                            }
-                                                                            checked={selectedSweets.includes(
-                                                                                "Gulab Jamun"
-                                                                            )}
-                                                                        />
-                                                                    </td>
-                                                                    <td>
-                                                                        Gulab
-                                                                        Jamun
-                                                                    </td>
-                                                                    <td>₹15</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            value="Rasgulla"
-                                                                            onChange={() =>
-                                                                                handleCheckboxChange(
-                                                                                    "Rasgulla"
-                                                                                )
-                                                                            }
-                                                                            checked={selectedSweets.includes(
-                                                                                "Rasgulla"
-                                                                            )}
-                                                                        />
-                                                                    </td>
-                                                                    <td>
-                                                                        Rasgulla
-                                                                    </td>
-                                                                    <td>₹20</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            value="Rasmalai"
-                                                                            onChange={() =>
-                                                                                handleCheckboxChange(
-                                                                                    "Rasmalai"
-                                                                                )
-                                                                            }
-                                                                            checked={selectedSweets.includes(
-                                                                                "Rasmalai"
-                                                                            )}
-                                                                        />
-                                                                    </td>
-                                                                    <td>
-                                                                        Rasmalai
-                                                                    </td>
-                                                                    <td>₹50</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            value="Rajbhog"
-                                                                            onChange={() =>
-                                                                                handleCheckboxChange(
-                                                                                    "Rajbhog"
-                                                                                )
-                                                                            }
-                                                                            checked={selectedSweets.includes(
-                                                                                "Rajbhog"
-                                                                            )}
-                                                                        />
-                                                                    </td>
-                                                                    <td>
-                                                                        Rajbhog
-                                                                    </td>
-                                                                    <td>₹45</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            value="Chena Kheer"
-                                                                            onChange={() =>
-                                                                                handleCheckboxChange(
-                                                                                    "Chena Kheer"
-                                                                                )
-                                                                            }
-                                                                            checked={selectedSweets.includes(
-                                                                                "Chena Kheer"
-                                                                            )}
-                                                                        />
-                                                                    </td>
-                                                                    <td>
-                                                                        Chena
-                                                                        Kheer
-                                                                    </td>
-                                                                    <td>₹70</td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                        {/* Display Selected Sweets */}
-                                                        <div className="selected-items">
-                                                            <h6>
-                                                                Selected Items:
-                                                            </h6>
-                                                            <ul>
-                                                                {selectedSweets.map(
-                                                                    (
-                                                                        sweet,
-                                                                        index
-                                                                    ) => (
-                                                                        <li
-                                                                            key={
-                                                                                index
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                sweet
-                                                                            }
-                                                                        </li>
-                                                                    )
-                                                                )}
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-
-                                                    <input
-                                                        type="hidden"
-                                                        id={selectedProductId}
-                                                        value={
-                                                            selectedProductId
-                                                        }
-                                                        readOnly
-                                                    />
-                                                    <input
-                                                        type="hidden"
-                                                        id={userId}
-                                                        value={userId}
-                                                    />
-                                                    <button
-                                                        className="btn btn-primary btn-hover-2 mt-[18px]"
-                                                        onClick={() =>
-                                                            handleAddToCart(
-                                                                selectedProductId,
-                                                                userId
-                                                            )
-                                                        }
-                                                    >
-                                                        Add To Cart
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -959,6 +686,8 @@ const SpecialMenu = ({ data, countCart }) => {
                 ></iframe>
             </div>
             {/* Map Iframe Section End */}
+
+            <ToastContainer />
         </>
     );
 };
@@ -977,7 +706,7 @@ const Home = (props) => {
 
     return (
         <MainLayout>
-            <SpecialMenu data={data} />{" "}
+            <SpecialMenu data={data} />
             {/* Pass the data prop to SpecialMenu */}
         </MainLayout>
     );

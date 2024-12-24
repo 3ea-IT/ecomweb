@@ -7,20 +7,26 @@
     },
     "devDependencies": {
         "@vitejs/plugin-react": "^4.3.2",
-        "axios": "^1.7.7",
+        "autoprefixer": "^10.4.20",
+        "axios": "^1.7.9",
         "laravel-vite-plugin": "^1.0.5",
+        "postcss": "^8.4.49",
+        "tailwindcss": "^3.4.17",
         "vite": "^5.4.8"
     },
     "dependencies": {
+        "@headlessui/react": "^2.2.0",
+        "@heroicons/react": "^2.2.0",
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/inertia-react": "^0.8.1",
         "@inertiajs/react": "^1.2.0",
         "next": "^15.0.3",
+        "prop-types": "^15.8.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-router-dom": "^6.27.0",
         "react-toastify": "^10.0.6",
-        "sweetalert2": "^11.14.5",
+        "sweetalert2": "^11.15.3",
         "swiper": "^11.1.14"
     }
 }

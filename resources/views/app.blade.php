@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="{{ asset('asset/vendor/pickadate/lib/themes/default.date.css') }}">
     <link rel="stylesheet" href="{{ asset('asset/vendor/rangeslider/rangeslider.css') }}">
     <link rel="stylesheet" href="{{ asset('asset/vendor/switcher/switcher.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,6 +42,7 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Vite and Inertia -->
     @viteReactRefresh
@@ -90,7 +92,7 @@
     <script src="{{ asset('asset/vendor/nouislider/nouislider.min.js') }}"></script>
     <script src="{{ asset('asset/vendor/wnumb/wNumb.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- <script src="{{ asset('asset/js/av_alert.js') }}"></script> -->
+    <script src="{{ asset('asset/js/cart_model.js') }}"></script>
 
     <!-- External JavaScript -->
     <script src="https://www.google.com/recaptcha/api.js"></script> <!-- Google API for Recaptcha -->
