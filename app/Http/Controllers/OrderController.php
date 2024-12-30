@@ -10,8 +10,8 @@ use App\Models\Product;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Order;
-use App\Models\CartItem;
 use App\Models\Payment;
+use App\Models\User;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\Auth;
 use Razorpay\Api\Api;
@@ -20,25 +20,19 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        // Fetch the authenticated user ID using Sanctum
         $userId = Auth::id();
 
-        // If the user is not authenticated, fallback to fetching from request input
         if (!$userId) {
-            $userId = $request->input('user_id');
-
-            if (!$userId) {
-                return response()->json(['error' => 'User ID is required'], 400);
-            }
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
         $countCart = Cart::join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
-                        ->where('carts.user_id', $userId)
-                        ->sum('cart_items.quantity');
+            ->where('carts.user_id', $userId)
+            ->sum('cart_items.quantity');
 
         $UserData = User::where('user_id', $userId)->first();
 
-        return Inertia::render('Order.checkout', [
+        return Inertia::render('Order/Checkout', [
             'countCart' => $countCart,
             'UserData' => $UserData
         ]);
@@ -62,7 +56,7 @@ class OrderController extends Controller
                 'shipping_address_id' => $request->shipping_address_id,
                 'shipping_charges' => $request->shipping_charges,
                 'tax_amount' => $request->tax_amount,
-                'coupon_amount' => $request->coupon_amount,
+                // 'coupon_amount' => $request->coupon_amount,
                 'total_amount' => $request->total_amount,
                 'payment_method' => $request->payment_method,
                 'order_number' => $orderNumber,
@@ -226,10 +220,4 @@ class OrderController extends Controller
             return response()->json(['message' => 'Payment verification failed.', 'error' => $e->getMessage()], 400);
         }
     }
-
-
-
-
-
-
 }
