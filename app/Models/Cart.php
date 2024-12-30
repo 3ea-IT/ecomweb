@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cart extends Model
 {
@@ -23,6 +24,12 @@ class Cart extends Model
     }
 
     public function cartItems()
+    {
+        return $this->hasMany(CartItem::class, 'cart_id', 'cart_id');
+    }
+
+    // Define the relationship with CartItem
+    public function items(): HasMany
     {
         return $this->hasMany(CartItem::class, 'cart_id', 'cart_id');
     }

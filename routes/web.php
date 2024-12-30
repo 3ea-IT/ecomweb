@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\IndexController;
@@ -27,7 +28,10 @@ Route::post('/register', [RegisterController::class, 'register'])->name('registe
 
 Route::post('/contact', [ContactController::class, 'store']);
 
-// Route::get('/check-out', [OrderController::class, 'index']);
+// Add this with your other web routes
+// Change the route to match the component path exactly
+Route::get('/check-out', [OrderController::class, 'index'])
+  ->middleware('auth:sanctum')
+  ->name('checkout');
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
