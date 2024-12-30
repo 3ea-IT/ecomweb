@@ -9,7 +9,7 @@ class OrderItem extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'order_item_id';
+    protected $primaryKey = 'order_item_id'; // Set the primary key to `order_item_id`
 
     protected $fillable = [
         'order_id',
@@ -25,29 +25,5 @@ class OrderItem extends Model
         'tax_amount',
     ];
 
-    // Define relationships
-    public function order()
-    {
-        return $this->belongsTo(Order::class, 'order_id', 'order_id');
-    }
 
-    public function product()
-    {
-        return $this->belongsTo(Product::class, 'product_id', 'product_id');
-    }
-
-    public function offer()
-    {
-        return $this->belongsTo(Offer::class, 'applied_offer_id', 'offer_id');
-    }
-
-    public function coupon()
-    {
-        return $this->belongsTo(Coupon::class, 'applied_coupon_id', 'coupon_id');
-    }
-
-    public function taxSlab()
-    {
-        return $this->belongsTo(TaxSlab::class, 'tax_slab_id', 'tax_slab_id');
-    }
 }

@@ -10,190 +10,226 @@ use App\Models\Product;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Order;
+use App\Models\CartItem;
+use App\Models\Payment;
 use App\Models\OrderItem;
-use App\Models\Coupon;
-use App\Models\Offer;
-use App\Models\TaxSlab;
 use Illuminate\Support\Facades\Auth;
+use Razorpay\Api\Api;
 
 class OrderController extends Controller
 {
-    /**
-     * Display the checkout page.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        // The frontend will handle fetching cart items via API
-        return Inertia::render('Order.checkout');
-    }
+        // Fetch the authenticated user ID using Sanctum
+        $userId = Auth::id();
 
-    /**
-     * Store a new order and its items.
-     */
-    public function store(Request $request)
-    {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['error' => 'User not authenticated.'], 401);
+        // If the user is not authenticated, fallback to fetching from request input
+        if (!$userId) {
+            $userId = $request->input('user_id');
+
+            if (!$userId) {
+                return response()->json(['error' => 'User ID is required'], 400);
+            }
         }
 
-        // Validate the incoming data
-        $validated = $request->validate([
-            'shipping_address_id' => 'required|integer|exists:addresses,address_id',
-            'billing_address_id' => 'required|integer|exists:addresses,address_id',
-            'shipping_charges' => 'required|numeric',
-            'tax_amount' => 'required|numeric',
-            'coupon_amount' => 'nullable|numeric',
-            'total_amount' => 'required|numeric',
-            'payment_method' => 'required|string|in:cod,card',
-            'card_number' => 'nullable|string',
-            'expiry_date' => 'nullable|string',
-            'cvv' => 'nullable|string',
+        $countCart = Cart::join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
+                        ->where('carts.user_id', $userId)
+                        ->sum('cart_items.quantity');
+
+        $UserData = User::where('user_id', $userId)->first();
+
+        return Inertia::render('Order.checkout', [
+            'countCart' => $countCart,
+            'UserData' => $UserData
         ]);
+    }
+
+    public function store(Request $request)
+    {
+        $randomNumber = rand(10000, 99999);
+
+        $orderNumber =  'KPT_O' . $randomNumber;
+
+        $orderId = uniqid('order_', true);
+
+        DB::beginTransaction();
 
         try {
-            // Start a database transaction
-            DB::beginTransaction();
-
-            // Generate a unique order number (customize as needed)
-            $orderNumber = strtoupper(uniqid('ORDER_'));
-
-            // Create the Order
+            // Create the order
             $order = Order::create([
-                'user_id' => $user->user_id,
+                'order_id' => $orderId,
+                'user_id' => $request->user_id,
+                'shipping_address_id' => $request->shipping_address_id,
+                'shipping_charges' => $request->shipping_charges,
+                'tax_amount' => $request->tax_amount,
+                'coupon_amount' => $request->coupon_amount,
+                'total_amount' => $request->total_amount,
+                'payment_method' => $request->payment_method,
                 'order_number' => $orderNumber,
-                'order_status' => 'pending',
-                'payment_status' => 'pending',
-                'shipping_address_id' => $validated['shipping_address_id'],
-                'billing_address_id' => $validated['billing_address_id'],
-                'subtotal_amount' => $request->input('subtotal_amount', 0.00),
-                'tax_amount' => $validated['tax_amount'],
-                'discount_amount' => $request->input('discount_amount', 0.00),
-                'shipping_charges' => $validated['shipping_charges'],
-                'total_amount' => $validated['total_amount'],
-                'payment_method' => $validated['payment_method'],
-                'card_number' => $validated['payment_method'] === 'card' ? $validated['card_number'] : null,
-                'expiry_date' => $validated['payment_method'] === 'card' ? $validated['expiry_date'] : null,
-                'cvv' => $validated['payment_method'] === 'card' ? $validated['cvv'] : null,
+                'order_status' => $request->order_status,
+                'payment_status' => 'Pending',
             ]);
 
-            // Fetch cart items for the user
-            $cartItems = CartItem::where('cart_id', function ($query) use ($user) {
-                $query->select('cart_id')->from('carts')->where('user_id', $user->user_id);
-            })->get();
-
-            if ($cartItems->isEmpty()) {
-                // Rollback the transaction if no cart items are found
-                DB::rollBack();
-                return response()->json(['error' => 'No items in the cart to place an order.'], 400);
+            $UserCart = Cart::where('user_id', $request->user_id)->first();
+            if (!$UserCart) {
+                return response()->json(['message' => 'User cart not found.'], 404);
             }
 
-            // Optional: Handle applied coupons or offers here
-            // Since frontend is not utilizing them yet, we'll skip for now
+            $CartID = $UserCart->cart_id;
+            $CartItems = CartItem::where('cart_id', $CartID)->get();
 
-            // Loop through cart items and create order_items
-            foreach ($cartItems as $item) {
-                // Determine the applicable price
-                $applicablePrice = $item->sale_price ?? $item->unit_price;
+            if ($CartItems->isEmpty()) {
+                return response()->json(['message' => 'No items in the cart.'], 404);
+            }
 
-                // Optional: Fetch coupon and offer details if applicable
-                // For now, we can set them to null or handle as per your logic
-                $appliedCouponId = null; // Replace with actual logic if needed
-                $appliedOfferId = null;  // Replace with actual logic if needed
+            foreach ($CartItems as $CartItem) {
+                // Fetch the main product
+                $product = Product::find($CartItem->product_id);
+                $taxRate = 0;
 
+                // Fetch tax slab details if the tax_slab_id is valid
+                if ($product && $product->tax_slab_id !== null) {
+                    $taxSlab = DB::table('tax_slabs')->where('tax_slab_id', $product->tax_slab_id)->first();
+                    $taxRate = $taxSlab ? $taxSlab->gst : 0;
+                }
+
+                // Calculate tax amount
+                $mrp = $CartItem->sale_price ?? $CartItem->unit_price;
+                $quantity = $CartItem->quantity;
+                $lineTotal = $mrp * $quantity;
+                $taxAmount = ($lineTotal * $taxRate) / 100; // Tax amount based on the percentage
+
+                // Create the main order item
                 OrderItem::create([
                     'order_id' => $order->order_id,
-                    'product_id' => $item->product_id,
-                    'product_name_snapshot' => $item->product->product_name,
-                    'mrp' => $item->unit_price,
-                    'discounted_price' => $applicablePrice,
-                    'quantity' => $item->quantity,
-                    'line_total' => ($applicablePrice * $item->quantity) + $item->total_addon_price,
-                    'applied_offer_id' => $appliedOfferId,
-                    'applied_coupon_id' => $appliedCouponId,
-                    'tax_slab_id' => $item->product->tax_slab_id, // Assuming Product has tax_slab_id
-                    'tax_amount' => $item->tax_amount,
+                    'product_id' => $CartItem->product_id,
+                    'mrp' => $mrp,
+                    'quantity' => $quantity,
+                    'product_name_snapshot' => $product->product_name ?? 'Unknown Product',
+                    'line_total' => $lineTotal,
+                    'tax_slab_id' => $product && $product->tax_slab_id !== null ? $product->tax_slab_id : 0,
+                    'tax_amount' => $taxAmount,
+                ]);
+
+                // Handle addons
+                if (!empty($CartItem->addon_ids)) {
+                    $addonIds = is_array($CartItem->addon_ids) ? $CartItem->addon_ids : json_decode($CartItem->addon_ids, true);
+                    foreach ($addonIds as $addonId) {
+                        $addonProduct = Product::where('product_id', $addonId)->first();
+                        $addonTaxRate = 0;
+
+                        // Fetch tax slab details for the addon
+                        if ($addonProduct && $addonProduct->tax_slab_id !== null) {
+                            $addonTaxSlab = DB::table('tax_slabs')->where('tax_slab_id', $addonProduct->tax_slab_id)->first();
+                            $addonTaxRate = $addonTaxSlab ? $addonTaxSlab->gst : 0;
+                        }
+
+                        // Calculate tax amount for the addon
+                        $addonMrp = $addonProduct->base_sale_price ?? $addonProduct->base_mrp;
+                        $addonTaxAmount = ($addonMrp * $addonTaxRate) / 100;
+
+                        // Create the addon order item
+                        if ($addonProduct) {
+                            OrderItem::create([
+                                'order_id' => $order->order_id,
+                                'product_id' => $addonProduct->product_id,
+                                'mrp' => $addonMrp,
+                                'quantity' => 1,
+                                'product_name_snapshot' => $addonProduct->product_name ?? 'Unknown Addon Product',
+                                'line_total' => $addonMrp,
+                                'tax_slab_id' => $addonProduct->tax_slab_id !== null ? $addonProduct->tax_slab_id : 0,
+                                'tax_amount' => $addonTaxAmount,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            // Clear the user's cart
+            CartItem::where('cart_id', $CartID)->delete();
+
+            DB::commit();
+
+            return response()->json(['message' => 'Order placed successfully!', 'order_id' => $order->order_id], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Order placement failed.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+
+    public function createRazorpayOrder(Request $request)
+    {
+        try {
+            $api = new \Razorpay\Api\Api(env('RAZORPAY_KEY'), env('RAZORPAY_SECRET'));
+
+            $razorpayOrder = $api->order->create([
+                'amount' => $request->amount,
+                'currency' => 'INR',
+                'payment_capture' => 1,
+                'notes' => [
+                    'order_id' => $request->order_id,
+                ],
+            ]);
+
+            $order = Order::where('order_id', $request->order_id)->first();
+            if ($order) {
+                $order->update(['razorpay_order_id' => $razorpayOrder->id]);
+            }
+
+            Payment::create([
+                'order_id' => $request->order_id,
+                'razorpay_order_id' => $razorpayOrder->id,
+            ]);
+
+            return response()->json(['razorpay_order_id' => $razorpayOrder->id], 201);
+        } catch (\Exception $e) {
+            \Log::error('Error creating Razorpay order:', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to create Razorpay order.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+
+    public function confirmPayment(Request $request)
+    {
+        try {
+            $api = new \Razorpay\Api\Api(env('RAZORPAY_KEY'), env('RAZORPAY_SECRET'));
+
+            $api->utility->verifyPaymentSignature([
+                'razorpay_order_id' => $request->razorpay_order_id,
+                'razorpay_payment_id' => $request->razorpay_payment_id,
+                'razorpay_signature' => $request->razorpay_signature,
+            ]);
+
+            $orderPayment = Payment::where('razorpay_order_id', $request->razorpay_order_id)->first();
+            if ($orderPayment) {
+                $orderPayment->update([
+                    'payment_status' => 'Paid',
+                    'razorpay_payment_id' => $request->razorpay_payment_id,
+                    'razorpay_signature' => $request->razorpay_signature,
+                    'mop' => 'Razorpay',
                 ]);
             }
 
-            // Clear the cart items
-            CartItem::where('cart_id', $cartItems->first()->cart_id)->delete();
-
-            // Optionally, delete the cart
-            Cart::where('user_id', $user->user_id)->delete();
-
-            // Commit the transaction
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Order placed successfully!',
-                'order' => $order
-            ], 201);
-        } catch (\Exception $e) {
-            // Rollback the transaction in case of errors
-            DB::rollBack();
-            Log::error('Error placing order: ' . $e->getMessage());
-            return response()->json(['error' => 'An error occurred while placing the order. Please try again later.'], 500);
-        }
-    }
-
-    /**
-     * Update the quantity of a cart item.
-     */
-    public function updateQuantityInDatabase(Request $request, $cartItemId)
-    {
-        // Validate the incoming request data
-        $validated = $request->validate([
-            'action' => 'required|in:increase,decrease',
-        ]);
-
-        try {
-            // Retrieve the cart item based on cartItemId
-            $cartItem = CartItem::find($cartItemId);
-
-            if (!$cartItem) {
-                return response()->json(['message' => 'Item not found in cart'], 404);
+            $order = Order::where('razorpay_order_id', $request->razorpay_order_id)->first();
+            if ($order) {
+                $order->update([
+                    'payment_status' => 'Paid',
+                    'razorpay_payment_id' => $request->razorpay_payment_id
+                ]);
+                return response()->json(['message' => 'Payment verified and order updated successfully.'], 200);
             }
 
-            // Update quantity based on the action
-            if ($validated['action'] === 'increase') {
-                $cartItem->quantity += 1;
-            } elseif ($validated['action'] === 'decrease') {
-                $cartItem->quantity = max($cartItem->quantity - 1, 1); // Ensure quantity doesn't go below 1
-            }
-
-            // Recalculate total_price
-            $applicablePrice = $cartItem->sale_price ?? $cartItem->unit_price;
-            $cartItem->total_price = ($applicablePrice * $cartItem->quantity) + $cartItem->total_addon_price;
-
-            // Save the updated cart item
-            $cartItem->save();
-
-            return response()->json(['message' => 'Quantity updated successfully', 'cartItem' => $cartItem]);
+            return response()->json(['message' => 'Order not found.'], 404);
         } catch (\Exception $e) {
-            // Handle any unexpected errors
-            Log::error('Error updating quantity: ' . $e->getMessage());
-            return response()->json(['error' => 'Server error: ' . $e->getMessage()], 500);
+            \Log::error('Payment verification failed:', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Payment verification failed.', 'error' => $e->getMessage()], 400);
         }
     }
 
-    /**
-     * Remove a cart item.
-     */
-    public function removeCartItem(Request $request)
-    {
-        $validated = $request->validate([
-            'cart_item_id' => 'required|integer|exists:cart_items,cart_item_id',
-        ]);
 
-        $cartItem = CartItem::find($validated['cart_item_id']);
 
-        if (!$cartItem) {
-            return response()->json(['message' => 'Item not found in cart'], 404);
-        }
 
-        $cartItem->delete();
 
-        return response()->json(['message' => 'Item removed successfully']);
-    }
+
 }

@@ -9,6 +9,8 @@ class Order extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'order_id'; // Set the primary key to `order_id`
+
     protected $fillable = [
         'user_id',
         'order_number',
@@ -23,29 +25,12 @@ class Order extends Model
         'coupon_amount',
         'total_amount',
         'payment_method',
-        'card_number',
-        'expiry_date',
-        'cvv',
+        'payment_status',
+        'razorpay_order_id',
+        'razorpay_payment_id', // Add this if missing
+        'tax_amount',
+        'status',
     ];
 
-    // Define relationships
-    public function orderItems()
-    {
-        return $this->hasMany(OrderItem::class, 'order_id', 'order_id');
-    }
 
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'user_id');
-    }
-
-    public function shippingAddress()
-    {
-        return $this->belongsTo(Address::class, 'shipping_address_id', 'address_id');
-    }
-
-    public function billingAddress()
-    {
-        return $this->belongsTo(Address::class, 'billing_address_id', 'address_id');
-    }
 }

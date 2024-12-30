@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Cart;
 use App\Models\CartItem;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
@@ -16,38 +17,41 @@ class CartController extends Controller
 
     public function cartItems(Request $request)
     {
+        // Fetch the user_id dynamically from the request
         $userId = $request->input('user_id');
 
+        if (!$userId) {
+            return response()->json(['error' => 'User ID is required'], 400);
+        }
 
         $countCart = Cart::join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
-            ->where('carts.user_id', 11)
-            ->sum('cart_items.quantity');
-
+                        ->where('carts.user_id', $userId) // Use dynamic user_id
+                        ->sum('cart_items.quantity');
 
         $CartList = DB::table('carts')
-            ->join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
-            ->join('products', 'cart_items.product_id', '=', 'products.product_id')
-            ->leftJoin('tax_slabs', 'products.tax_slab_id', '=', 'tax_slabs.tax_slab_id') // Join tax slabs
-            ->select(
-                'carts.cart_id as cart_id',
-                'cart_items.*',
-                'products.product_id as product_id',
-                'products.product_name as product_name',
-                'products.product_description as product_description',
-                'products.base_mrp as product_price',
-                'products.main_image_url as product_image_url',
-                'tax_slabs.gst as gst',
-                DB::raw("(
-                SELECT GROUP_CONCAT(product_name SEPARATOR ', ')
-                FROM products
-                WHERE FIND_IN_SET(
-                    products.product_id,
-                    REPLACE(REPLACE(REPLACE(cart_items.addon_ids, '\"', ''), '[', ''), ']', '')
-                )
-            ) AS addon_names")
-            )
-            ->where('carts.user_id', 11)
-            ->get();
+                    ->join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
+                    ->join('products', 'cart_items.product_id', '=', 'products.product_id')
+                    ->leftJoin('tax_slabs', 'products.tax_slab_id', '=', 'tax_slabs.tax_slab_id')
+                    ->select(
+                        'carts.cart_id as cart_id',
+                        'cart_items.*',
+                        'products.product_id as product_id',
+                        'products.product_name as product_name',
+                        'products.product_description as product_description',
+                        'products.base_mrp as product_price',
+                        'products.main_image_url as product_image_url',
+                        'tax_slabs.gst as gst',
+                        DB::raw("(
+                            SELECT GROUP_CONCAT(product_name SEPARATOR ', ')
+                            FROM products
+                            WHERE FIND_IN_SET(
+                                products.product_id,
+                                REPLACE(REPLACE(REPLACE(cart_items.addon_ids, '\"', ''), '[', ''), ']', '')
+                            )
+                        ) AS addon_names")
+                    )
+                    ->where('carts.user_id', $userId) // Use dynamic user_id
+                    ->get();
 
         return response()->json([
             'countCart' => $countCart,
@@ -55,16 +59,9 @@ class CartController extends Controller
         ]);
     }
 
-
-
-
-    /**
-     * Add a product (and optional add-ons) to the cart.
-     */
     public function addToCart(Request $request)
     {
         try {
-            // Validate the incoming data
             $validated = $request->validate([
                 'product_id' => 'required|exists:products,product_id',
                 'variation_id' => 'nullable|exists:variations,variation_id',
@@ -266,54 +263,41 @@ class CartController extends Controller
         return response()->json(['message' => 'Item removed successfully']);
     }
 
-    public function removeItem(Request $request)
-    {
-        try {
-            // Find the cart item by its ID
-            $cartItem = CartItem::where('cart_item_id', $request->cart_item_id)->first();
 
-            // Check if the item exists
-            if (!$cartItem) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Item not found in cart.',
-                ], 404);
-            }
-
-            // Delete the cart item
-            $cartItem->delete();
-
-            // Return success response
-            return response()->json([
-                'success' => true,
-                'message' => 'Item removed successfully.',
+        public function removeItem(Request $request)
+        {
+            // Validate the incoming request
+            $validated = $request->validate([
+                'cart_item_id' => 'required|integer',
             ]);
-        } catch (\Exception $e) {
-            // Catch and handle any unexpected errors
-            return response()->json([
-                'success' => false,
-                'message' => 'Server error: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
 
+            try {
+                // Find the cart item by its ID
+                $cartItem = CartItem::find($validated['cart_item_id']);
 
-    public function checkCode(Request $request)
-    {
+                    // Check if the item exists
+                    if (!$cartItem) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Item not found in cart.',
+                        ], 404);
+                    }
 
-        try {
-            // Query the database to check if the code exists
-            $coupon = DB::table('coupons')->where('coupon_code', $request->code)->first();
+                    // Delete the cart item
+                    $cartItem->delete();
 
-            // Return response indicating if the code exists
-            if ($coupon) {
-                return response()->json(['exists' => true, 'coupon' => $coupon]);
-            } else {
-                return response()->json(['exists' => false], 404);
+                    // Return success response
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Item removed successfully.',
+                    ]);
+                } catch (\Exception $e) {
+                    // Catch and handle any unexpected errors
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Server error: ' . $e->getMessage(),
+                    ], 500);
+                }
             }
-        } catch (\Exception $e) {
-            // Handle any unexpected errors
-            return response()->json(['error' => 'An error occurred while checking the promo code.'], 500);
-        }
-    }
+
 }

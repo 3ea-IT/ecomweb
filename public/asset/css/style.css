@@ -6591,6 +6591,7 @@ margin: 15px 0; */
 .input-group .quantity-field {
   height: 31px;
   width: 105px;
+  /* width: 30px; */
   padding: 0;
   text-align: center;
   z-index: 1 !important;

@@ -26,7 +26,7 @@ Route::post('/register', [RegisterController::class, 'register'])->name('registe
 
 Route::post('/contact', [ContactController::class, 'store']);
 
-Route::get('/check-out', [OrderController::class, 'index']);
+// Route::get('/check-out', [OrderController::class, 'index']);
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
