@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Cart;
-use App\Models\User;
+use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\CartItem;
 use App\Models\Payment;

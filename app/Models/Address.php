@@ -30,4 +30,16 @@ class Address extends Model
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
+    /**
+     * Relationship with Order (shipping and billing).
+     */
+    public function shippingOrders()
+    {
+        return $this->hasMany(Order::class, 'shipping_address_id', 'address_id');
+    }
+
+    public function billingOrders()
+    {
+        return $this->hasMany(Order::class, 'billing_address_id', 'address_id');
+    }
 }
