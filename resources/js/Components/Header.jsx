@@ -170,8 +170,8 @@ function Header() {
                             </div>
                         </div>
 
-                        <div className="header-nav lg:justify-end lg:flex-row flex-col lg:gap-0 gap-5 flex">
-                            <ul className="nav navbar-nav navbar lg:flex items-center float-right">
+                        <div className="header-nav lg:justify-end lg:flex-row flex-col lg:gap-0 gap-5 flex open">
+                            <ul className="nav navbar-nav navbar lg:flex items-center float-right show">
                                 <li>
                                     <Link href="/">Home</Link>
                                 </li>
@@ -252,17 +252,6 @@ function Header() {
                                     Join our 100% remote network of creators and
                                     freelancers.
                                 </p>
-                                {/* <button
-                                        name="submit"
-                                        value="submit"
-                                        type="submit"
-                                        className="btn google-btn w-full block"
-                                    >
-                                        Sign Up with Google
-                                    </button>
-                                    <h6 className="login-title">
-                                        <span className="px-2.5">OR</span>
-                                    </h6> */}
                             </div>
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-[18px]">

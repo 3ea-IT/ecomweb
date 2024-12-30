@@ -18,6 +18,7 @@ Route::inertia('/blogsDetail', 'BlogDetail');
 Route::inertia('/outletsDetail', 'OutletsDetail');
 Route::inertia('/contact', 'Contact');
 Route::inertia('/ShopCart', 'Cart.CartDetail');
+Route::inertia('/OrderHistory', 'Order.OrderHistory');
 
 // Define the GET route for displaying the registration form
 Route::inertia('/register', 'Register')->name('register.page');

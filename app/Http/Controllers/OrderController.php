@@ -14,7 +14,7 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\Auth;
-use Razorpay\Api\Api;
+
 
 class OrderController extends Controller
 {
@@ -220,4 +220,32 @@ class OrderController extends Controller
             return response()->json(['message' => 'Payment verification failed.', 'error' => $e->getMessage()], 400);
         }
     }
+
+
+    public function OrderItems(Request $request)
+    {
+        $userId = $request->input('user_id');
+
+        if (!$userId) {
+            return response()->json(['error' => 'User ID is required'], 400);
+        }
+
+        // Fetch orders with their associated items using the 'items' relationship
+        $orders = Order::where('user_id', $userId)
+                    ->with('items')  // Eager load the related items
+                    ->get();
+
+        return response()->json([
+            'orders' => $orders
+        ]);
+    }
+
+
+
+
+
+
+
+
+
 }

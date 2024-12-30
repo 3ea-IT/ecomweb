@@ -25,5 +25,11 @@ class OrderItem extends Model
         'tax_amount',
     ];
 
+    // Define the relationship between OrderItem and Order
+    public function order()
+    {
+        return $this->belongsTo(Order::class, 'order_id');
+    }
+
 
 }
