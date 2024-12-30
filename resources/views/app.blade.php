@@ -40,6 +40,7 @@
 
     <link rel="stylesheet" href="{{ asset('asset/css/custom.css') }}">
 
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -97,7 +98,7 @@
     <!-- External JavaScript -->
     <script src="https://www.google.com/recaptcha/api.js"></script> <!-- Google API for Recaptcha -->
 
-
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </body>
 
 </html>

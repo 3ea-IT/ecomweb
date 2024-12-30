@@ -12,7 +12,7 @@ class IndexController extends Controller
 {
     public function index()
     {
-        $data = Product::all();
+        $data = Product::where('isaddon','0')->get();
 
         $user = Auth::user();
         $countCart = $user ? Cart::where('user_id', $user->user_id)->count() : 0;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Correctly importing React, useState, and useEffect
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../../Layouts/MainLayout';
 import { Link } from '@inertiajs/react';
 import axios from 'axios';
@@ -7,7 +7,6 @@ function CartDetail() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [countCart, setCountCart] = useState(0);
-  const [code, setCode] = useState('');
 
   const calculateTotal = () => {
     return cartItems
@@ -21,35 +20,29 @@ function CartDetail() {
   const AddoncalculateTotal = () => {
     return cartItems
       .reduce((AddonTotal, cartItem) => {
-        const AddonPrice = cartItem.total_addon_price || 0; // Ensure addon price defaults to 0
+        const AddonPrice = cartItem.total_addon_price || 0;
         return AddonTotal + AddonPrice;
       }, 0)
       .toFixed(2);
   };
 
-
   const GstcalculateTotal = () => {
-    // Calculate total GST
     const totalGst = cartItems.reduce((totalGst, cartItem) => {
-      const price = cartItem.sale_price || cartItem.unit_price; // Use sale price if available
+      const price = cartItem.sale_price || cartItem.unit_price;
       const itemTotal = price * cartItem.quantity;
-
-      // Calculate GST for the item
-      const gstPercentage = cartItem.gst || 0; // Default GST to 0 if not provided
+      const gstPercentage = cartItem.gst || 0;
       const itemGst = (itemTotal * gstPercentage) / 100;
-
-      return totalGst + itemGst; // Accumulate total GST
+      return totalGst + itemGst;
     }, 0);
-
-    return Math.round(totalGst); // Return the rounded total GST
+    return Math.round(totalGst);
   };
 
-
-  const deliveryCharge = 30.0; // Example delivery charge
+  const deliveryCharge = 30.0;
+  const ConvenienceCharge = 15.0;
   const totalGst = parseFloat(GstcalculateTotal());
-  const itemTotal = parseFloat(calculateTotal()); // Convert string to number
-  const addonTotal = parseFloat(AddoncalculateTotal()); // Convert string to number
-  const totalAmount = (itemTotal + addonTotal + totalGst + deliveryCharge).toFixed(2);
+  const itemTotal = parseFloat(calculateTotal());
+  const addonTotal = parseFloat(AddoncalculateTotal());
+  const totalAmount = (itemTotal + addonTotal + totalGst + deliveryCharge + ConvenienceCharge).toFixed(2);
 
   const handleDecrease = async (id) => {
     try {
@@ -90,7 +83,7 @@ function CartDetail() {
   const updateQuantityInDatabase = async (productId, action) => {
     try {
       const response = await axios.post(
-        `http://127.0.0.1:8000/api/update-quantity/${productId}`,
+        `${import.meta.env.VITE_API_URL}/update-quantity/${productId}`,
         { action }
       );
       return response.data;
@@ -101,39 +94,24 @@ function CartDetail() {
   };
 
   const handleRemoveItem = async (cart_item_id) => {
-    // Confirm before proceeding
-    const confirmed = window.confirm(
-      'Are you sure you want to remove this item?'
-    );
-
-    if (!confirmed) {
-      return; // Exit if the user cancels
-    }
-
     try {
-      // Send the delete request
-      const response = await axios.post(`http://127.0.0.1:8000/api/remove-item`, { cart_item_id });
-
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/remove-item`, { cart_item_id });
       if (response.data.success) {
-        // Remove the item from the state
         setCartItems((prevItems) =>
           prevItems.filter((item) => item.cart_item_id !== cart_item_id)
         );
-        alert('Item removed successfully!');
       } else {
         alert(response.data.message || 'Failed to remove item. Please try again.');
       }
     } catch (error) {
-      // Log the error and show an alert
       console.error('Error removing item:', error.message);
       alert('An error occurred. Please try again.');
     }
   };
 
-
   useEffect(() => {
     const fetchCartItems = async () => {
-      const UserID = localStorage.getItem("userId"); // Get UserID from localStorage
+      const UserID = localStorage.getItem('userId'); // Fetch userId from localStorage
       if (!UserID) {
         alert("User is not logged in. Please log in to view your cart.");
         setLoading(false);
@@ -143,7 +121,7 @@ function CartDetail() {
       try {
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/cart-items`, {
           params: {
-            userId: UserID, // Pass UserID as a query parameter
+            user_id: UserID, // Send userId as a query parameter
           },
         });
 
@@ -159,27 +137,6 @@ function CartDetail() {
 
     fetchCartItems();
   }, []);
-
-
-    if (loading) {
-      return <p>Loading cart items...</p>;
-    }
-
-    const handleApply = async () => {
-
-        // API call to check if the code exists in the database
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/check-code`, {
-          code: code, // Pass the code in the request body
-        });
-
-        if (response.data.exists) {
-          setMessage(`Promo code is valid! Discount: ${response.data.coupon.discount}%`);
-        } else {
-          setMessage('Promo code does not exist.');
-        }
-
-    };
-
 
   return (
     <MainLayout>
@@ -222,7 +179,7 @@ function CartDetail() {
                             try {
                               addonIdArray = typeof product.addon_ids === "string"
                                 ? JSON.parse(product.addon_ids)
-                                : product.addon_ids; // Use directly if already an array
+                                : product.addon_ids;
                             } catch (error) {
                               console.error("Error parsing addon_ids:", error);
                               addonIdArray = [];
@@ -369,37 +326,7 @@ function CartDetail() {
                             <p>No items in your cart.</p>
                             )}
                             <div className="order-detail mt-5">
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
-      <input
-        name="code"
-        type="text"
-        className="form-control"
-        placeholder="Enter code"
-        value={code} // Bind input value to state
-        onChange={(e) => setCode(e.target.value)} // Update state on input change
-        style={{
-          flex: 1,
-          padding: '10px',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          fontSize: '16px',
-        }}
-      />
-      <button
-        className="btn btn-primary"
-        onClick={handleApply} // Attach the click event
-        style={{
-          padding: '10px 20px',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontSize: '16px',
-        }}
-      >
-        Apply
-      </button>
-    </div>
+
                                 <h6 className="mb-2">Bill Details</h6>
                                 <table className="mb-[25px] w-full border-collapse">
                                     <tbody>
@@ -415,9 +342,13 @@ function CartDetail() {
                                             <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">Delivery Charges</td>
                                             <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">{deliveryCharge}</td>
                                         </tr>
-                                        <tr className="tax border-b-2 border-[#22222233]">
+                                        <tr className="tax border-b-2 border-[#22222233]" hidden>
                                             <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">Govt Taxes & Other Charges</td>
                                             <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">{totalGst}</td>
+                                        </tr>
+                                        <tr className="tax border-b-2 border-[#22222233]">
+                                            <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">Convenience Charges</td>
+                                            <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">{ConvenienceCharge}</td>
                                         </tr>
 
 
@@ -432,7 +363,6 @@ function CartDetail() {
                         </div>
                     </aside>
                 </div>
-
 
             </div>
         </div>
