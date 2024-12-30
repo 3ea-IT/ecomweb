@@ -23,17 +23,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products/{id}', [ProductController::class, 'show']);
     Route::get('/cart-items', [CartController::class, 'cartItems']);
     Route::get('/check-out', [OrderController::class, 'index']);
+
+
 });
+Route::get('/order-items', [OrderController::class, 'OrderItems']);
 
 Route::post('/orders', [OrderController::class, 'store']);
-
-
-
 Route::post('/UserLogin', [LoginController::class, 'UserLogin']);
-
 Route::post('/create-razorpay-order', [OrderController::class, 'createRazorpayOrder']);
 Route::post('/confirm-payment', [OrderController::class, 'confirmPayment']);
-
 Route::get('/cart-COUNT', [CartController::class, 'cartCOUNT']);
 
 

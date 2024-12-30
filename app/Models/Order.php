@@ -32,5 +32,11 @@ class Order extends Model
         'status',
     ];
 
+    // Define the relationship between Order and OrderItems
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class, 'order_id');
+    }
+
 
 }
