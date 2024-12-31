@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Coupon;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,6 +33,7 @@ class CartController extends Controller
             ->join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
             ->join('products', 'cart_items.product_id', '=', 'products.product_id')
             ->leftJoin('tax_slabs', 'products.tax_slab_id', '=', 'tax_slabs.tax_slab_id')
+            ->leftJoin('coupons', 'cart_items.applied_coupon_id', '=', 'coupons.coupon_id')
             ->select(
                 'carts.cart_id as cart_id',
                 'cart_items.*',
@@ -41,14 +43,15 @@ class CartController extends Controller
                 'products.base_mrp as product_price',
                 'products.main_image_url as product_image_url',
                 'tax_slabs.gst as gst',
+                'coupons.discount_value as cou_discount_value',
                 DB::raw("(
-                            SELECT GROUP_CONCAT(product_name SEPARATOR ', ')
-                            FROM products
-                            WHERE FIND_IN_SET(
-                                products.product_id,
-                                REPLACE(REPLACE(REPLACE(cart_items.addon_ids, '\"', ''), '[', ''), ']', '')
-                            )
-                        ) AS addon_names")
+                    SELECT GROUP_CONCAT(product_name SEPARATOR ', ')
+                    FROM products
+                    WHERE FIND_IN_SET(
+                        products.product_id,
+                        REPLACE(REPLACE(REPLACE(cart_items.addon_ids, '\"', ''), '[', ''), ']', '')
+                    )
+                ) AS addon_names")
             )
             ->where('carts.user_id', $userId) // Use dynamic user_id
             ->get();
@@ -298,6 +301,63 @@ class CartController extends Controller
                 'success' => false,
                 'message' => 'Server error: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function applyCoupon(Request $request)
+    {
+        // Validate the incoming data
+        $validated = $request->validate([
+            'coupon_code' => 'required',
+            'user_id' => 'required'
+        ]);
+
+        $couponCode = $validated['coupon_code'];
+        $userId = $validated['user_id'];
+
+        // Fetch the user-specific cart items
+        $UserDataId = Cart::where('user_id', $userId)->first();
+
+        // If the user does not have a cart, return an error
+        if (!$UserDataId) {
+            return response()->json(['success' => false, 'message' => 'User cart not found.']);
+        }
+
+        // Fetch the user-specific cart items
+        $cartItems = CartItem::where('cart_id', $UserDataId->cart_id)->get();
+
+        // Find the coupon by code
+        $coupon = Coupon::where('coupon_code', $couponCode)->first();
+
+        // If the coupon doesn't exist
+        if (!$coupon) {
+            return response()->json(['success' => false, 'message' => 'Invalid coupon code']);
+        }
+
+        // Check if the coupon is expired (status 0 means expired)
+        if ($coupon->is_active === 0) {
+            return response()->json(['success' => false, 'message' => 'Coupon has expired']);
+        }
+
+        // Apply coupon only if it's valid
+        $applied = false;
+        foreach ($cartItems as $cartItem) {
+            $cartItem->applied_coupon_id = $coupon->coupon_id;
+            if ($cartItem->save()) {
+                $applied = true; // Mark that the coupon was successfully applied
+            }
+        }
+
+        // If the coupon was applied successfully to at least one item, increment the use_count
+        if ($applied) {
+            $coupon->used_count = $coupon->used_count + 1; // Increment use_count
+            $coupon->save(); // Save the updated coupon
+            return response()->json([
+                'success' => true,
+                'message' => 'Coupon applied successfully!'
+            ]);
+        } else {
+            return response()->json(['success' => false, 'message' => 'Failed to apply coupon.']);
         }
     }
 }

@@ -7,6 +7,9 @@ function CartDetail() {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [countCart, setCountCart] = useState(0);
+    const [couponCode, setCouponCode] = useState(""); // State to store coupon code
+    const [couponMessage, setCouponMessage] = useState(""); // State to store success or error message
+    const [couponMessageStyle, setCouponMessageStyle] = useState("");
 
     const calculateTotal = () => {
         return cartItems
@@ -37,9 +40,20 @@ function CartDetail() {
         return Math.round(totalGst);
     };
 
+    const CouponCalculateTotal = () => {
+        return cartItems
+            .reduce((CouponTotal, cartItem) => {
+                const CouponPrice =
+                    parseFloat(cartItem.cou_discount_value) || 0;
+                return CouponTotal + CouponPrice;
+            }, 0)
+            .toFixed(2);
+    };
+
     const deliveryCharge = 30.0;
     const ConvenienceCharge = 15.0;
     const totalGst = parseFloat(GstcalculateTotal());
+    const CouponCodeAmount = parseFloat(CouponCalculateTotal());
     const itemTotal = parseFloat(calculateTotal());
     const addonTotal = parseFloat(AddoncalculateTotal());
     const totalAmount = (
@@ -47,7 +61,8 @@ function CartDetail() {
         addonTotal +
         totalGst +
         deliveryCharge +
-        ConvenienceCharge
+        ConvenienceCharge -
+        CouponCodeAmount
     ).toFixed(2);
 
     const handleDecrease = async (id) => {
@@ -163,6 +178,56 @@ function CartDetail() {
 
         fetchCartItems();
     }, []);
+
+    // Function to handle coupon input change
+    const handleCouponChange = (event) => {
+        setCouponCode(event.target.value); // Update coupon code on input change
+    };
+
+    // Function to handle apply coupon button click
+    const handleApplyCoupon = async () => {
+        if (!couponCode) {
+            setCouponMessage("Please enter a coupon code.");
+            return;
+        }
+
+        const userId = localStorage.getItem("userId"); // Get user ID from localStorage
+
+        if (!userId) {
+            setCouponMessage(
+                "User is not logged in. Please log in to apply coupon."
+            );
+            return;
+        }
+
+        try {
+            // Make a request to validate the coupon code (this is an example, modify according to your API)
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/apply-coupon`,
+                {
+                    coupon_code: couponCode,
+                    user_id: userId, // Send the userId as part of the request payload
+                }
+            );
+
+            if (response.data.success) {
+                setCouponMessage(response.data.message); // Success message
+                setCouponMessageStyle("text-green-600 bg-green-100"); // Green success message
+            } else if (response.data.message) {
+                setCouponMessage(response.data.message); // Display any error message
+                setCouponMessageStyle("text-red-600 bg-red-100"); // Red error message
+            }
+            // Automatically reload the page after 2 seconds
+            setTimeout(() => {
+                window.location.reload(); // Reload the page
+            }, 2000);
+        } catch (error) {
+            console.error("Error applying coupon:", error);
+            setCouponMessage(
+                "An error occurred while applying the coupon. Please try again."
+            );
+        }
+    };
 
     return (
         <MainLayout>
@@ -510,6 +575,36 @@ function CartDetail() {
                                     ) : (
                                         <p>No items in your cart.</p>
                                     )}
+
+                                    <div className="container">
+                                        {/* Coupon Code Input and Button */}
+                                        <div className="flex items-center justify-between mt-6">
+                                            <input
+                                                type="text"
+                                                placeholder="Enter Coupon Code"
+                                                value={couponCode} // Bind the input value to state
+                                                onChange={handleCouponChange} // Update state on input change
+                                                className="border border-gray-300 p-2 rounded-lg w-3/4"
+                                            />
+                                            <button
+                                                onClick={handleApplyCoupon} // Trigger apply coupon logic
+                                                className="bg-red-600 text-white px-4 py-2 rounded-lg ml-4"
+                                            >
+                                                Apply
+                                            </button>
+                                        </div>
+
+                                        {/* Coupon Message */}
+                                        {couponMessage && (
+                                            <div className="mt-4">
+                                                <p
+                                                    className={`text-sm ${couponMessageStyle}`}
+                                                >
+                                                    {couponMessage}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="order-detail mt-5">
                                         <h6 className="mb-2">Bill Details</h6>
                                         <table className="mb-[25px] w-full border-collapse">
@@ -558,6 +653,17 @@ function CartDetail() {
                                                         {ConvenienceCharge}
                                                     </td>
                                                 </tr>
+                                                {CouponCodeAmount > 0 && (
+                                                    <tr className="tax border-b-2 border-[#22222233]">
+                                                        <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">
+                                                            Applied Coupon
+                                                            Amount
+                                                        </td>
+                                                        <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">
+                                                            {CouponCodeAmount}
+                                                        </td>
+                                                    </tr>
+                                                )}
 
                                                 <tr className="total">
                                                     <td className="py-[6px] font-medium text-sm leading-[21px] text-bodycolor">
