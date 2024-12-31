@@ -164,6 +164,12 @@ function Header() {
                                     Menu
                                 </Link>
                                 <Link
+                                    href="/OrderHistory"
+                                    className="hover:text-primary transition-colors"
+                                >
+                                    Orders
+                                </Link>
+                                <Link
                                     href="/blogs"
                                     className="hover:text-primary transition-colors"
                                 >
@@ -332,6 +338,12 @@ function Header() {
                                     className="block py-2 hover:text-primary transition-colors"
                                 >
                                     Menu
+                                </Link>
+                                <Link
+                                    href="/OrderHistory"
+                                    className="block py-2 hover:text-primary transition-colors"
+                                >
+                                    Orders
                                 </Link>
                                 <Link
                                     href="/blogs"
