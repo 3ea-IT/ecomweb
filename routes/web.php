@@ -34,4 +34,8 @@ Route::get('/check-out', [OrderController::class, 'index'])
   ->middleware('auth:sanctum')
   ->name('checkout');
 
+Route::get('/orders/{orderId}', [OrderController::class, 'show'])
+  ->middleware('auth:sanctum')
+  ->name('orders.show');
+
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');

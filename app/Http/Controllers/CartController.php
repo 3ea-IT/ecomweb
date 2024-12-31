@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Coupon;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,33 +26,35 @@ class CartController extends Controller
         }
 
         $countCart = Cart::join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
-                        ->where('carts.user_id', $userId) // Use dynamic user_id
-                        ->sum('cart_items.quantity');
+            ->where('carts.user_id', $userId) // Use dynamic user_id
+            ->sum('cart_items.quantity');
 
         $CartList = DB::table('carts')
-                    ->join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
-                    ->join('products', 'cart_items.product_id', '=', 'products.product_id')
-                    ->leftJoin('tax_slabs', 'products.tax_slab_id', '=', 'tax_slabs.tax_slab_id')
-                    ->select(
-                        'carts.cart_id as cart_id',
-                        'cart_items.*',
-                        'products.product_id as product_id',
-                        'products.product_name as product_name',
-                        'products.product_description as product_description',
-                        'products.base_mrp as product_price',
-                        'products.main_image_url as product_image_url',
-                        'tax_slabs.gst as gst',
-                        DB::raw("(
-                            SELECT GROUP_CONCAT(product_name SEPARATOR ', ')
-                            FROM products
-                            WHERE FIND_IN_SET(
-                                products.product_id,
-                                REPLACE(REPLACE(REPLACE(cart_items.addon_ids, '\"', ''), '[', ''), ']', '')
-                            )
-                        ) AS addon_names")
+            ->join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
+            ->join('products', 'cart_items.product_id', '=', 'products.product_id')
+            ->leftJoin('tax_slabs', 'products.tax_slab_id', '=', 'tax_slabs.tax_slab_id')
+            ->leftJoin('coupons', 'cart_items.applied_coupon_id', '=', 'coupons.coupon_id')
+            ->select(
+                'carts.cart_id as cart_id',
+                'cart_items.*',
+                'products.product_id as product_id',
+                'products.product_name as product_name',
+                'products.product_description as product_description',
+                'products.base_mrp as product_price',
+                'products.main_image_url as product_image_url',
+                'tax_slabs.gst as gst',
+                'coupons.discount_value as cou_discount_value',
+                DB::raw("(
+                    SELECT GROUP_CONCAT(product_name SEPARATOR ', ')
+                    FROM products
+                    WHERE FIND_IN_SET(
+                        products.product_id,
+                        REPLACE(REPLACE(REPLACE(cart_items.addon_ids, '\"', ''), '[', ''), ']', '')
                     )
-                    ->where('carts.user_id', $userId) // Use dynamic user_id
-                    ->get();
+                ) AS addon_names")
+            )
+            ->where('carts.user_id', $userId) // Use dynamic user_id
+            ->get();
 
         return response()->json([
             'countCart' => $countCart,
@@ -87,8 +90,9 @@ class CartController extends Controller
             ]);
 
             // Determine unit_price and sale_price based on variation
-            if (!empty($validated['variation_id'])) {
-                $variation = $product->variations()->where('variation_id', $validated['variation_id'])->first();
+            $variationId = $validated['variation_id'] ?? null;
+            if ($variationId) {
+                $variation = $product->variations()->where('variation_id', $variationId)->first();
                 if (!$variation) {
                     return response()->json(['error' => 'Invalid variation selected.'], 400);
                 }
@@ -119,7 +123,7 @@ class CartController extends Controller
             // Check if the product with the same variation already exists in the cart
             $cartItem = CartItem::where('cart_id', $cart->cart_id)
                 ->where('product_id', $validated['product_id'])
-                ->where('variation_id', $validated['variation_id'])
+                ->where('variation_id', $variationId)
                 ->first();
 
             if ($cartItem) {
@@ -158,7 +162,7 @@ class CartController extends Controller
                     'sale_price' => $sale_price,
                     'total_addon_price' => $total_addon_price,
                     'total_price' => $total_price,
-                    'variation_id' => $validated['variation_id'] ?? null,
+                    'variation_id' => $variationId,
                     'addon_ids' => $validated['addon_ids'] ?? [],
                 ]);
             }
@@ -264,40 +268,96 @@ class CartController extends Controller
     }
 
 
-        public function removeItem(Request $request)
-        {
-            // Validate the incoming request
-            $validated = $request->validate([
-                'cart_item_id' => 'required|integer',
-            ]);
+    public function removeItem(Request $request)
+    {
+        // Validate the incoming request
+        $validated = $request->validate([
+            'cart_item_id' => 'required|integer',
+        ]);
 
-            try {
-                // Find the cart item by its ID
-                $cartItem = CartItem::find($validated['cart_item_id']);
+        try {
+            // Find the cart item by its ID
+            $cartItem = CartItem::find($validated['cart_item_id']);
 
-                    // Check if the item exists
-                    if (!$cartItem) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Item not found in cart.',
-                        ], 404);
-                    }
-
-                    // Delete the cart item
-                    $cartItem->delete();
-
-                    // Return success response
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Item removed successfully.',
-                    ]);
-                } catch (\Exception $e) {
-                    // Catch and handle any unexpected errors
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Server error: ' . $e->getMessage(),
-                    ], 500);
-                }
+            // Check if the item exists
+            if (!$cartItem) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item not found in cart.',
+                ], 404);
             }
 
+            // Delete the cart item
+            $cartItem->delete();
+
+            // Return success response
+            return response()->json([
+                'success' => true,
+                'message' => 'Item removed successfully.',
+            ]);
+        } catch (\Exception $e) {
+            // Catch and handle any unexpected errors
+            return response()->json([
+                'success' => false,
+                'message' => 'Server error: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function applyCoupon(Request $request)
+    {
+        // Validate the incoming data
+        $validated = $request->validate([
+            'coupon_code' => 'required',
+            'user_id' => 'required'
+        ]);
+
+        $couponCode = $validated['coupon_code'];
+        $userId = $validated['user_id'];
+
+        // Fetch the user-specific cart items
+        $UserDataId = Cart::where('user_id', $userId)->first();
+
+        // If the user does not have a cart, return an error
+        if (!$UserDataId) {
+            return response()->json(['success' => false, 'message' => 'User cart not found.']);
+        }
+
+        // Fetch the user-specific cart items
+        $cartItems = CartItem::where('cart_id', $UserDataId->cart_id)->get();
+
+        // Find the coupon by code
+        $coupon = Coupon::where('coupon_code', $couponCode)->first();
+
+        // If the coupon doesn't exist
+        if (!$coupon) {
+            return response()->json(['success' => false, 'message' => 'Invalid coupon code']);
+        }
+
+        // Check if the coupon is expired (status 0 means expired)
+        if ($coupon->is_active === 0) {
+            return response()->json(['success' => false, 'message' => 'Coupon has expired']);
+        }
+
+        // Apply coupon only if it's valid
+        $applied = false;
+        foreach ($cartItems as $cartItem) {
+            $cartItem->applied_coupon_id = $coupon->coupon_id;
+            if ($cartItem->save()) {
+                $applied = true; // Mark that the coupon was successfully applied
+            }
+        }
+
+        // If the coupon was applied successfully to at least one item, increment the use_count
+        if ($applied) {
+            $coupon->used_count = $coupon->used_count + 1; // Increment use_count
+            $coupon->save(); // Save the updated coupon
+            return response()->json([
+                'success' => true,
+                'message' => 'Coupon applied successfully!'
+            ]);
+        } else {
+            return response()->json(['success' => false, 'message' => 'Failed to apply coupon.']);
+        }
+    }
 }

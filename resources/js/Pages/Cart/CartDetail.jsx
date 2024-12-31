@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import MainLayout from '../../Layouts/MainLayout';
-import { Link } from '@inertiajs/react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import MainLayout from "../../Layouts/MainLayout";
+import { Link } from "@inertiajs/react";
+import axios from "axios";
 
 function CartDetail() {
-  const [cartItems, setCartItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [countCart, setCountCart] = useState(0);
+    const [cartItems, setCartItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [countCart, setCountCart] = useState(0);
+    const [couponCode, setCouponCode] = useState(""); // State to store coupon code
+    const [couponMessage, setCouponMessage] = useState(""); // State to store success or error message
+    const [couponMessageStyle, setCouponMessageStyle] = useState("");
 
     const calculateTotal = () => {
         return cartItems
@@ -17,32 +20,50 @@ function CartDetail() {
             .toFixed(2);
     };
 
-  const AddoncalculateTotal = () => {
-    return cartItems
-      .reduce((AddonTotal, cartItem) => {
-        const AddonPrice = cartItem.total_addon_price || 0;
-        return AddonTotal + AddonPrice;
-      }, 0)
-      .toFixed(2);
-  };
+    const AddoncalculateTotal = () => {
+        return cartItems
+            .reduce((AddonTotal, cartItem) => {
+                const AddonPrice = cartItem.total_addon_price || 0;
+                return AddonTotal + AddonPrice;
+            }, 0)
+            .toFixed(2);
+    };
 
-  const GstcalculateTotal = () => {
-    const totalGst = cartItems.reduce((totalGst, cartItem) => {
-      const price = cartItem.sale_price || cartItem.unit_price;
-      const itemTotal = price * cartItem.quantity;
-      const gstPercentage = cartItem.gst || 0;
-      const itemGst = (itemTotal * gstPercentage) / 100;
-      return totalGst + itemGst;
-    }, 0);
-    return Math.round(totalGst);
-  };
+    const GstcalculateTotal = () => {
+        const totalGst = cartItems.reduce((totalGst, cartItem) => {
+            const price = cartItem.sale_price || cartItem.unit_price;
+            const itemTotal = price * cartItem.quantity;
+            const gstPercentage = cartItem.gst || 0;
+            const itemGst = (itemTotal * gstPercentage) / 100;
+            return totalGst + itemGst;
+        }, 0);
+        return Math.round(totalGst);
+    };
 
-  const deliveryCharge = 30.0;
-  const ConvenienceCharge = 15.0;
-  const totalGst = parseFloat(GstcalculateTotal());
-  const itemTotal = parseFloat(calculateTotal());
-  const addonTotal = parseFloat(AddoncalculateTotal());
-  const totalAmount = (itemTotal + addonTotal + totalGst + deliveryCharge + ConvenienceCharge).toFixed(2);
+    const CouponCalculateTotal = () => {
+        return cartItems
+            .reduce((CouponTotal, cartItem) => {
+                const CouponPrice =
+                    parseFloat(cartItem.cou_discount_value) || 0;
+                return CouponTotal + CouponPrice;
+            }, 0)
+            .toFixed(2);
+    };
+
+    const deliveryCharge = 30.0;
+    const ConvenienceCharge = 15.0;
+    const totalGst = parseFloat(GstcalculateTotal());
+    const CouponCodeAmount = parseFloat(CouponCalculateTotal());
+    const itemTotal = parseFloat(calculateTotal());
+    const addonTotal = parseFloat(AddoncalculateTotal());
+    const totalAmount = (
+        itemTotal +
+        addonTotal +
+        totalGst +
+        deliveryCharge +
+        ConvenienceCharge -
+        CouponCodeAmount
+    ).toFixed(2);
 
     const handleDecrease = async (id) => {
         try {
@@ -84,50 +105,66 @@ function CartDetail() {
         }
     };
 
-  const updateQuantityInDatabase = async (productId, action) => {
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/update-quantity/${productId}`,
-        { action }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error updating quantity:', error.response || error.message);
-      throw error;
-    }
-  };
+    const updateQuantityInDatabase = async (productId, action) => {
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/update-quantity/${productId}`,
+                { action }
+            );
+            return response.data;
+        } catch (error) {
+            console.error(
+                "Error updating quantity:",
+                error.response || error.message
+            );
+            throw error;
+        }
+    };
 
-  const handleRemoveItem = async (cart_item_id) => {
-    try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/remove-item`, { cart_item_id });
-      if (response.data.success) {
-        setCartItems((prevItems) =>
-          prevItems.filter((item) => item.cart_item_id !== cart_item_id)
-        );
-      } else {
-        alert(response.data.message || 'Failed to remove item. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error removing item:', error.message);
-      alert('An error occurred. Please try again.');
-    }
-  };
+    const handleRemoveItem = async (cart_item_id) => {
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/remove-item`,
+                { cart_item_id }
+            );
+            if (response.data.success) {
+                setCartItems((prevItems) =>
+                    prevItems.filter(
+                        (item) => item.cart_item_id !== cart_item_id
+                    )
+                );
+            } else {
+                alert(
+                    response.data.message ||
+                        "Failed to remove item. Please try again."
+                );
+            }
+        } catch (error) {
+            console.error("Error removing item:", error.message);
+            alert("An error occurred. Please try again.");
+        }
+    };
 
-  useEffect(() => {
-    const fetchCartItems = async () => {
-      const UserID = localStorage.getItem('userId'); // Fetch userId from localStorage
-      if (!UserID) {
-        alert("User is not logged in. Please log in to view your cart.");
-        setLoading(false);
-        return;
-      }
+    useEffect(() => {
+        const fetchCartItems = async () => {
+            const UserID = localStorage.getItem("userId"); // Fetch userId from localStorage
+            if (!UserID) {
+                alert(
+                    "User is not logged in. Please log in to view your cart."
+                );
+                setLoading(false);
+                return;
+            }
 
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/cart-items`, {
-          params: {
-            user_id: UserID, // Send userId as a query parameter
-          },
-        });
+            try {
+                const response = await axios.get(
+                    `${import.meta.env.VITE_API_URL}/cart-items`,
+                    {
+                        params: {
+                            user_id: UserID, // Send userId as a query parameter
+                        },
+                    }
+                );
 
                 setCartItems(response.data.CartList);
                 setCountCart(response.data.countCart);
@@ -139,28 +176,86 @@ function CartDetail() {
             }
         };
 
-    fetchCartItems();
-  }, []);
+        fetchCartItems();
+    }, []);
 
-  return (
-    <MainLayout>
-      {/* <!-- Banner Section --> */}
-      <section className="bg-[url('../images/banner/bnr1.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:opacity-100 after:w-full after:h-full after:top-0 after:left-0 pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] overflow-hidden bg-cover bg-center">
-        <div className="container table h-full relative z-[1] text-center">
-          <div className="dz-bnr-inr-entry align-middle table-cell">
-            <h2 className="font-lobster text-white mb-5 2xl:text-[70px] md:text-[60px] text-[40px] leading-[1.2]">Shop Cart</h2>
-            {/* <!-- Breadcrumb Row --> */}
-            <nav aria-label="breadcrumb" className="breadcrumb-row">
-              <ul className="breadcrumb bg-primary shadow-[0px_10px_20px_rgba(0,0,0,0.05)] rounded-[10px] inline-block lg:py-[13px] md:py-[10px] sm:py-[5px] py-[7px] lg:px-[30px] md:px-[18px] sm:px-5 px-3.5 m-0">
-                <li className="breadcrumb-item p-0 inline-block text-[15px] font-normal"><Link href="/" className="text-white">Home</Link></li>
-                <li className="breadcrumb-item text-white p-0 inline-block text-[15px] pl-2 font-normal active">Shop Cart</li>
-              </ul>
-            </nav>
-            {/* <!-- Breadcrumb Row End --> */}
-          </div>
-        </div>
-      </section>
-      {/* <!-- Banner End --> */}
+    // Function to handle coupon input change
+    const handleCouponChange = (event) => {
+        setCouponCode(event.target.value); // Update coupon code on input change
+    };
+
+    // Function to handle apply coupon button click
+    const handleApplyCoupon = async () => {
+        if (!couponCode) {
+            setCouponMessage("Please enter a coupon code.");
+            return;
+        }
+
+        const userId = localStorage.getItem("userId"); // Get user ID from localStorage
+
+        if (!userId) {
+            setCouponMessage(
+                "User is not logged in. Please log in to apply coupon."
+            );
+            return;
+        }
+
+        try {
+            // Make a request to validate the coupon code (this is an example, modify according to your API)
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/apply-coupon`,
+                {
+                    coupon_code: couponCode,
+                    user_id: userId, // Send the userId as part of the request payload
+                }
+            );
+
+            if (response.data.success) {
+                setCouponMessage(response.data.message); // Success message
+                setCouponMessageStyle("text-green-600 bg-green-100"); // Green success message
+            } else if (response.data.message) {
+                setCouponMessage(response.data.message); // Display any error message
+                setCouponMessageStyle("text-red-600 bg-red-100"); // Red error message
+            }
+            // Automatically reload the page after 2 seconds
+            setTimeout(() => {
+                window.location.reload(); // Reload the page
+            }, 2000);
+        } catch (error) {
+            console.error("Error applying coupon:", error);
+            setCouponMessage(
+                "An error occurred while applying the coupon. Please try again."
+            );
+        }
+    };
+
+    return (
+        <MainLayout>
+            {/* <!-- Banner Section --> */}
+            <section className="bg-[url('../images/banner/bnr1.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:opacity-100 after:w-full after:h-full after:top-0 after:left-0 pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] overflow-hidden bg-cover bg-center">
+                <div className="container table h-full relative z-[1] text-center">
+                    <div className="dz-bnr-inr-entry align-middle table-cell">
+                        <h2 className="font-lobster text-white mb-5 2xl:text-[70px] md:text-[60px] text-[40px] leading-[1.2]">
+                            Shop Cart
+                        </h2>
+                        {/* <!-- Breadcrumb Row --> */}
+                        <nav aria-label="breadcrumb" className="breadcrumb-row">
+                            <ul className="breadcrumb bg-primary shadow-[0px_10px_20px_rgba(0,0,0,0.05)] rounded-[10px] inline-block lg:py-[13px] md:py-[10px] sm:py-[5px] py-[7px] lg:px-[30px] md:px-[18px] sm:px-5 px-3.5 m-0">
+                                <li className="breadcrumb-item p-0 inline-block text-[15px] font-normal">
+                                    <Link href="/" className="text-white">
+                                        Home
+                                    </Link>
+                                </li>
+                                <li className="breadcrumb-item text-white p-0 inline-block text-[15px] pl-2 font-normal active">
+                                    Shop Cart
+                                </li>
+                            </ul>
+                        </nav>
+                        {/* <!-- Breadcrumb Row End --> */}
+                    </div>
+                </div>
+            </section>
+            {/* <!-- Banner End --> */}
 
             {/* <!-- Search Section --> */}
             <section className="lg:pt-[100px] sm:pt-[70px] pt-[50px] lg:pb-[100px] sm:pb-10 pb-5 relative bg-white">
@@ -180,19 +275,24 @@ function CartDetail() {
                                 </a>
                             </div>
 
-                        {/* Cart List Section */}
-                        {cartItems.length > 0 ? (
-                          cartItems.map((product) => {
-                            // Parse addon_ids if it's a string
-                            let addonIdArray = [];
-                            try {
-                              addonIdArray = typeof product.addon_ids === "string"
-                                ? JSON.parse(product.addon_ids)
-                                : product.addon_ids;
-                            } catch (error) {
-                              console.error("Error parsing addon_ids:", error);
-                              addonIdArray = [];
-                            }
+                            {/* Cart List Section */}
+                            {cartItems.length > 0 ? (
+                                cartItems.map((product) => {
+                                    // Parse addon_ids if it's a string
+                                    let addonIdArray = [];
+                                    try {
+                                        addonIdArray =
+                                            typeof product.addon_ids ===
+                                            "string"
+                                                ? JSON.parse(product.addon_ids)
+                                                : product.addon_ids;
+                                    } catch (error) {
+                                        console.error(
+                                            "Error parsing addon_ids:",
+                                            error
+                                        );
+                                        addonIdArray = [];
+                                    }
 
                                     return (
                                         <div
@@ -359,92 +459,241 @@ function CartDetail() {
                             )}
                         </div>
 
-                <div className="lg:w-1/3 w-full px-[15px] mb-[30px]">
-                    <aside className="lg:sticky pl-5 max-xl:pl-0 pb-[1px] top-[100px]">
-                        <div className="shop-filter style-1">
-                            <div className="flex justify-between">
-                                <div className="widget-title xl:mb-[30px] mb-5 pb-3 text-lg relative">
-                                    <h5 className="">Cart <span className="text-primary">({countCart})</span></h5>
-                                </div>
-                                <a href="javascript:void(0);" className="btn-close style-1 text-xl font-black text-primary p-0 lg:hidden block"><i className="la la-close font-black"></i></a>
-                            </div>
-                            {cartItems.length > 0 ? (
-                              cartItems.map((cartItem) => (
-                            <div className="cart-item flex items-center border-b border-[#2222221a] pb-[15px] mb-[15px]">
-                                <div className="dz-media w-[80px] min-w-[80px] h-[80px] overflow-hidden rounded-[10px] relative">
-                                    <img src={cartItem.product_image_url} alt={cartItem.product_name} />
-                                </div>
-                                <div className="dz-content ml-[15px] w-full">
-                                    <div className="dz-head mb-[10px] flex items-center justify-between">
-                                        <h6 className="text-base">{cartItem.product_name}</h6>
-                                        <a href="javascript:void(0);" className="text-black2"   onClick={() => handleRemoveItem(cartItem.cart_item_id)}>
-                                            <i className="fa-solid fa-xmark text-danger"></i>
+                        <div className="lg:w-1/3 w-full px-[15px] mb-[30px]">
+                            <aside className="lg:sticky pl-5 max-xl:pl-0 pb-[1px] top-[100px]">
+                                <div className="shop-filter style-1">
+                                    <div className="flex justify-between">
+                                        <div className="widget-title xl:mb-[30px] mb-5 pb-3 text-lg relative">
+                                            <h5 className="">
+                                                Cart{" "}
+                                                <span className="text-primary">
+                                                    ({countCart})
+                                                </span>
+                                            </h5>
+                                        </div>
+                                        <a
+                                            href="javascript:void(0);"
+                                            className="btn-close style-1 text-xl font-black text-primary p-0 lg:hidden block"
+                                        >
+                                            <i className="la la-close font-black"></i>
                                         </a>
                                     </div>
-                                    <div className="dz-body flex items-center justify-between">
-                                        <div className="input-group mt-[5px] flex flex-wrap items-stretch h-[31px] relative w-[105px] min-w-[105px]">
-                                            <input type="number" step="1" name="quantity" className="quantity-field"  value={cartItem.quantity} onChange={(e) => handleQuantityChange(cartItem.cart_id, e.target.value)} />
-                                            <span className="flex justify-between p-[2px] absolute w-full">
-                                              <input type="button" onClick={() => handleDecrease(cartItem.product_id)} value="-" className="button-minus" data-field="quantity" style={{ display: 'none' }} />
-                                              <input type="button" onClick={() => handleIncrease(cartItem.product_id)} value="+" className="button-plus" data-field="quantity" style={{ display: 'none' }}  />
-                                            </span>
-                                          </div>
-                                          <h5 className="price text-primary mb-0">
-                                            {((cartItem.sale_price || cartItem.unit_price) * cartItem.quantity).toFixed(2)}
-                                          </h5>
+                                    {cartItems.length > 0 ? (
+                                        cartItems.map((cartItem) => (
+                                            <div className="cart-item flex items-center border-b border-[#2222221a] pb-[15px] mb-[15px]">
+                                                <div className="dz-media w-[80px] min-w-[80px] h-[80px] overflow-hidden rounded-[10px] relative">
+                                                    <img
+                                                        src={
+                                                            cartItem.product_image_url
+                                                        }
+                                                        alt={
+                                                            cartItem.product_name
+                                                        }
+                                                    />
+                                                </div>
+                                                <div className="dz-content ml-[15px] w-full">
+                                                    <div className="dz-head mb-[10px] flex items-center justify-between">
+                                                        <h6 className="text-base">
+                                                            {
+                                                                cartItem.product_name
+                                                            }
+                                                        </h6>
+                                                        <a
+                                                            href="javascript:void(0);"
+                                                            className="text-black2"
+                                                            onClick={() =>
+                                                                handleRemoveItem(
+                                                                    cartItem.cart_item_id
+                                                                )
+                                                            }
+                                                        >
+                                                            <i className="fa-solid fa-xmark text-danger"></i>
+                                                        </a>
+                                                    </div>
+                                                    <div className="dz-body flex items-center justify-between">
+                                                        <div className="input-group mt-[5px] flex flex-wrap items-stretch h-[31px] relative w-[105px] min-w-[105px]">
+                                                            <input
+                                                                type="number"
+                                                                step="1"
+                                                                name="quantity"
+                                                                className="quantity-field"
+                                                                value={
+                                                                    cartItem.quantity
+                                                                }
+                                                                onChange={(e) =>
+                                                                    handleQuantityChange(
+                                                                        cartItem.cart_id,
+                                                                        e.target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                            />
+                                                            <span className="flex justify-between p-[2px] absolute w-full">
+                                                                <input
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        handleDecrease(
+                                                                            cartItem.product_id
+                                                                        )
+                                                                    }
+                                                                    value="-"
+                                                                    className="button-minus"
+                                                                    data-field="quantity"
+                                                                    style={{
+                                                                        display:
+                                                                            "none",
+                                                                    }}
+                                                                />
+                                                                <input
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        handleIncrease(
+                                                                            cartItem.product_id
+                                                                        )
+                                                                    }
+                                                                    value="+"
+                                                                    className="button-plus"
+                                                                    data-field="quantity"
+                                                                    style={{
+                                                                        display:
+                                                                            "none",
+                                                                    }}
+                                                                />
+                                                            </span>
+                                                        </div>
+                                                        <h5 className="price text-primary mb-0">
+                                                            {(
+                                                                (cartItem.sale_price ||
+                                                                    cartItem.unit_price) *
+                                                                cartItem.quantity
+                                                            ).toFixed(2)}
+                                                        </h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p>No items in your cart.</p>
+                                    )}
 
+                                    <div className="container">
+                                        {/* Coupon Code Input and Button */}
+                                        <div className="flex items-center justify-between mt-6">
+                                            <input
+                                                type="text"
+                                                placeholder="Enter Coupon Code"
+                                                value={couponCode} // Bind the input value to state
+                                                onChange={handleCouponChange} // Update state on input change
+                                                className="border border-gray-300 p-2 rounded-lg w-3/4"
+                                            />
+                                            <button
+                                                onClick={handleApplyCoupon} // Trigger apply coupon logic
+                                                className="bg-red-600 text-white px-4 py-2 rounded-lg ml-4"
+                                            >
+                                                Apply
+                                            </button>
+                                        </div>
+
+                                        {/* Coupon Message */}
+                                        {couponMessage && (
+                                            <div className="mt-4">
+                                                <p
+                                                    className={`text-sm ${couponMessageStyle}`}
+                                                >
+                                                    {couponMessage}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="order-detail mt-5">
+                                        <h6 className="mb-2">Bill Details</h6>
+                                        <table className="mb-[25px] w-full border-collapse">
+                                            <tbody>
+                                                <tr>
+                                                    <td className="py-[6px] font-medium text-sm leading-[21px] text-bodycolor">
+                                                        Addon Total
+                                                    </td>
+                                                    <td className="price text-primary font-semibold text-base leading-6 text-right">
+                                                        {addonTotal}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="py-[6px] font-medium text-sm leading-[21px] text-bodycolor">
+                                                        Product Total
+                                                    </td>
+                                                    <td className="price text-primary font-semibold text-base leading-6 text-right">
+                                                        {itemTotal}
+                                                    </td>
+                                                </tr>
+                                                <tr className="charges border-b border-dashed border-[#22222233]">
+                                                    <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">
+                                                        Delivery Charges
+                                                    </td>
+                                                    <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">
+                                                        {deliveryCharge}
+                                                    </td>
+                                                </tr>
+                                                <tr
+                                                    className="tax border-b-2 border-[#22222233]"
+                                                    hidden
+                                                >
+                                                    <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">
+                                                        Govt Taxes & Other
+                                                        Charges
+                                                    </td>
+                                                    <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">
+                                                        {totalGst}
+                                                    </td>
+                                                </tr>
+                                                <tr className="tax border-b-2 border-[#22222233]">
+                                                    <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">
+                                                        Convenience Charges
+                                                    </td>
+                                                    <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">
+                                                        {ConvenienceCharge}
+                                                    </td>
+                                                </tr>
+                                                {CouponCodeAmount > 0 && (
+                                                    <tr className="tax border-b-2 border-[#22222233]">
+                                                        <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">
+                                                            Applied Coupon
+                                                            Amount
+                                                        </td>
+                                                        <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">
+                                                            {CouponCodeAmount}
+                                                        </td>
+                                                    </tr>
+                                                )}
+
+                                                <tr className="total">
+                                                    <td className="py-[6px] font-medium text-sm leading-[21px] text-bodycolor">
+                                                        <h6>Total</h6>
+                                                    </td>
+                                                    <td className="price text-primary font-semibold text-base leading-6 text-right">
+                                                        {totalAmount}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <Link
+                                            href="/check-out"
+                                            className="btn btn-primary block text-center btn-md w-full btn-hover-1"
+                                        >
+                                            <span className="z-[2] relative block">
+                                                Order Now{" "}
+                                                <i className="fa-solid fa-arrow-right ml-[10px]"></i>
+                                            </span>
+                                        </Link>
                                     </div>
                                 </div>
-                            </div>
-                             ))
-                            ) : (
-                            <p>No items in your cart.</p>
-                            )}
-                            <div className="order-detail mt-5">
-
-                                <h6 className="mb-2">Bill Details</h6>
-                                <table className="mb-[25px] w-full border-collapse">
-                                    <tbody>
-                                        <tr>
-                                            <td className="py-[6px] font-medium text-sm leading-[21px] text-bodycolor">Addon Total</td>
-                                            <td className="price text-primary font-semibold text-base leading-6 text-right">{addonTotal}</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="py-[6px] font-medium text-sm leading-[21px] text-bodycolor">Product Total</td>
-                                            <td className="price text-primary font-semibold text-base leading-6 text-right">{itemTotal}</td>
-                                        </tr>
-                                        <tr className="charges border-b border-dashed border-[#22222233]">
-                                            <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">Delivery Charges</td>
-                                            <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">{deliveryCharge}</td>
-                                        </tr>
-                                        <tr className="tax border-b-2 border-[#22222233]" hidden>
-                                            <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">Govt Taxes & Other Charges</td>
-                                            <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">{totalGst}</td>
-                                        </tr>
-                                        <tr className="tax border-b-2 border-[#22222233]">
-                                            <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">Convenience Charges</td>
-                                            <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">{ConvenienceCharge}</td>
-                                        </tr>
-
-
-                                        <tr className="total">
-                                            <td className="py-[6px] font-medium text-sm leading-[21px] text-bodycolor"><h6>Total</h6></td>
-                                            <td className="price text-primary font-semibold text-base leading-6 text-right">{totalAmount}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <Link href="/check-out" className="btn btn-primary block text-center btn-md w-full btn-hover-1"><span className="z-[2] relative block">Order Now <i className="fa-solid fa-arrow-right ml-[10px]"></i></span></Link>
-                            </div>
+                            </aside>
                         </div>
-                    </aside>
+                    </div>
                 </div>
-
-            </div>
-        </div>
-    </section>
-	{/* <!-- Cart Section --> */}
-    </MainLayout>
-  );
+            </section>
+            {/* <!-- Cart Section --> */}
+        </MainLayout>
+    );
 }
 
 export default CartDetail;

@@ -232,20 +232,38 @@ class OrderController extends Controller
 
         // Fetch orders with their associated items using the 'items' relationship
         $orders = Order::where('user_id', $userId)
-                    ->with('items')  // Eager load the related items
-                    ->get();
+            ->with('items')  // Eager load the related items
+            ->get();
 
         return response()->json([
             'orders' => $orders
         ]);
     }
 
+    public function show($orderId)
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            return redirect()->route('home')->withErrors('You must be logged in.');
+        }
 
+        // Fetch the order (with items) that belongs to the currently logged in user
+        $order = Order::where('order_id', $orderId)
+            ->where('user_id', $userId)
+            ->with('items') // Make sure you have a relationship defined: Order hasMany OrderItem
+            ->firstOrFail();
 
+        // You could also fetch other data (like cart count, user info, etc.)
+        $countCart = Cart::join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
+            ->where('carts.user_id', $userId)
+            ->sum('cart_items.quantity');
 
+        $UserData = User::where('user_id', $userId)->first();
 
-
-
-
-
+        return Inertia::render('Order/OrderDetail', [
+            'order'     => $order,
+            'countCart' => $countCart,
+            'UserData'  => $UserData,
+        ]);
+    }
 }
