@@ -21,6 +21,7 @@ class Coupon extends Model
         'start_date',
         'end_date',
         'is_active',
+        'updated_at'
     ];
 
     /**
