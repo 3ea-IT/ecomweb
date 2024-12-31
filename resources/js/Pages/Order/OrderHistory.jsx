@@ -17,7 +17,7 @@ function OrderHistory() {
                 setLoading(false); // Set loading to false if not logged in
                 return;
             }
-
+    
             try {
                 const response = await axios.get(
                     `${import.meta.env.VITE_API_URL}/order-items`,
@@ -25,10 +25,11 @@ function OrderHistory() {
                         params: { user_id: UserID },
                     }
                 );
-
+    
                 // Check the response and set order history
                 if (response.data && response.data.orders) {
-                    setOrderHistory(response.data.orders); // Set the order data from API response
+                    // Reverse the orders so the newest is first
+                    setOrderHistory(response.data.orders.reverse()); // Reverse the array
                 } else {
                     setOrderHistory([]); // If no orders, set as empty array
                 }
@@ -39,7 +40,7 @@ function OrderHistory() {
                 setLoading(false); // Set loading to false after error
             }
         };
-
+    
         fetchOrderItems(); // Fetch order items on mount
     }, []); // Empty dependency array to run only once on mount
 
@@ -86,9 +87,9 @@ function OrderHistory() {
                         >
                             <div className="flex justify-between items-center mb-4">
                                 <div>
-                                    <h2 className="font-semibold">
+                                    <h3 className="font-semibold">
                                         {order.order_number}
-                                    </h2>
+                                    </h3>
                                     <p className="text-sm text-gray-500">
                                         Order # {order.order_id}
                                     </p>
