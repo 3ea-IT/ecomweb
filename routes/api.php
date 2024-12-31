@@ -6,6 +6,8 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Models\CartItem;
+use App\Models\Cart;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,6 +28,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/apply-coupon', [CartController::class, 'applyCoupon']);
 });
 Route::get('/order-items', [OrderController::class, 'OrderItems']);
+Route::get('/cart-count/{userId}', function ($userId) {
+    $cart = Cart::where('user_id', $userId)->first();
+
+    if ($cart) {
+        $count = CartItem::where('cart_id', $cart->cart_id)->sum('quantity');
+        return response()->json(['count' => $count]);
+    }
+
+    return response()->json(['count' => 0]);
+});
 
 Route::post('/orders', [OrderController::class, 'store']);
 Route::post('/UserLogin', [LoginController::class, 'UserLogin']);

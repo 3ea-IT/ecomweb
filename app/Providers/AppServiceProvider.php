@@ -29,12 +29,17 @@ class AppServiceProvider extends ServiceProvider
                 ];
             },
             'cartCount' => function () {
-                $user = Auth::user();
-                if ($user) {
-                    // Use a more direct query to count cart items
-                    return CartItem::whereHas('cart', function ($query) use ($user) {
-                        $query->where('user_id', $user->user_id);
-                    })->count();
+                // Get user ID from session/auth
+                $userId = Auth::id();
+
+                if ($userId) {
+                    // First find the user's cart
+                    $cart = Cart::where('user_id', $userId)->first();
+
+                    if ($cart) {
+                        // Count items in the cart
+                        return CartItem::where('cart_id', $cart->cart_id)->sum('quantity');
+                    }
                 }
                 return 0;
             },
