@@ -10,6 +10,7 @@ function CartDetail() {
     const [couponCode, setCouponCode] = useState("");
     const [couponMessage, setCouponMessage] = useState("");
     const [couponMessageStyle, setCouponMessageStyle] = useState("");
+    const [isApplying, setIsApplying] = useState(false);
 
     const calculateTotal = () => {
         return cartItems
@@ -43,7 +44,8 @@ function CartDetail() {
     const CouponCalculateTotal = () => {
         return cartItems
             .reduce((CouponTotal, cartItem) => {
-                const CouponPrice = parseFloat(cartItem.cou_discount_value) || 0;
+                const CouponPrice =
+                    parseFloat(cartItem.cou_discount_value) || 0;
                 return CouponTotal + CouponPrice;
             }, 0)
             .toFixed(2);
@@ -181,6 +183,7 @@ function CartDetail() {
 
     // Handle apply coupon button click
     const handleApplyCoupon = async () => {
+        setIsApplying(true);
         if (!couponCode) {
             setCouponMessage("Please enter a coupon code.");
             setCouponMessageStyle("text-red-600 bg-red-100");
@@ -221,6 +224,8 @@ function CartDetail() {
                 "An error occurred while applying the coupon. Please try again."
             );
             setCouponMessageStyle("text-red-600 bg-red-100");
+        } finally {
+            setIsApplying(false);
         }
     };
 
@@ -242,7 +247,10 @@ function CartDetail() {
                 setCartItems((prevItems) =>
                     prevItems.map((item) =>
                         item.id === cartId
-                            ? { ...item, quantity: response.data.cartItem.quantity }
+                            ? {
+                                  ...item,
+                                  quantity: response.data.cartItem.quantity,
+                              }
                             : item
                     )
                 );
@@ -281,12 +289,11 @@ function CartDetail() {
             </MainLayout>
         );
     }
-    
 
     return (
         <MainLayout>
-           {/* <!-- Banner Section --> */}
-           <section className="bg-[url('../images/banner/bnr1.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:opacity-100 after:w-full after:h-full after:top-0 after:left-0 pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] overflow-hidden bg-cover bg-center">
+            {/* <!-- Banner Section --> */}
+            <section className="bg-[url('../images/banner/bnr1.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:opacity-100 after:w-full after:h-full after:top-0 after:left-0 pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] overflow-hidden bg-cover bg-center">
                 <div className="container table h-full relative z-[1] text-center">
                     <div className="dz-bnr-inr-entry align-middle table-cell">
                         <h2 className="font-lobster text-white mb-5 2xl:text-[70px] md:text-[60px] text-[40px] leading-[1.2]">
@@ -326,7 +333,6 @@ function CartDetail() {
                                 <h5 className="lg:mb-[15px] mb-5">
                                     ({countCart})Item you have selected
                                 </h5>
-                               
                             </div>
 
                             {cartItems.length > 0 ? (
@@ -521,16 +527,16 @@ function CartDetail() {
                             )}
                         </div>
 
-
-
-
                         {/* Sidebar: Cart Summary and Coupon */}
                         <div className="w-full lg:w-1/3 px-4">
                             <aside className="sticky top-24">
                                 <div className="p-6 bg-gray-100 rounded-lg shadow-md">
                                     <div className="flex justify-between items-center mb-6">
                                         <h5 className="text-xl font-semibold">
-                                            Cart <span className="text-primary">({countCart})</span>
+                                            Cart{" "}
+                                            <span className="text-primary">
+                                                ({countCart})
+                                            </span>
                                         </h5>
                                         <button
                                             type="button"
@@ -545,73 +551,114 @@ function CartDetail() {
                                         <>
                                             {/* Cart Items Summary */}
                                             <div className="space-y-4">
-                                                    {cartItems.map((cartItem) => (
-                                                        <div key={cartItem.cart_item_id} className="flex items-center justify-between p-4 border rounded-lg shadow-sm">
-                                                            {/* Product Details */}
-                                                            <div className="flex items-center">
-                                                                <img
-                                                                    src={cartItem.product_image_url}
-                                                                    alt={cartItem.product_name}
-                                                                    className="w-16 h-16 object-cover rounded-lg"
-                                                                />
-                                                                <div className="ml-3">
-                                                                    <h6 className="text-sm font-medium">
-                                                                        {cartItem.product_name}
-                                                                    </h6>
-                                                                    {/* Quantity Input */}
-                                                                    <div className="mt-1">
-                                                                        <input
-                                                                            type="number"
-                                                                            min="1"
-                                                                            value={cartItem.quantity}
-                                                                            onChange={(e) =>
-                                                                                handleQuantityChange(cartItem.cart_id, e.target.value)
-                                                                            }
-                                                                            className="w-12 text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                                            aria-label={`Quantity of ${cartItem.product_name}`}
-                                                                        />
-                                                                    </div>
+                                                {cartItems.map((cartItem) => (
+                                                    <div
+                                                        key={
+                                                            cartItem.cart_item_id
+                                                        }
+                                                        className="flex items-center justify-between p-4 border rounded-lg shadow-sm"
+                                                    >
+                                                        {/* Product Details */}
+                                                        <div className="flex items-center">
+                                                            <img
+                                                                src={
+                                                                    cartItem.product_image_url
+                                                                }
+                                                                alt={
+                                                                    cartItem.product_name
+                                                                }
+                                                                className="w-16 h-16 object-cover rounded-lg"
+                                                            />
+                                                            <div className="ml-3">
+                                                                <h6 className="text-sm font-medium">
+                                                                    {
+                                                                        cartItem.product_name
+                                                                    }
+                                                                </h6>
+                                                                {/* Quantity Input */}
+                                                                <div className="mt-1">
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={
+                                                                            cartItem.quantity
+                                                                        }
+                                                                        onChange={(
+                                                                            e
+                                                                        ) =>
+                                                                            handleQuantityChange(
+                                                                                cartItem.cart_id,
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            )
+                                                                        }
+                                                                        className="w-12 text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                                        aria-label={`Quantity of ${cartItem.product_name}`}
+                                                                    />
                                                                 </div>
                                                             </div>
-
-                                                            {/* Total Price and Remove Button */}
-                                                            <div className="flex items-center space-x-4">
-                                                                {/* Total Price */}
-                                                                <h5 className="text-primary font-semibold">
-                                                                    ₹{((cartItem.sale_price || cartItem.unit_price) * cartItem.quantity).toFixed(2)}
-                                                                </h5>
-
-                                                                {/* Remove Button */}
-                                                                <button
-                                                                    onClick={() => handleRemoveItem(cartItem.cart_item_id)}
-                                                                    className="text-red-500 hover:text-red-700 focus:outline-none"
-                                                                    aria-label={`Remove ${cartItem.product_name} from cart`}
-                                                                >
-                                                                    {/* Trash Can Icon using Font Awesome */}
-                                                                    <i className="fa-solid fa-trash"></i>
-                                                                </button>
-                                                            </div>
                                                         </div>
-                                                    ))}
-                                                </div>
 
+                                                        {/* Total Price and Remove Button */}
+                                                        <div className="flex items-center space-x-4">
+                                                            {/* Total Price */}
+                                                            <h5 className="text-primary font-semibold">
+                                                                ₹
+                                                                {(
+                                                                    (cartItem.sale_price ||
+                                                                        cartItem.unit_price) *
+                                                                    cartItem.quantity
+                                                                ).toFixed(2)}
+                                                            </h5>
+
+                                                            {/* Remove Button */}
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleRemoveItem(
+                                                                        cartItem.cart_item_id
+                                                                    )
+                                                                }
+                                                                className="text-red-500 hover:text-red-700 focus:outline-none"
+                                                                aria-label={`Remove ${cartItem.product_name} from cart`}
+                                                            >
+                                                                {/* Trash Can Icon using Font Awesome */}
+                                                                <i className="fa-solid fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
 
                                             {/* Coupon Code Input and Button */}
                                             <div className="mt-6">
-                                                <h6 className="mb-2 text-lg font-semibold">Apply Coupon</h6>
+                                                <h6 className="mb-2 text-lg font-semibold">
+                                                    Apply Coupon
+                                                </h6>
                                                 <div className="flex items-center space-x-2">
                                                     <input
                                                         type="text"
                                                         placeholder="Enter Coupon Code"
                                                         value={couponCode}
-                                                        onChange={handleCouponChange}
+                                                        onChange={
+                                                            handleCouponChange
+                                                        }
                                                         className="flex-1 border border-gray-300 p-2 rounded-lg"
                                                     />
                                                     <button
-                                                        onClick={handleApplyCoupon}
-                                                        className="bg-red-600 text-white px-4 py-2 rounded-lg"
+                                                        onClick={
+                                                            handleApplyCoupon
+                                                        }
+                                                        disabled={isApplying}
+                                                        className={`px-6 py-2 rounded-lg text-white ${
+                                                            isApplying
+                                                                ? "bg-gray-400 text-xs"
+                                                                : "bg-red-600"
+                                                        }`}
                                                     >
-                                                        Apply
+                                                        {isApplying
+                                                            ? "Applying"
+                                                            : "Apply"}
                                                     </button>
                                                 </div>
 
@@ -628,41 +675,55 @@ function CartDetail() {
                                             </div>
                                         </>
                                     ) : (
-                                        <p className="text-center text-gray-500">No items in your cart.</p>
+                                        <p className="text-center text-gray-500">
+                                            No items in your cart.
+                                        </p>
                                     )}
 
                                     {/* Bill Details */}
                                     <div className="mt-6">
-                                        <h6 className="mb-4 text-lg font-semibold">Bill Details</h6>
+                                        <h6 className="mb-4 text-lg font-semibold">
+                                            Bill Details
+                                        </h6>
                                         <table className="w-full">
                                             <tbody>
                                                 <tr className="border-b">
-                                                    <td className="py-2 text-sm font-medium text-gray-700">Addon Total</td>
+                                                    <td className="py-2 text-sm font-medium text-gray-700">
+                                                        Addon Total
+                                                    </td>
                                                     <td className="text-right text-primary font-semibold">
                                                         ₹{addonTotal}
                                                     </td>
                                                 </tr>
                                                 <tr className="border-b">
-                                                    <td className="py-2 text-sm font-medium text-gray-700">Product Total</td>
+                                                    <td className="py-2 text-sm font-medium text-gray-700">
+                                                        Product Total
+                                                    </td>
                                                     <td className="text-right text-primary font-semibold">
                                                         ₹{itemTotal}
                                                     </td>
                                                 </tr>
                                                 <tr className="border-b">
-                                                    <td className="py-2 text-sm font-medium text-gray-700">Delivery Charges</td>
+                                                    <td className="py-2 text-sm font-medium text-gray-700">
+                                                        Delivery Charges
+                                                    </td>
                                                     <td className="text-right text-primary font-semibold">
                                                         ₹{deliveryCharge}
                                                     </td>
                                                 </tr>
                                                 <tr className="border-b">
-                                                    <td className="py-2 text-sm font-medium text-gray-700">Convenience Charges</td>
+                                                    <td className="py-2 text-sm font-medium text-gray-700">
+                                                        Convenience Charges
+                                                    </td>
                                                     <td className="text-right text-primary font-semibold">
                                                         ₹{ConvenienceCharge}
                                                     </td>
                                                 </tr>
                                                 {CouponCodeAmount > 0 && (
                                                     <tr className="border-b">
-                                                        <td className="py-2 text-sm font-medium text-gray-700">Applied Coupon</td>
+                                                        <td className="py-2 text-sm font-medium text-gray-700">
+                                                            Applied Coupon
+                                                        </td>
                                                         <td className="text-right text-primary font-semibold">
                                                             -₹{CouponCodeAmount}
                                                         </td>
@@ -682,7 +743,8 @@ function CartDetail() {
                                             href="/check-out"
                                             className="btn btn-primary w-full mt-4 py-3 rounded hover:bg-red-700 transition-colors duration-300"
                                         >
-                                            Order Now <i className="fa-solid fa-arrow-right ml-2"></i>
+                                            Order Now{" "}
+                                            <i className="fa-solid fa-arrow-right ml-2"></i>
                                         </Link>
                                     </div>
                                 </div>
