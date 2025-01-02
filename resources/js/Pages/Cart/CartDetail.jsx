@@ -7,8 +7,8 @@ function CartDetail() {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [countCart, setCountCart] = useState(0);
-    const [couponCode, setCouponCode] = useState(""); // State to store coupon code
-    const [couponMessage, setCouponMessage] = useState(""); // State to store success or error message
+    const [couponCode, setCouponCode] = useState("");
+    const [couponMessage, setCouponMessage] = useState("");
     const [couponMessageStyle, setCouponMessageStyle] = useState("");
 
     const calculateTotal = () => {
@@ -43,15 +43,14 @@ function CartDetail() {
     const CouponCalculateTotal = () => {
         return cartItems
             .reduce((CouponTotal, cartItem) => {
-                const CouponPrice =
-                    parseFloat(cartItem.cou_discount_value) || 0;
+                const CouponPrice = parseFloat(cartItem.cou_discount_value) || 0;
                 return CouponTotal + CouponPrice;
             }, 0)
             .toFixed(2);
     };
 
-    const deliveryCharge = 0.0;
-    const ConvenienceCharge = 0.0;
+    const deliveryCharge = 30.0;
+    const ConvenienceCharge = 15.0;
     const totalGst = parseFloat(GstcalculateTotal());
     const CouponCodeAmount = parseFloat(CouponCalculateTotal());
     const itemTotal = parseFloat(calculateTotal());
@@ -72,13 +71,11 @@ function CartDetail() {
                 setCartItems((prevItems) =>
                     prevItems.map((item) =>
                         item.id === id
-                            ? { ...item, qty: response.cartItem.qty }
+                            ? { ...item, quantity: response.cartItem.quantity }
                             : item
                     )
                 );
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                // Optionally, remove window.location.reload() for better UX
             }
         } catch (error) {
             console.error("Error decreasing quantity:", error.message);
@@ -92,13 +89,11 @@ function CartDetail() {
                 setCartItems((prevItems) =>
                     prevItems.map((item) =>
                         item.id === id
-                            ? { ...item, qty: response.cartItem.qty }
+                            ? { ...item, quantity: response.cartItem.quantity }
                             : item
                     )
                 );
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                // Optionally, remove window.location.reload() for better UX
             }
         } catch (error) {
             console.error("Error increasing quantity:", error.message);
@@ -147,13 +142,21 @@ function CartDetail() {
 
     useEffect(() => {
         const fetchCartItems = async () => {
-            const UserID = localStorage.getItem("userId"); // Fetch userId from localStorage
+            const UserID = localStorage.getItem("userId");
+            if (!UserID) {
+                alert(
+                    "User is not logged in. Please log in to view your cart."
+                );
+                setLoading(false);
+                return;
+            }
+
             try {
                 const response = await axios.get(
                     `${import.meta.env.VITE_API_URL}/cart-items`,
                     {
                         params: {
-                            user_id: UserID, // Send userId as a query parameter
+                            user_id: UserID,
                         },
                     }
                 );
@@ -163,7 +166,7 @@ function CartDetail() {
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching cart items:", error.message);
-                // alert("Failed to fetch cart data.");
+                alert("Failed to fetch cart data.");
                 setLoading(false);
             }
         };
@@ -171,53 +174,119 @@ function CartDetail() {
         fetchCartItems();
     }, []);
 
-    // Function to handle coupon input change
+    // Handle coupon input change
     const handleCouponChange = (event) => {
-        setCouponCode(event.target.value); // Update coupon code on input change
+        setCouponCode(event.target.value);
     };
 
-    // Function to handle apply coupon button click
+    // Handle apply coupon button click
     const handleApplyCoupon = async () => {
         if (!couponCode) {
             setCouponMessage("Please enter a coupon code.");
+            setCouponMessageStyle("text-red-600 bg-red-100");
             return;
         }
 
-        const userId = localStorage.getItem("userId"); // Get user ID from localStorage
+        const userId = localStorage.getItem("userId");
+
+        if (!userId) {
+            setCouponMessage(
+                "User is not logged in. Please log in to apply coupon."
+            );
+            setCouponMessageStyle("text-red-600 bg-red-100");
+            return;
+        }
 
         try {
-            // Make a request to validate the coupon code (this is an example, modify according to your API)
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/apply-coupon`,
                 {
                     coupon_code: couponCode,
-                    user_id: userId, // Send the userId as part of the request payload
+                    user_id: userId,
                 }
             );
 
             if (response.data.success) {
-                setCouponMessage(response.data.message); // Success message
-                setCouponMessageStyle("text-green-600 bg-green-100"); // Green success message
+                setCouponMessage(response.data.message);
+                setCouponMessageStyle("text-green-600 bg-green-100");
             } else if (response.data.message) {
-                setCouponMessage(response.data.message); // Display any error message
-                setCouponMessageStyle("text-red-600 bg-red-100"); // Red error message
+                setCouponMessage(response.data.message);
+                setCouponMessageStyle("text-red-600 bg-red-100");
             }
-            // Automatically reload the page after 2 seconds
-            setTimeout(() => {
-                window.location.reload(); // Reload the page
-            }, 2000);
+            window.location.reload();
+            // Optionally, remove window.location.reload() for better UX
         } catch (error) {
             console.error("Error applying coupon:", error);
             setCouponMessage(
                 "An error occurred while applying the coupon. Please try again."
             );
+            setCouponMessageStyle("text-red-600 bg-red-100");
         }
     };
 
+    // Handle quantity change via input
+    const handleQuantityChange = async (cartId, value) => {
+        const newQuantity = parseInt(value, 10);
+        if (isNaN(newQuantity) || newQuantity < 1) {
+            // Optionally, show an error message or reset to previous quantity
+            return;
+        }
+
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/update-quantity/${cartId}`,
+                { action: "set", quantity: newQuantity }
+            );
+
+            if (response.data.cartItem) {
+                setCartItems((prevItems) =>
+                    prevItems.map((item) =>
+                        item.id === cartId
+                            ? { ...item, quantity: response.data.cartItem.quantity }
+                            : item
+                    )
+                );
+            }
+        } catch (error) {
+            console.error("Error updating quantity:", error.message);
+        }
+    };
+
+    if (loading) {
+        return (
+            <MainLayout>
+                <div className="flex justify-center items-center h-screen">
+                    {/* SVG Spinner */}
+                    <svg
+                        className="animate-spin h-12 w-12 text-red-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                        ></circle>
+                        <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8H4z"
+                        ></path>
+                    </svg>
+                </div>
+            </MainLayout>
+        );
+    }
+    
+
     return (
         <MainLayout>
-            {/* <!-- Banner Section --> */}
-            <section className="bg-[url('../images/banner/bnr1.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:opacity-100 after:w-full after:h-full after:top-0 after:left-0 pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] overflow-hidden bg-cover bg-center">
+           {/* <!-- Banner Section --> */}
+           <section className="bg-[url('../images/banner/bnr1.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:opacity-100 after:w-full after:h-full after:top-0 after:left-0 pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] overflow-hidden bg-cover bg-center">
                 <div className="container table h-full relative z-[1] text-center">
                     <div className="dz-bnr-inr-entry align-middle table-cell">
                         <h2 className="font-lobster text-white mb-5 2xl:text-[70px] md:text-[60px] text-[40px] leading-[1.2]">
@@ -257,13 +326,7 @@ function CartDetail() {
                                 <h5 className="lg:mb-[15px] mb-5">
                                     ({countCart})Item you have selected
                                 </h5>
-                                <a
-                                    href="#offcanvasFilter"
-                                    id="filter-button2"
-                                    className="btn btn-primary filter-btn lg:hidden block mb-[15px] py-[5px] px-[18px] text-white"
-                                >
-                                    Filter
-                                </a>
+                               
                             </div>
 
                             {cartItems.length > 0 ? (
@@ -458,234 +521,168 @@ function CartDetail() {
                             )}
                         </div>
 
-                        <div className="lg:w-1/3 w-full px-[15px] mb-[30px]">
-                            <aside className="lg:sticky pl-5 max-xl:pl-0 pb-[1px] top-[100px]">
-                                <div className="shop-filter style-1">
-                                    <div className="flex justify-between">
-                                        <div className="widget-title xl:mb-[30px] mb-5 pb-3 text-lg relative">
-                                            <h5 className="">
-                                                Cart{" "}
-                                                <span className="text-primary">
-                                                    ({countCart})
-                                                </span>
-                                            </h5>
-                                        </div>
-                                        <a
-                                            href="javascript:void(0);"
-                                            className="btn-close style-1 text-xl font-black text-primary p-0 lg:hidden block"
+
+
+
+                        {/* Sidebar: Cart Summary and Coupon */}
+                        <div className="w-full lg:w-1/3 px-4">
+                            <aside className="sticky top-24">
+                                <div className="p-6 bg-gray-100 rounded-lg shadow-md">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h5 className="text-xl font-semibold">
+                                            Cart <span className="text-primary">({countCart})</span>
+                                        </h5>
+                                        <button
+                                            type="button"
+                                            className="btn-close text-xl font-black text-primary lg:hidden block"
+                                            aria-label="Close"
                                         >
-                                            <i className="la la-close font-black"></i>
-                                        </a>
+                                            <i className="la la-close"></i>
+                                        </button>
                                     </div>
+
                                     {cartItems.length > 0 ? (
-                                        cartItems.map((cartItem) => (
-                                            <div className="cart-item flex items-center border-b border-[#2222221a] pb-[15px] mb-[15px]">
-                                                <div className="dz-media w-[80px] min-w-[80px] h-[80px] overflow-hidden rounded-[10px] relative">
-                                                    <img
-                                                        src={`https://console.pizzaportindia.com/${cartItem.product_image_url}`}
-                                                        alt={
-                                                            cartItem.product_name
-                                                        }
-                                                    />
-                                                </div>
-                                                <div className="dz-content ml-[15px] w-full">
-                                                    <div className="dz-head mb-[10px] flex items-center justify-between">
-                                                        <h6 className="text-base">
-                                                            {
-                                                                cartItem.product_name
-                                                            }
-                                                        </h6>
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="text-black2"
-                                                            onClick={() =>
-                                                                handleRemoveItem(
-                                                                    cartItem.cart_item_id
-                                                                )
-                                                            }
-                                                        >
-                                                            <i className="fa-solid fa-xmark text-danger"></i>
-                                                        </a>
-                                                    </div>
-                                                    <div className="dz-body flex items-center justify-between">
-                                                        <div className="input-group mt-[5px] flex flex-wrap items-stretch h-[31px] relative w-[105px] min-w-[105px]">
-                                                            <input
-                                                                type="number"
-                                                                step="1"
-                                                                name="quantity"
-                                                                className="quantity-field"
-                                                                value={
-                                                                    cartItem.quantity
-                                                                }
-                                                                onChange={(e) =>
-                                                                    handleQuantityChange(
-                                                                        cartItem.cart_id,
-                                                                        e.target
-                                                                            .value
-                                                                    )
-                                                                }
-                                                            />
-                                                            <span className="flex justify-between p-[2px] absolute w-full">
-                                                                <input
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleDecrease(
-                                                                            cartItem.product_id
-                                                                        )
-                                                                    }
-                                                                    value="-"
-                                                                    className="button-minus"
-                                                                    data-field="quantity"
-                                                                    style={{
-                                                                        display:
-                                                                            "none",
-                                                                    }}
+                                        <>
+                                            {/* Cart Items Summary */}
+                                            <div className="space-y-4">
+                                                    {cartItems.map((cartItem) => (
+                                                        <div key={cartItem.cart_item_id} className="flex items-center justify-between p-4 border rounded-lg shadow-sm">
+                                                            {/* Product Details */}
+                                                            <div className="flex items-center">
+                                                                <img
+                                                                    src={cartItem.product_image_url}
+                                                                    alt={cartItem.product_name}
+                                                                    className="w-16 h-16 object-cover rounded-lg"
                                                                 />
-                                                                <input
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleIncrease(
-                                                                            cartItem.product_id
-                                                                        )
-                                                                    }
-                                                                    value="+"
-                                                                    className="button-plus"
-                                                                    data-field="quantity"
-                                                                    style={{
-                                                                        display:
-                                                                            "none",
-                                                                    }}
-                                                                />
-                                                            </span>
+                                                                <div className="ml-3">
+                                                                    <h6 className="text-sm font-medium">
+                                                                        {cartItem.product_name}
+                                                                    </h6>
+                                                                    {/* Quantity Input */}
+                                                                    <div className="mt-1">
+                                                                        <input
+                                                                            type="number"
+                                                                            min="1"
+                                                                            value={cartItem.quantity}
+                                                                            onChange={(e) =>
+                                                                                handleQuantityChange(cartItem.cart_id, e.target.value)
+                                                                            }
+                                                                            className="w-12 text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                                            aria-label={`Quantity of ${cartItem.product_name}`}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Total Price and Remove Button */}
+                                                            <div className="flex items-center space-x-4">
+                                                                {/* Total Price */}
+                                                                <h5 className="text-primary font-semibold">
+                                                                    ₹{((cartItem.sale_price || cartItem.unit_price) * cartItem.quantity).toFixed(2)}
+                                                                </h5>
+
+                                                                {/* Remove Button */}
+                                                                <button
+                                                                    onClick={() => handleRemoveItem(cartItem.cart_item_id)}
+                                                                    className="text-red-500 hover:text-red-700 focus:outline-none"
+                                                                    aria-label={`Remove ${cartItem.product_name} from cart`}
+                                                                >
+                                                                    {/* Trash Can Icon using Font Awesome */}
+                                                                    <i className="fa-solid fa-trash"></i>
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                        <h5 className="price text-primary mb-0">
-                                                            {(
-                                                                (cartItem.sale_price ||
-                                                                    cartItem.unit_price) *
-                                                                cartItem.quantity
-                                                            ).toFixed(2)}
-                                                        </h5>
-                                                    </div>
+                                                    ))}
                                                 </div>
+
+
+                                            {/* Coupon Code Input and Button */}
+                                            <div className="mt-6">
+                                                <h6 className="mb-2 text-lg font-semibold">Apply Coupon</h6>
+                                                <div className="flex items-center space-x-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Enter Coupon Code"
+                                                        value={couponCode}
+                                                        onChange={handleCouponChange}
+                                                        className="flex-1 border border-gray-300 p-2 rounded-lg"
+                                                    />
+                                                    <button
+                                                        onClick={handleApplyCoupon}
+                                                        className="bg-red-600 text-white px-4 py-2 rounded-lg"
+                                                    >
+                                                        Apply
+                                                    </button>
+                                                </div>
+
+                                                {/* Coupon Message */}
+                                                {couponMessage && (
+                                                    <div className="mt-4">
+                                                        <p
+                                                            className={`text-sm p-2 rounded ${couponMessageStyle}`}
+                                                        >
+                                                            {couponMessage}
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </div>
-                                        ))
+                                        </>
                                     ) : (
-                                        <p>No items in your cart.</p>
+                                        <p className="text-center text-gray-500">No items in your cart.</p>
                                     )}
 
-                                    <div className="container">
-                                        {/* Coupon Code Input and Button */}
-                                        <div className="flex items-center justify-between mt-6">
-                                            <input
-                                                type="text"
-                                                placeholder="Enter Coupon Code"
-                                                value={couponCode} // Bind the input value to state
-                                                onChange={handleCouponChange} // Update state on input change
-                                                className="border border-gray-300 p-2 rounded-lg w-3/4"
-                                            />
-                                            <button
-                                                onClick={handleApplyCoupon} // Trigger apply coupon logic
-                                                className="bg-red-600 text-white px-4 py-2 rounded-lg ml-4"
-                                            >
-                                                Apply
-                                            </button>
-                                        </div>
-
-                                        {/* Coupon Message */}
-                                        {couponMessage && (
-                                            <div className="mt-4">
-                                                <p
-                                                    className={`text-sm ${couponMessageStyle}`}
-                                                >
-                                                    {couponMessage}
-                                                </p>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="order-detail mt-5">
-                                        <h6 className="mb-2">Bill Details</h6>
-                                        <table className="mb-[25px] w-full border-collapse">
+                                    {/* Bill Details */}
+                                    <div className="mt-6">
+                                        <h6 className="mb-4 text-lg font-semibold">Bill Details</h6>
+                                        <table className="w-full">
                                             <tbody>
-                                                <tr>
-                                                    <td className="py-[6px] font-medium text-sm leading-[21px] text-bodycolor">
-                                                        Addon Total
-                                                    </td>
-                                                    <td className="price text-primary font-semibold text-base leading-6 text-right">
-                                                        {addonTotal}
+                                                <tr className="border-b">
+                                                    <td className="py-2 text-sm font-medium text-gray-700">Addon Total</td>
+                                                    <td className="text-right text-primary font-semibold">
+                                                        ₹{addonTotal}
                                                     </td>
                                                 </tr>
-                                                <tr>
-                                                    <td className="py-[6px] font-medium text-sm leading-[21px] text-bodycolor">
-                                                        Product Total
-                                                    </td>
-                                                    <td className="price text-primary font-semibold text-base leading-6 text-right">
-                                                        {itemTotal}
+                                                <tr className="border-b">
+                                                    <td className="py-2 text-sm font-medium text-gray-700">Product Total</td>
+                                                    <td className="text-right text-primary font-semibold">
+                                                        ₹{itemTotal}
                                                     </td>
                                                 </tr>
-                                                <tr
-                                                    className="charges border-b border-dashed border-[#22222233]"
-                                                    hidden
-                                                >
-                                                    <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">
-                                                        Delivery Charges
-                                                    </td>
-                                                    <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">
-                                                        {deliveryCharge}
+                                                <tr className="border-b">
+                                                    <td className="py-2 text-sm font-medium text-gray-700">Delivery Charges</td>
+                                                    <td className="text-right text-primary font-semibold">
+                                                        ₹{deliveryCharge}
                                                     </td>
                                                 </tr>
-                                                <tr
-                                                    className="tax border-b-2 border-[#22222233]"
-                                                    hidden
-                                                >
-                                                    <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">
-                                                        Govt Taxes & Other
-                                                        Charges
-                                                    </td>
-                                                    <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">
-                                                        {totalGst}
-                                                    </td>
-                                                </tr>
-                                                <tr
-                                                    className="tax border-b-2 border-[#22222233]"
-                                                    hidden
-                                                >
-                                                    <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">
-                                                        Convenience Charges
-                                                    </td>
-                                                    <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">
-                                                        {ConvenienceCharge}
+                                                <tr className="border-b">
+                                                    <td className="py-2 text-sm font-medium text-gray-700">Convenience Charges</td>
+                                                    <td className="text-right text-primary font-semibold">
+                                                        ₹{ConvenienceCharge}
                                                     </td>
                                                 </tr>
                                                 {CouponCodeAmount > 0 && (
-                                                    <tr className="tax border-b-2 border-[#22222233]">
-                                                        <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">
-                                                            Applied Coupon
-                                                            Amount
-                                                        </td>
-                                                        <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">
-                                                            - {CouponCodeAmount}
+                                                    <tr className="border-b">
+                                                        <td className="py-2 text-sm font-medium text-gray-700">Applied Coupon</td>
+                                                        <td className="text-right text-primary font-semibold">
+                                                            -₹{CouponCodeAmount}
                                                         </td>
                                                     </tr>
                                                 )}
-
-                                                <tr className="total">
-                                                    <td className="py-[6px] font-medium text-sm leading-[21px] text-bodycolor">
+                                                <tr className="border-t">
+                                                    <td className="py-2 text-sm font-medium text-gray-700">
                                                         <h6>Total</h6>
                                                     </td>
-                                                    <td className="price text-primary font-semibold text-base leading-6 text-right">
-                                                        {totalAmount}
+                                                    <td className="text-right text-primary font-semibold">
+                                                        ₹{totalAmount}
                                                     </td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                         <Link
                                             href="/check-out"
-                                            className="btn btn-primary block text-center btn-md w-full btn-hover-1"
+                                            className="btn btn-primary w-full mt-4 py-3 rounded hover:bg-red-700 transition-colors duration-300"
                                         >
-                                            <span className="z-[2] relative block">
-                                                Order Now{" "}
-                                                <i className="fa-solid fa-arrow-right ml-[10px]"></i>
-                                            </span>
+                                            Order Now <i className="fa-solid fa-arrow-right ml-2"></i>
                                         </Link>
                                     </div>
                                 </div>
@@ -694,56 +691,7 @@ function CartDetail() {
                     </div>
                 </div>
             </section>
-            {/* <!-- Cart Section --> */}
-
-            <section
-                className="lg:pt-[100px] sm:pt-[100px] pt-[50px] lg:pb-[100px] sm:pb-10 pb-5 relative bg-white"
-                style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    flexDirection: "column",
-                    display: cartItems.length != 0 ? "none" : "block", // If no items in cart, hide the section
-                }}
-            >
-                <div className="container">
-                    <div
-                        className="row text-center justify-center items-center"
-                        style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            flexDirection: "column", // Stack elements vertically
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                flexDirection: "column", // Stack elements vertically
-                                textAlign: "center", // Ensures the text is centered
-                            }}
-                        >
-                            <img
-                                src="/asset/image/empty-cart.png"
-                                alt="Main Slider 1"
-                                className="w-[200px] h-[200px] mb-4" // Image with margin bottom
-                            />
-                            <h3 className="mb-4 font-bold text-3xl">
-                                Your Cart is empty!
-                            </h3>
-
-                            <Link
-                                href="/menu" // Link to the menu or wherever you'd like
-                                className="mb-4 btn btn-primary py-3 px-7 text-white rounded mx-auto block"
-                            >
-                                Continue Shopping
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            {/* <!-- Cart Section End --> */}
         </MainLayout>
     );
 }

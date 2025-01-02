@@ -17,7 +17,6 @@ use App\Models\Cart;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/update-quantity/{productId}', [CartController::class, 'updateQuantityInDatabase']);
-    Route::post('/remove-item', [CartController::class, 'removeItem']);
     Route::get('/products/{product}/variations', [CartController::class, 'getVariations']);
     Route::get('/products/{product}/addons', [CartController::class, 'getAddons']);
     Route::post('/cart/add', [CartController::class, 'addToCart']);
@@ -26,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/check-out', [OrderController::class, 'index']);
 });
+Route::post('/remove-item', [CartController::class, 'removeItem']);
 Route::post('/apply-coupon', [CartController::class, 'applyCoupon']);
 Route::get(uri: '/cart-items', action: [CartController::class, 'cartItems']);
 
