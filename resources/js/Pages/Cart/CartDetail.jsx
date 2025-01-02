@@ -482,9 +482,7 @@ function CartDetail() {
                                             <div className="cart-item flex items-center border-b border-[#2222221a] pb-[15px] mb-[15px]">
                                                 <div className="dz-media w-[80px] min-w-[80px] h-[80px] overflow-hidden rounded-[10px] relative">
                                                     <img
-                                                        src={
-                                                            cartItem.product_image_url
-                                                        }
+                                                        src={`https://console.pizzaportindia.com/${cartItem.product_image_url}`}
                                                         alt={
                                                             cartItem.product_name
                                                         }

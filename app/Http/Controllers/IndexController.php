@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Product;
+use App\Models\Category;
 use App\Models\Cart;
 use Illuminate\Support\Facades\Auth;
 
@@ -26,12 +27,16 @@ class IndexController extends Controller
 
     public function showMenu()
     {
-        // Fetch your products from the DB or wherever
-        $products = Product::all();
+        // Fetch active categories with their products
+        $categories = Category::where('is_active', 1)
+            ->with(['products' => function ($query) {
+                $query->where('is_active', 1)
+                    ->where('isaddon', 0);
+            }])
+            ->get();
 
-        // Pass 'data' to your 'Menu' component
         return Inertia::render('Menu', [
-            'data' => $products
+            'categories' => $categories
         ]);
     }
 }
