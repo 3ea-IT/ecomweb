@@ -44,6 +44,7 @@ class CartController extends Controller
                 'products.main_image_url as product_image_url',
                 'tax_slabs.gst as gst',
                 'coupons.discount_value as cou_discount_value',
+                'coupons.coupon_code as coupon_code',
                 DB::raw("(
                     SELECT GROUP_CONCAT(product_name SEPARATOR ', ')
                     FROM products
@@ -267,7 +268,6 @@ class CartController extends Controller
         return response()->json(['message' => 'Item removed successfully']);
     }
 
-
     public function removeItem(Request $request)
     {
         // Validate the incoming request
@@ -358,6 +358,29 @@ class CartController extends Controller
             ]);
         } else {
             return response()->json(['success' => false, 'message' => 'Failed to apply coupon.']);
+        }
+    }
+
+    public function removeCoupon(Request $request)
+    {
+        try {
+            $userId = $request->user_id;
+
+            // Update cart items to remove coupon
+            DB::table('cart_items')
+                ->join('carts', 'cart_items.cart_id', '=', 'carts.cart_id')
+                ->where('carts.user_id', $userId)
+                ->update(['applied_coupon_id' => null]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Coupon removed successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove coupon'
+            ], 500);
         }
     }
 }

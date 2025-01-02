@@ -6,6 +6,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\AddressController;
 use App\Models\CartItem;
 use App\Models\Cart;
 
@@ -45,3 +46,11 @@ Route::post('/UserLogin', [LoginController::class, 'UserLogin']);
 Route::post('/create-razorpay-order', [OrderController::class, 'createRazorpayOrder']);
 Route::post('/confirm-payment', [OrderController::class, 'confirmPayment']);
 Route::get('/cart-COUNT', [CartController::class, 'cartCOUNT']);
+
+Route::get('/user-addresses', [AddressController::class, 'index']);
+Route::post('/user-addresses', [AddressController::class, 'store']);
+Route::get('/user-addresses/{id}', [AddressController::class, 'show']);
+Route::put('/user-addresses/{id}', [AddressController::class, 'update']);
+Route::delete('/user-addresses/{id}', [AddressController::class, 'destroy']);
+
+Route::post('/remove-coupon', [CartController::class, 'removeCoupon']);

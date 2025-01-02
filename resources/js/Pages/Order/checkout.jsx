@@ -4,9 +4,40 @@ import { Link } from "@inertiajs/react";
 import axios from "axios";
 
 function Checkout({ CartList = [] }) {
-    const [loading, setLoading] = useState(false); // Define the loading state
+    const [loading, setLoading] = useState(false);
     const [cartItems, setCartItems] = useState(CartList);
     const [paymentMethod, setPaymentMethod] = useState("");
+    const [addresses, setAddresses] = useState([]);
+    const [selectedAddress, setSelectedAddress] = useState(null);
+
+    // Fetch user's addresses
+    useEffect(() => {
+        const fetchAddresses = async () => {
+            const userId = localStorage.getItem("userId");
+            if (!userId) return;
+
+            try {
+                const response = await axios.get(
+                    `${import.meta.env.VITE_API_URL}/user-addresses`,
+                    {
+                        params: { user_id: userId },
+                    }
+                );
+                setAddresses(response.data);
+                // Set default address if available
+                const defaultAddress = response.data.find(
+                    (addr) => addr.is_default === 1
+                );
+                if (defaultAddress) {
+                    setSelectedAddress(defaultAddress.address_id);
+                }
+            } catch (error) {
+                console.error("Error fetching addresses:", error);
+            }
+        };
+
+        fetchAddresses();
+    }, []);
 
     // Calculate all amount of product
     const calculateTotal = () => {
@@ -74,8 +105,12 @@ function Checkout({ CartList = [] }) {
             return;
         }
 
+        if (!selectedAddress) {
+            alert("Please select or add a delivery address.");
+            return;
+        }
+
         if (paymentMethod === "cod") {
-            // Handle Cash on Delivery
             const orderId = await createOrder();
             if (orderId) {
                 alert("Order placed successfully!");
@@ -83,7 +118,6 @@ function Checkout({ CartList = [] }) {
                 window.location.href = "/";
             }
         } else if (paymentMethod === "card") {
-            // Save order and initiate Razorpay payment
             const orderId = await createOrder();
             if (orderId) {
                 initiateRazorpay(orderId);
@@ -93,7 +127,6 @@ function Checkout({ CartList = [] }) {
 
     const createOrder = async () => {
         setLoading(true);
-
         const UserID = localStorage.getItem("userId");
         const OrderType = localStorage.getItem("orderType");
 
@@ -101,24 +134,22 @@ function Checkout({ CartList = [] }) {
             const payload = {
                 user_id: UserID,
                 OrderType: OrderType,
+                shipping_address_id: selectedAddress,
                 shipping_charges: deliveryCharge,
                 tax_amount: totalGst,
                 coupon_amount: CouponCodeAmount,
                 total_amount: totalAmount,
                 payment_method: paymentMethod,
-                order_status: "Pending", // Initial status
+                order_status: "Pending",
             };
 
             const response = await axios.post(
                 `${import.meta.env.VITE_API_URL}/orders`,
-                payload,
-                {
-                    headers: { "Content-Type": "application/json" },
-                }
+                payload
             );
 
             if (response.status === 201) {
-                return response.data.order_id; // Return the order_id
+                return response.data.order_id;
             } else {
                 alert(response.data.message || "Failed to place the order.");
                 return null;
@@ -296,265 +327,258 @@ function Checkout({ CartList = [] }) {
             {/* <!-- Banner End --> */}
 
             {/* <!-- Cart Section --> */}
-            <section className="lg:pt-[100px] sm:pt-[70px] pt-[50px] lg:pb-[100px] sm:pb-10 pb-5 relative bg-white">
-                <div className="container">
-                    <div className="dz-divider bg-gray-dark icon-center my-12 relative h-[1px] bg-[#d3d3d3]">
-                        <i className="fa fa-circle bg-white text-primary absolute left-[50%] text-center top-[-8px] block"></i>
-                    </div>
-                    <div className="row">
-                        <div className="lg:w-1/2 w-full px-[15px]">
+            <section className="py-8 sm:py-12 lg:py-[100px] relative bg-white">
+                <div className="container px-4 sm:px-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Order Summary */}
+                        <div className="w-full">
                             <div className="widget">
-                                <h4 className="widget-title xl:mb-[30px] mb-5 pb-3 relative">
+                                <h4 className="widget-title text-xl sm:text-2xl mb-4 pb-3 relative">
                                     Your Order
                                 </h4>
-                                <table className="mb-5 border border-[#00000020] align-middle w-full">
-                                    <thead className="text-center">
-                                        <tr className="border-b border-[#00000020]">
-                                            <th className="bg-[#222] p-[15px] text-base font-semibold text-white">
-                                                IMAGE
-                                            </th>
-                                            <th className="bg-[#222] p-[15px] text-base font-semibold text-white">
-                                                PRODUCT NAME
-                                            </th>
-                                            <th className="bg-[#222] p-[15px] text-base font-semibold text-white">
-                                                QUANTITY
-                                            </th>
-                                            <th className="bg-[#222] p-[15px] text-base font-semibold text-white">
-                                                TOTAL
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {cartItems.length > 0 ? (
-                                            cartItems.map((cartItem, index) => {
-                                                let addonIdArray = [];
-                                                try {
-                                                    addonIdArray =
-                                                        typeof cartItem.addon_ids ===
-                                                        "string"
-                                                            ? JSON.parse(
-                                                                  cartItem.addon_ids
-                                                              )
-                                                            : cartItem.addon_ids;
-                                                } catch (error) {
-                                                    console.error(
-                                                        "Error parsing addon_ids:",
-                                                        error
-                                                    );
-                                                    addonIdArray = [];
-                                                }
-
-                                                return (
-                                                    <tr key={index}>
-                                                        <td className="p-[15px] font-medium border border-[#00000020] product-item-img">
-                                                            <img
-                                                                src={
-                                                                    cartItem.product_image_url
-                                                                }
-                                                                alt={
-                                                                    cartItem.product_name
-                                                                }
-                                                                className="w-[100px] rounded-md"
-                                                            />
-                                                        </td>
-                                                        <td className="p-[15px] font-medium border border-[#00000020] text-bodycolor">
-                                                            {
-                                                                cartItem.product_name
-                                                            }
-                                                            <br />
-                                                            {Array.isArray(
-                                                                addonIdArray
-                                                            ) &&
-                                                                addonIdArray.length >
-                                                                    0 && (
-                                                                    <>
-                                                                        <hr
-                                                                            style={{
-                                                                                border: "1px solid #ccc",
-                                                                                margin: "10px 0",
-                                                                            }}
-                                                                        />
-
-                                                                        <span
-                                                                            style={{
-                                                                                color: "black",
-                                                                                fontSize:
-                                                                                    "13px",
-                                                                            }}
-                                                                        >
-                                                                            Added
-                                                                            Toppings:{" "}
-                                                                        </span>
-                                                                        <span
-                                                                            style={{
-                                                                                fontSize:
-                                                                                    "13px",
-                                                                            }}
-                                                                        >
-                                                                            {
-                                                                                cartItem.addon_names
-                                                                            }
-                                                                        </span>
-                                                                    </>
-                                                                )}
-                                                        </td>
-                                                        <td className="p-[15px] font-medium border border-[#00000020] text-bodycolor">
-                                                            {cartItem.quantity}
-                                                        </td>
-                                                        <td className="p-[15px] font-medium border border-[#00000020] text-bodycolor">
-                                                            {cartItem.sale_price ? (
-                                                                <>
-                                                                    ₹
-                                                                    {cartItem.sale_price *
-                                                                        cartItem.quantity}
-                                                                </>
-                                                            ) : (
-                                                                `₹${
-                                                                    cartItem.unit_price *
-                                                                    cartItem.quantity
-                                                                }`
-                                                            )}
-                                                            <br />
-                                                            {cartItem.total_addon_price >
-                                                            0 ? (
-                                                                <>
-                                                                    <span
-                                                                        style={{
-                                                                            color: "#727272",
-                                                                            fontSize:
-                                                                                "10px",
-                                                                        }}
-                                                                    >
-                                                                        Add-ons:
-                                                                    </span>
-                                                                    ₹
-                                                                    {
-                                                                        cartItem.total_addon_price
-                                                                    }
-                                                                </>
-                                                            ) : (
-                                                                <span
-                                                                    style={{
-                                                                        color: "#727272",
-                                                                        fontSize:
-                                                                            "14px",
-                                                                    }}
-                                                                ></span>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
-                                        ) : (
-                                            <tr>
-                                                <td
-                                                    colSpan="4"
-                                                    className="text-center p-[15px] font-medium text-bodycolor"
-                                                >
-                                                    No items in your cart.
-                                                </td>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border border-[#00000020]">
+                                        <thead className="text-center">
+                                            <tr className="border-b border-[#00000020]">
+                                                <th className="bg-[#222] p-[15px] text-base font-semibold text-white">
+                                                    IMAGE
+                                                </th>
+                                                <th className="bg-[#222] p-[15px] text-base font-semibold text-white">
+                                                    PRODUCT NAME
+                                                </th>
+                                                <th className="bg-[#222] p-[15px] text-base font-semibold text-white">
+                                                    QUANTITY
+                                                </th>
+                                                <th className="bg-[#222] p-[15px] text-base font-semibold text-white">
+                                                    TOTAL
+                                                </th>
                                             </tr>
-                                        )}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {cartItems.length > 0 ? (
+                                                cartItems.map(
+                                                    (cartItem, index) => {
+                                                        let addonIdArray = [];
+                                                        try {
+                                                            addonIdArray =
+                                                                typeof cartItem.addon_ids ===
+                                                                "string"
+                                                                    ? JSON.parse(
+                                                                          cartItem.addon_ids
+                                                                      )
+                                                                    : cartItem.addon_ids;
+                                                        } catch (error) {
+                                                            console.error(
+                                                                "Error parsing addon_ids:",
+                                                                error
+                                                            );
+                                                            addonIdArray = [];
+                                                        }
+
+                                                        return (
+                                                            <tr key={index}>
+                                                                <td className="p-[15px] font-medium border border-[#00000020] product-item-img">
+                                                                    <img
+                                                                        src={`https://console.pizzaportindia.com/${cartItem.product_image_url}`}
+                                                                        alt={
+                                                                            cartItem.product_name
+                                                                        }
+                                                                        className="w-[100px] rounded-md"
+                                                                    />
+                                                                </td>
+                                                                <td className="p-[15px] font-medium border border-[#00000020] text-bodycolor">
+                                                                    {
+                                                                        cartItem.product_name
+                                                                    }
+                                                                    <br />
+                                                                    {Array.isArray(
+                                                                        addonIdArray
+                                                                    ) &&
+                                                                        addonIdArray.length >
+                                                                            0 && (
+                                                                            <>
+                                                                                <hr
+                                                                                    style={{
+                                                                                        border: "1px solid #ccc",
+                                                                                        margin: "10px 0",
+                                                                                    }}
+                                                                                />
+
+                                                                                <span
+                                                                                    style={{
+                                                                                        color: "black",
+                                                                                        fontSize:
+                                                                                            "13px",
+                                                                                    }}
+                                                                                >
+                                                                                    Added
+                                                                                    Toppings:{" "}
+                                                                                </span>
+                                                                                <span
+                                                                                    style={{
+                                                                                        fontSize:
+                                                                                            "13px",
+                                                                                    }}
+                                                                                >
+                                                                                    {
+                                                                                        cartItem.addon_names
+                                                                                    }
+                                                                                </span>
+                                                                            </>
+                                                                        )}
+                                                                </td>
+                                                                <td className="p-[15px] font-medium border border-[#00000020] text-bodycolor">
+                                                                    {
+                                                                        cartItem.quantity
+                                                                    }
+                                                                </td>
+                                                                <td className="p-[15px] font-medium border border-[#00000020] text-bodycolor">
+                                                                    {cartItem.sale_price ? (
+                                                                        <>
+                                                                            ₹
+                                                                            {cartItem.sale_price *
+                                                                                cartItem.quantity}
+                                                                        </>
+                                                                    ) : (
+                                                                        `₹${
+                                                                            cartItem.unit_price *
+                                                                            cartItem.quantity
+                                                                        }`
+                                                                    )}
+                                                                    <br />
+                                                                    {cartItem.total_addon_price >
+                                                                    0 ? (
+                                                                        <>
+                                                                            <span
+                                                                                style={{
+                                                                                    color: "#727272",
+                                                                                    fontSize:
+                                                                                        "10px",
+                                                                                }}
+                                                                            >
+                                                                                Add-ons:
+                                                                            </span>
+                                                                            ₹
+                                                                            {
+                                                                                cartItem.total_addon_price
+                                                                            }
+                                                                        </>
+                                                                    ) : (
+                                                                        <span
+                                                                            style={{
+                                                                                color: "#727272",
+                                                                                fontSize:
+                                                                                    "14px",
+                                                                            }}
+                                                                        ></span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    }
+                                                )
+                                            ) : (
+                                                <tr>
+                                                    <td
+                                                        colSpan="4"
+                                                        className="text-center p-[15px] font-medium text-bodycolor"
+                                                    >
+                                                        No items in your cart.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="lg:w-1/2 w-full px-[15px]">
+                        {/* Checkout Form */}
+                        <div className="w-full">
                             <form
                                 className="shop-form widget"
                                 onSubmit={handleAddToOrder}
                             >
-                                <input
-                                    type="hidden"
-                                    name="UserID"
-                                    id="UserID"
-                                    value="11"
-                                />
-                                <input
-                                    type="hidden"
-                                    name="AddressID"
-                                    id="AddressID"
-                                    value="9"
-                                />
-
-                                <h4 className="widget-title xl:mb-[30px] mb-5 pb-3 relative">
-                                    Order Total
+                                {/* <h4 className="widget-title text-xl sm:text-2xl mb-4 pb-3 relative">
+                                    Delivery Address
                                 </h4>
-                                <table className="mb-5 border border-[#00000020] align-middle w-full">
-                                    <tbody>
-                                        <tr>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                Order Subtotal
-                                            </td>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                {itemTotal}
-                                            </td>
-                                        </tr>
-                                        {addonTotal !== 0 && (
-                                            <tr>
-                                                <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                    Addon Total
-                                                </td>
-                                                <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                    {addonTotal}
-                                                </td>
-                                            </tr>
-                                        )}
 
-                                        <tr hidden>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                Shipping
-                                            </td>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                {deliveryCharge}
-                                            </td>
-                                        </tr>
-                                        <tr hidden>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                Govt Taxes & Other Charges
-                                            </td>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                {totalGst}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                Coupon
-                                            </td>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                - {CouponCodeAmount}
-                                            </td>
-                                        </tr>
-                                        <tr hidden>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                Convenience Charges
-                                            </td>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                {ConvenienceCharge}
-                                            </td>
-                                        </tr>
+                                <div className="mb-6">
+                                    {addresses.map((address) => (
+                                        <div
+                                            key={address.address_id}
+                                            className="border rounded-lg p-4 mb-3 cursor-pointer hover:border-primary"
+                                            onClick={() =>
+                                                setSelectedAddress(
+                                                    address.address_id
+                                                )
+                                            }
+                                            style={{
+                                                borderColor:
+                                                    selectedAddress ===
+                                                    address.address_id
+                                                        ? "#ff0000"
+                                                        : "#e5e7eb",
+                                            }}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="radio"
+                                                    name="address"
+                                                    checked={
+                                                        selectedAddress ===
+                                                        address.address_id
+                                                    }
+                                                    onChange={() =>
+                                                        setSelectedAddress(
+                                                            address.address_id
+                                                        )
+                                                    }
+                                                    className="w-4 h-4 text-primary"
+                                                />
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {address.full_name}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">
+                                                        {address.address_line_1}
+                                                        {address.address_line_2 &&
+                                                            `, ${address.address_line_2}`}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">
+                                                        {address.city},{" "}
+                                                        {address.state}{" "}
+                                                        {address.postal_code}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">
+                                                        {address.phone_number}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
 
-                                        <tr>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                Total
-                                            </td>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                {totalAmount}
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
 
-<AddressSection />
-                            
-                                <h4 className="widget-title xl:mb-[30px] mb-5 pb-3 relative">
+                                <AddressSection
+                                    onAddressAdded={(newAddress) => {
+                                        setAddresses((prev) => [
+                                            ...prev,
+                                            newAddress,
+                                        ]);
+                                        setSelectedAddress(
+                                            newAddress.address_id
+                                        );
+                                    }}
+                                /> */}
+
+                                {/* Payment Method */}
+                                <h4 className="widget-title text-xl sm:text-2xl mt-8 mb-4 pb-3 relative">
                                     Payment Method
                                 </h4>
-
-                                <div className="form-group  pb-5 inline-block w-full">
+                                <div className="form-group pb-5 w-full">
                                     <select
-                                        className="form-control w-full"
+                                        className="form-control w-full p-3 border rounded-lg"
                                         value={paymentMethod}
                                         onChange={(e) =>
                                             setPaymentMethod(e.target.value)
@@ -564,19 +588,21 @@ function Checkout({ CartList = [] }) {
                                         <option value="">
                                             Select Payment Method
                                         </option>
-                                        <option value="cod">
+                                        {/* <option value="cod">
                                             Cash on Delivery
-                                        </option>
+                                        </option> */}
                                         <option value="card">
-                                            Credit / Debit / ATM Card
+                                            Online Payment
                                         </option>
                                     </select>
                                 </div>
+
+                                {/* Place Order Button */}
                                 <div className="form-group">
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="btn btn-primary block text-center btn-md w-full"
+                                        className="btn btn-primary w-full py-3 rounded-lg text-white bg-primary hover:bg-primary-dark transition-colors"
                                     >
                                         {loading
                                             ? "Processing..."
@@ -593,11 +619,9 @@ function Checkout({ CartList = [] }) {
     );
 }
 
-function AddressSection() {
-    // State to track whether modal is open or closed
+function AddressSection({ onAddressAdded }) {
     const [showModal, setShowModal] = useState(false);
-
-    // State to store address form data
+    const [loading, setLoading] = useState(false);
     const [addressForm, setAddressForm] = useState({
         full_name: "",
         address_line_1: "",
@@ -607,184 +631,250 @@ function AddressSection() {
         country: "",
         postal_code: "",
         phone_number: "",
+        is_default: false,
     });
 
-    // Toggle the modal
-    const openModal = () => setShowModal(true);
-    const closeModal = () => setShowModal(false);
-
-    // Handle input changes
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setAddressForm((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-    };
-
-    // Handle form submission (replace with your desired logic, e.g. API call)
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Perform validation or call an API here
-        console.log("New address data:", addressForm);
+        setLoading(true);
 
-        // Close the modal after submission (if desired)
-        closeModal();
+        try {
+            const userId = localStorage.getItem("userId");
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/user-addresses`,
+                {
+                    ...addressForm,
+                    user_id: userId,
+                }
+            );
+
+            if (response.status === 201) {
+                onAddressAdded(response.data);
+                setShowModal(false);
+                setAddressForm({
+                    full_name: "",
+                    address_line_1: "",
+                    address_line_2: "",
+                    city: "",
+                    state: "",
+                    country: "",
+                    postal_code: "",
+                    phone_number: "",
+                    is_default: false,
+                });
+            }
+        } catch (error) {
+            console.error("Error adding address:", error);
+            alert("Failed to add address. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <div className="mt-6">
-            <h5 className="xl:mb-[10px] pb-3 relative">Address:</h5>
+        <div>
             <button
-                className="btn btn-primary px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                onClick={openModal}
+                type="button"
+                onClick={() => setShowModal(true)}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
             >
                 Add New Address
             </button>
-            <br />
-            <br />
 
-            {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 mt-20">
-                    {/* Background overlay */}
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
                     <div
-                        className="absolute inset-0 bg-black opacity-50"
-                        onClick={closeModal}
+                        className="fixed inset-0 bg-black opacity-50"
+                        onClick={() => setShowModal(false)}
                     />
 
-                    {/* Modal content */}
-                    <div className=" bg-white w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-lg z-10 p-6 relative">
+                    <div className="bg-white w-full max-w-md rounded-lg z-10 p-6 relative max-h-[70vh] overflow-y-auto">
                         <h2 className="text-xl font-semibold mb-4">
-                            Add a New Address
+                            Add New Address
                         </h2>
+
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block mb-1 font-medium">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium">
                                     Full Name
                                 </label>
                                 <input
                                     type="text"
-                                    name="full_name"
                                     value={addressForm.full_name}
-                                    onChange={handleChange}
-                                    className="w-full border border-gray-300 rounded p-2"
+                                    onChange={(e) =>
+                                        setAddressForm((prev) => ({
+                                            ...prev,
+                                            full_name: e.target.value,
+                                        }))
+                                    }
+                                    className="w-full p-2 border rounded-md"
                                     required
                                 />
                             </div>
 
-                            <div>
-                                <label className="block mb-1 font-medium">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium">
                                     Address Line 1
                                 </label>
                                 <input
                                     type="text"
-                                    name="address_line_1"
                                     value={addressForm.address_line_1}
-                                    onChange={handleChange}
-                                    className="w-full border border-gray-300 rounded p-2"
+                                    onChange={(e) =>
+                                        setAddressForm((prev) => ({
+                                            ...prev,
+                                            address_line_1: e.target.value,
+                                        }))
+                                    }
+                                    className="w-full p-2 border rounded-md"
                                     required
                                 />
                             </div>
 
-                            <div>
-                                <label className="block mb-1 font-medium">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium">
                                     Address Line 2
                                 </label>
                                 <input
                                     type="text"
-                                    name="address_line_2"
                                     value={addressForm.address_line_2}
-                                    onChange={handleChange}
-                                    className="w-full border border-gray-300 rounded p-2"
+                                    onChange={(e) =>
+                                        setAddressForm((prev) => ({
+                                            ...prev,
+                                            address_line_2: e.target.value,
+                                        }))
+                                    }
+                                    className="w-full p-2 border rounded-md"
                                 />
                             </div>
 
-                            <div className="flex space-x-2">
-                                <div className="w-1/2">
-                                    <label className="block mb-1 font-medium">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium">
                                         City
                                     </label>
                                     <input
                                         type="text"
-                                        name="city"
                                         value={addressForm.city}
-                                        onChange={handleChange}
-                                        className="w-full border border-gray-300 rounded p-2"
+                                        onChange={(e) =>
+                                            setAddressForm((prev) => ({
+                                                ...prev,
+                                                city: e.target.value,
+                                            }))
+                                        }
+                                        className="w-full p-2 border rounded-md"
                                         required
                                     />
                                 </div>
-                                <div className="w-1/2">
-                                    <label className="block mb-1 font-medium">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium">
                                         State
                                     </label>
                                     <input
                                         type="text"
-                                        name="state"
                                         value={addressForm.state}
-                                        onChange={handleChange}
-                                        className="w-full border border-gray-300 rounded p-2"
+                                        onChange={(e) =>
+                                            setAddressForm((prev) => ({
+                                                ...prev,
+                                                state: e.target.value,
+                                            }))
+                                        }
+                                        className="w-full p-2 border rounded-md"
                                         required
                                     />
                                 </div>
                             </div>
 
-                            <div className="flex space-x-2">
-                                <div className="w-1/2">
-                                    <label className="block mb-1 font-medium">
-                                        Country
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="country"
-                                        value={addressForm.country}
-                                        onChange={handleChange}
-                                        className="w-full border border-gray-300 rounded p-2"
-                                        required
-                                    />
-                                </div>
-                                <div className="w-1/2">
-                                    <label className="block mb-1 font-medium">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium">
                                         Postal Code
                                     </label>
                                     <input
                                         type="text"
-                                        name="postal_code"
                                         value={addressForm.postal_code}
-                                        onChange={handleChange}
-                                        className="w-full border border-gray-300 rounded p-2"
+                                        onChange={(e) =>
+                                            setAddressForm((prev) => ({
+                                                ...prev,
+                                                postal_code: e.target.value,
+                                            }))
+                                        }
+                                        className="w-full p-2 border rounded-md"
+                                        required
+                                        pattern="[0-9]*"
+                                        maxLength="6"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium">
+                                        Country
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={addressForm.country}
+                                        onChange={(e) =>
+                                            setAddressForm((prev) => ({
+                                                ...prev,
+                                                country: e.target.value,
+                                            }))
+                                        }
+                                        className="w-full p-2 border rounded-md"
                                         required
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block mb-1 font-medium">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium">
                                     Phone Number
                                 </label>
                                 <input
-                                    type="text"
-                                    name="phone_number"
+                                    type="tel"
                                     value={addressForm.phone_number}
-                                    onChange={handleChange}
-                                    className="w-full border border-gray-300 rounded p-2"
+                                    onChange={(e) =>
+                                        setAddressForm((prev) => ({
+                                            ...prev,
+                                            phone_number: e.target.value,
+                                        }))
+                                    }
+                                    className="w-full p-2 border rounded-md"
                                     required
+                                    pattern="[0-9]*"
+                                    maxLength="10"
                                 />
                             </div>
 
-                            <div className="flex items-center justify-end space-x-4 mt-6">
+                            <div className="flex items-center space-x-2 mt-4">
+                                <input
+                                    type="checkbox"
+                                    id="is_default"
+                                    checked={addressForm.is_default}
+                                    onChange={(e) =>
+                                        setAddressForm((prev) => ({
+                                            ...prev,
+                                            is_default: e.target.checked,
+                                        }))
+                                    }
+                                    className="w-4 h-4"
+                                />
+                                <label htmlFor="is_default" className="text-sm">
+                                    Set as default address
+                                </label>
+                            </div>
+
+                            <div className="flex justify-end space-x-4 mt-6">
                                 <button
                                     type="button"
-                                    onClick={closeModal}
-                                    className="bg-gray-400 text-white px-4 py-2 rounded"
+                                    onClick={() => setShowModal(false)}
+                                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                                    disabled={loading}
+                                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
                                 >
-                                    Save Address
+                                    {loading ? "Saving..." : "Save Address"}
                                 </button>
                             </div>
                         </form>

@@ -11,6 +11,8 @@ function CartDetail() {
     const [couponMessage, setCouponMessage] = useState("");
     const [couponMessageStyle, setCouponMessageStyle] = useState("");
     const [isApplying, setIsApplying] = useState(false);
+    // Add this with your other useState declarations
+    const [appliedCouponCode, setAppliedCouponCode] = useState("");
 
     const calculateTotal = () => {
         return cartItems
@@ -165,9 +167,18 @@ function CartDetail() {
 
                 setCartItems(response.data.CartList);
                 setCountCart(response.data.countCart);
+
+                // Add this new code to set applied coupon if it exists
+                if (
+                    response.data.CartList.length > 0 &&
+                    response.data.CartList[0].coupon_code
+                ) {
+                    setAppliedCouponCode(response.data.CartList[0].coupon_code);
+                }
+
                 setLoading(false);
             } catch (error) {
-                console.error("Error fetching cart items:", error.message);
+                console.error("Error fetching cart items:", error);
                 alert("Failed to fetch cart data.");
                 setLoading(false);
             }
@@ -257,6 +268,53 @@ function CartDetail() {
             }
         } catch (error) {
             console.error("Error updating quantity:", error.message);
+        }
+    };
+
+    const CouponDisplay = ({ couponCode, onRemove }) => {
+        if (!couponCode) return null;
+
+        return (
+            <div className="flex items-center justify-between p-2 mb-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center">
+                    <span className="text-blue-600 mr-2">
+                        <i className="fa-solid fa-ticket"></i>
+                    </span>
+                    <span className="text-sm font-medium text-blue-800">
+                        Applied: {couponCode}
+                    </span>
+                </div>
+                <button
+                    onClick={onRemove}
+                    className="text-gray-500 hover:text-red-500 transition-colors"
+                    aria-label="Remove coupon"
+                >
+                    <i className="fa-solid fa-times"></i>
+                </button>
+            </div>
+        );
+    };
+
+    const handleRemoveCoupon = async () => {
+        const userId = localStorage.getItem("userId");
+
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/remove-coupon`,
+                { user_id: userId }
+            );
+
+            if (response.data.success) {
+                setAppliedCouponCode("");
+                setCouponCode("");
+                setCouponMessage("Coupon removed successfully");
+                setCouponMessageStyle("text-green-600 bg-green-100");
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error("Error removing coupon:", error);
+            setCouponMessage("Failed to remove coupon");
+            setCouponMessageStyle("text-red-600 bg-red-100");
         }
     };
 
@@ -561,9 +619,7 @@ function CartDetail() {
                                                         {/* Product Details */}
                                                         <div className="flex items-center">
                                                             <img
-                                                                src={
-                                                                    cartItem.product_image_url
-                                                                }
+                                                                src={`https://console.pizzaportindia.com/${cartItem.product_image_url}`}
                                                                 alt={
                                                                     cartItem.product_name
                                                                 }
@@ -635,6 +691,17 @@ function CartDetail() {
                                                 <h6 className="mb-2 text-lg font-semibold">
                                                     Apply Coupon
                                                 </h6>
+
+                                                {/* Add this new component */}
+                                                <CouponDisplay
+                                                    couponCode={
+                                                        appliedCouponCode
+                                                    }
+                                                    onRemove={
+                                                        handleRemoveCoupon
+                                                    }
+                                                />
+
                                                 <div className="flex items-center space-x-2">
                                                     <input
                                                         type="text"
