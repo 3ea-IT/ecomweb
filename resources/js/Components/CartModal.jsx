@@ -106,11 +106,7 @@ const CartModal = ({ product, onClose, onAddToCart }) => {
                 {/* Product Image and Name */}
                 <div className="flex items-center space-x-4 mb-6">
                     <img
-                        src={
-                            product.main_image_url.startsWith("http")
-                                ? product.main_image_url
-                                : `/${product.main_image_url}`
-                        }
+                        src={`https://console.pizzaportindia.com/${product.main_image_url}`}
                         alt={product.product_name}
                         className="w-24 h-24 object-cover rounded-lg"
                     />

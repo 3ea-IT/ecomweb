@@ -40,6 +40,11 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
+
+        // getting the user address 
+
+        $userAddressID = DB::table('user_addresses')->where('user_id', $request->user_id)->first();
+
         $randomNumber = rand(10000, 99999);
 
         $orderNumber =  'KPT_O' . $randomNumber;
@@ -52,11 +57,12 @@ class OrderController extends Controller
             // Create the order
             $order = Order::create([
                 'order_id' => $orderId,
+                'order_type' => $request->OrderType,
                 'user_id' => $request->user_id,
-                'shipping_address_id' => $request->shipping_address_id,
+                'shipping_address_id' => $userAddressID->address_id,
                 'shipping_charges' => $request->shipping_charges,
                 'tax_amount' => $request->tax_amount,
-                // 'coupon_amount' => $request->coupon_amount,
+                'discount_amount' => $request->coupon_amount,
                 'total_amount' => $request->total_amount,
                 'payment_method' => $request->payment_method,
                 'order_number' => $orderNumber,
@@ -101,6 +107,7 @@ class OrderController extends Controller
                     'quantity' => $quantity,
                     'product_name_snapshot' => $product->product_name ?? 'Unknown Product',
                     'line_total' => $lineTotal,
+                    'applied_coupon_id' => $CartItems[0]->applied_coupon_id,
                     'tax_slab_id' => $product && $product->tax_slab_id !== null ? $product->tax_slab_id : 0,
                     'tax_amount' => $taxAmount,
                 ]);
@@ -131,6 +138,7 @@ class OrderController extends Controller
                                 'quantity' => 1,
                                 'product_name_snapshot' => $addonProduct->product_name ?? 'Unknown Addon Product',
                                 'line_total' => $addonMrp,
+                                'applied_coupon_id' => $CartItems[0]->applied_coupon_id,
                                 'tax_slab_id' => $addonProduct->tax_slab_id !== null ? $addonProduct->tax_slab_id : 0,
                                 'tax_amount' => $addonTaxAmount,
                             ]);
@@ -241,30 +249,28 @@ class OrderController extends Controller
     }
 
     public function show($orderId)
-{
-    $userId = Auth::id();
-    if (!$userId) {
-        return redirect()->route('home')->withErrors('You must be logged in.');
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            return redirect()->route('home')->withErrors('You must be logged in.');
+        }
+
+        $order = Order::where('order_id', $orderId)
+            ->where('user_id', $userId)
+            ->with('items', 'shippingAddress')
+            ->firstOrFail();
+
+        $countCart = Cart::join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
+            ->where('carts.user_id', $userId)
+            ->sum('cart_items.quantity');
+
+        $UserData = User::where('user_id', $userId)->first();
+
+        // Just pass the entire order; 'status_message' is now automatically included
+        return Inertia::render('Order/OrderDetail', [
+            'order'     => $order,       // Includes order_status + status_message
+            'countCart' => $countCart,
+            'UserData'  => $UserData
+        ]);
     }
-
-    $order = Order::where('order_id', $orderId)
-        ->where('user_id', $userId)
-        ->with('items', 'shippingAddress') 
-        ->firstOrFail();
-
-    $countCart = Cart::join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
-        ->where('carts.user_id', $userId)
-        ->sum('cart_items.quantity');
-
-    $UserData = User::where('user_id', $userId)->first();
-
-    // Just pass the entire order; 'status_message' is now automatically included
-    return Inertia::render('Order/OrderDetail', [
-        'order'     => $order,       // Includes order_status + status_message
-        'countCart' => $countCart,
-        'UserData'  => $UserData
-    ]);
-}
-
-    
 }

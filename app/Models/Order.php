@@ -26,6 +26,7 @@ class Order extends Model
         'total_amount',
         'payment_method',
         'payment_status',
+        'order_type',
         'razorpay_order_id',
         'razorpay_payment_id', // Add this if missing
         'tax_amount',
@@ -42,7 +43,4 @@ class Order extends Model
     {
         return $this->belongsTo(Address::class, 'shipping_address_id', 'address_id');
     }
-    
-
-
 }

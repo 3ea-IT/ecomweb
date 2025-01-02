@@ -9,9 +9,10 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\LoginController;
 
 Route::get('/', [IndexController::class, 'index'])->name('home');
+
 Route::inertia('/about', 'About');
 Route::inertia('/outlets', 'Outlets');
-Route::inertia('/menu', 'Menu');
+Route::get('/menu', [IndexController::class, 'showMenu'])->name('menu');
 Route::inertia('/productDetail', 'ProductDetail');
 Route::inertia('/blogs', 'Blog');
 Route::inertia('/blogsDetail', 'BlogDetail');

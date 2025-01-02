@@ -164,6 +164,12 @@ function Header() {
                                     Menu
                                 </Link>
                                 <Link
+                                    href="/OrderHistory"
+                                    className="hover:text-primary transition-colors"
+                                >
+                                    Orders
+                                </Link>
+                                <Link
                                     href="/blogs"
                                     className="hover:text-primary transition-colors"
                                 >
@@ -182,7 +188,7 @@ function Header() {
                                 {/* Modified to show login button on mobile */}
                                 {userName ? (
                                     <div className="flex items-center space-x-2">
-                                        <span className="hidden md:inline text-sm md:text-base font-medium">
+                                        <span className="md:inline text-sm md:text-base font-medium">
                                             {userName}
                                         </span>
                                         <button
@@ -332,6 +338,12 @@ function Header() {
                                     className="block py-2 hover:text-primary transition-colors"
                                 >
                                     Menu
+                                </Link>
+                                <Link
+                                    href="/OrderHistory"
+                                    className="block py-2 hover:text-primary transition-colors"
+                                >
+                                    Orders
                                 </Link>
                                 <Link
                                     href="/blogs"

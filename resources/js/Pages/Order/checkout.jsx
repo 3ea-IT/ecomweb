@@ -41,10 +41,19 @@ function Checkout({ CartList = [] }) {
         return Math.round(totalGst); // Return the rounded total GST
     };
 
-    // Sum all amount
-    const couponAmount = 0.0; // Coupon discount
-    const deliveryCharge = 30.0; // Example delivery charge
-    const ConvenienceCharge = 15.0; // Example Convenience Charge
+    const CouponCalculateTotal = () => {
+        return cartItems
+            .reduce((CouponTotal, cartItem) => {
+                const CouponPrice =
+                    parseFloat(cartItem.cou_discount_value) || 0;
+                return CouponTotal + CouponPrice;
+            }, 0)
+            .toFixed(2);
+    };
+
+    const deliveryCharge = 0.0; // Example delivery charge
+    const ConvenienceCharge = 0.0; // Example Convenience Charge
+    const CouponCodeAmount = parseFloat(CouponCalculateTotal());
     const totalGst = parseFloat(GstcalculateTotal());
     const itemTotal = parseFloat(calculateTotal()); // Convert string to number
     const addonTotal = parseFloat(AddoncalculateTotal()); // Convert string to number
@@ -53,7 +62,8 @@ function Checkout({ CartList = [] }) {
         addonTotal +
         totalGst +
         deliveryCharge +
-        ConvenienceCharge
+        ConvenienceCharge -
+        CouponCodeAmount
     ).toFixed(2);
 
     const handleAddToOrder = async (e) => {
@@ -84,13 +94,16 @@ function Checkout({ CartList = [] }) {
     const createOrder = async () => {
         setLoading(true);
 
+        const UserID = localStorage.getItem("userId");
+        const OrderType = localStorage.getItem("orderType");
+
         try {
             const payload = {
-                user_id: "11",
-                shipping_address_id: "9",
+                user_id: UserID,
+                OrderType: OrderType,
                 shipping_charges: deliveryCharge,
                 tax_amount: totalGst,
-                coupon_amount: couponAmount,
+                coupon_amount: CouponCodeAmount,
                 total_amount: totalAmount,
                 payment_method: paymentMethod,
                 order_status: "Pending", // Initial status
@@ -478,15 +491,18 @@ function Checkout({ CartList = [] }) {
                                                 {itemTotal}
                                             </td>
                                         </tr>
-                                        <tr>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                Addon Total
-                                            </td>
-                                            <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                {addonTotal}
-                                            </td>
-                                        </tr>
-                                        <tr>
+                                        {addonTotal !== 0 && (
+                                            <tr>
+                                                <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
+                                                    Addon Total
+                                                </td>
+                                                <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
+                                                    {addonTotal}
+                                                </td>
+                                            </tr>
+                                        )}
+
+                                        <tr hidden>
                                             <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
                                                 Shipping
                                             </td>
@@ -502,15 +518,15 @@ function Checkout({ CartList = [] }) {
                                                 {totalGst}
                                             </td>
                                         </tr>
-                                        <tr hidden>
+                                        <tr>
                                             <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
                                                 Coupon
                                             </td>
                                             <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
-                                                {couponAmount}
+                                                - {CouponCodeAmount}
                                             </td>
                                         </tr>
-                                        <tr>
+                                        <tr hidden>
                                             <td className="p-[15px] font-medium text-bodycolor border border-[#00000020]">
                                                 Convenience Charges
                                             </td>
@@ -536,9 +552,9 @@ function Checkout({ CartList = [] }) {
                                     Payment Method
                                 </h4>
 
-                                <div className="form-group mb-5 inline-block w-full">
+                                <div className="form-group  pb-5 inline-block w-full">
                                     <select
-                                        className="form-control"
+                                        className="form-control w-full"
                                         value={paymentMethod}
                                         onChange={(e) =>
                                             setPaymentMethod(e.target.value)
