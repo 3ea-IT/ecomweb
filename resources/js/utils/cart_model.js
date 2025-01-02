@@ -97,7 +97,7 @@ export const OpenCart = (title, product) => {
             <img src="${
                 main_image_url.startsWith("http")
                     ? main_image_url
-                    : "/" + main_image_url
+                    : "https://console.pizzaportindia.com/" + main_image_url
             }" alt="${product_name}" class="w-32 h-32 object-cover rounded-full mb-4">
             <h3 class="text-xl font-semibold mb-2">${product_name}</h3>
             

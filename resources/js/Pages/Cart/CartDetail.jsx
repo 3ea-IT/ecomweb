@@ -252,156 +252,211 @@ function CartDetail() {
             >
                 <div className="container">
                     <div className="row">
-                            <div className="lg:w-2/3 w-full px-[15px]">
-                                <div className="flex justify-between items-center">
-                                    <h5 className="lg:mb-[15px] mb-5">
-                                        ({countCart})Item you have selected
-                                    </h5>
-                                    <a
-                                        href="#offcanvasFilter"
-                                        id="filter-button2"
-                                        className="btn btn-primary filter-btn lg:hidden block mb-[15px] py-[5px] px-[18px] text-white"
-                                    >
-                                        Filter
-                                    </a>
-                                </div>
-
-                     {cartItems.length > 0 ? (
-                  cartItems.map((product) => {
-                       // Parse addon_ids if it's a string
-                      let addonIdArray = [];
-                      try {
-                      addonIdArray =
-                          typeof product.addon_ids === "string"
-                          ? JSON.parse(product.addon_ids)
-                         : product.addon_ids;
-                      } catch (error) {
-                      console.error("Error parsing addon_ids:", error);
-                     addonIdArray = [];
-                     }
-
-                     // Check if there's an actual discount:
-                     // (sale_price is defined && less than unit_price)
-                      const hasDiscount =
-                      product.sale_price &&
-                      parseFloat(product.sale_price) < parseFloat(product.unit_price);
-
-                        return (
-                        <div
-                            key={product.cart_id}
-                            className="dz-shop-card style-1 flex border border-[#0000001a] rounded-[10px] mb-5 overflow-hidden duration-500 hover:border-transparent hover:shadow-[0px_15px_55px_rgba(34,34,34,0.15)] relative"
-                        >
-                            <div className="dz-media w-[100px] min-w-[100px]">
-                            <img
-                                src={product.product_image_url}
-                                className="h-full"
-                                alt={product.product_name}
-                            />
-                            </div>
-                            <div className="dz-content sm:p-5 p-2 flex flex-col w-full">
-                            <div className="dz-head mb-4 flex items-center justify-between">
-                                <h6 className="dz-name mb-0 flex items-center text-base">
-                                <svg
-                                    className="mr-[10px]"
-                                    width="18"
-                                    height="18"
-                                    viewBox="0 0 18 18"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <rect x="0.5" y="0.5" width="16" height="16" stroke="#0F8A65" />
-                                    <circle cx="8.5" cy="8.5" r="5.5" fill="#0F8A65" />
-                                </svg>
-                                <a href={`/product-detail/${product.product_id}`}>
-                                    {product.product_name}
-                                </a>
-                                </h6>
-
-                                {/* Price Section */}
-                                <h5 className="text-primary">
-                                {hasDiscount ? (
-                                    // Discounted scenario
-                                    <>
-                                    ₹
-                                    <del
-                                        style={{
-                                        fontSize: "14px",
-                                        marginLeft: "0px",
-                                        color: "#727272",
-                                        }}
-                                    >
-                                        {product.unit_price * product.quantity}
-                                    </del>
-                                    <br />
-                                    ₹
-                                    {product.sale_price * product.quantity}
-                                    </>
-                                ) : (
-                                    // No discount scenario
-                                    `₹${product.unit_price * product.quantity}`
-                                )}
+                        <div className="lg:w-2/3 w-full px-[15px]">
+                            <div className="flex justify-between items-center">
+                                <h5 className="lg:mb-[15px] mb-5">
+                                    ({countCart})Item you have selected
                                 </h5>
+                                <a
+                                    href="#offcanvasFilter"
+                                    id="filter-button2"
+                                    className="btn btn-primary filter-btn lg:hidden block mb-[15px] py-[5px] px-[18px] text-white"
+                                >
+                                    Filter
+                                </a>
                             </div>
 
-                            <div className="dz-body sm:flex block justify-between">
-                                <ul className="dz-meta flex mx-[-10px]">
-                                <li className="leading-[21px] mx-[10px] text-sm text-[#727272]">
-                                    <span className="text-primary font-medium">
-                                    {product.product_description
-                                        ?.split(" ")
-                                        .slice(0, 10)
-                                        .join(" ")}
-                                    ...
-                                    </span>
-                                    <br />
-                                    {Array.isArray(addonIdArray) && addonIdArray.length > 0 && (
-                                    <>
-                                        <hr
-                                        style={{
-                                            border: "1px solid #ccc",
-                                            margin: "10px 0",
-                                        }}
-                                        />
-                                        <span style={{ color: "rgb(87, 153, 225)" }}>
-                                        Your Customisation
-                                        </span>
-                                        <br />
-                                        <span style={{ color: "black" }}>
-                                        Added Toppings:{" "}
-                                        {product.addon_names}
-                                        </span>
-                                    </>
-                                    )}
-                                </li>
-                                </ul>
-                                <div className="dz-body flex justify-between items-center">
-                                <div className="input-group flex flex-col items-start w-full">
-                                    <h5
-                                    className="text-primary text-right"
-                                    style={{
-                                        textAlign: "right",
-                                        marginBottom: "0",
-                                    }}
-                                    >
-                                    {product.total_addon_price ? (
-                                        <span style={{ color: "red" }}>
-                                        ₹{product.total_addon_price}
-                                        </span>
-                                    ) : (
-                                        <span></span>
-                                    )}
-                                    </h5>
-                                </div>
-                                </div>
-                            </div>
-                            </div>
+                            {cartItems.length > 0 ? (
+                                cartItems.map((product) => {
+                                    // Parse addon_ids if it's a string
+                                    let addonIdArray = [];
+                                    try {
+                                        addonIdArray =
+                                            typeof product.addon_ids ===
+                                            "string"
+                                                ? JSON.parse(product.addon_ids)
+                                                : product.addon_ids;
+                                    } catch (error) {
+                                        console.error(
+                                            "Error parsing addon_ids:",
+                                            error
+                                        );
+                                        addonIdArray = [];
+                                    }
+
+                                    // Check if there's an actual discount:
+                                    // (sale_price is defined && less than unit_price)
+                                    const hasDiscount =
+                                        product.sale_price &&
+                                        parseFloat(product.sale_price) <
+                                            parseFloat(product.unit_price);
+
+                                    return (
+                                        <div
+                                            key={product.cart_id}
+                                            className="dz-shop-card style-1 flex border border-[#0000001a] rounded-[10px] mb-5 overflow-hidden duration-500 hover:border-transparent hover:shadow-[0px_15px_55px_rgba(34,34,34,0.15)] relative"
+                                        >
+                                            <div className="dz-media w-[100px] min-w-[100px]">
+                                                <img
+                                                    src={`https://console.pizzaportindia.com/${product.product_image_url}`}
+                                                    className="h-full"
+                                                    alt={product.product_name}
+                                                />
+                                            </div>
+
+                                            <div className="dz-content sm:p-5 p-2 flex flex-col w-full">
+                                                <div className="dz-head mb-4 flex items-center justify-between">
+                                                    <h6 className="dz-name mb-0 flex items-center text-base">
+                                                        <svg
+                                                            className="mr-[10px]"
+                                                            width="18"
+                                                            height="18"
+                                                            viewBox="0 0 18 18"
+                                                            fill="none"
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                        >
+                                                            <rect
+                                                                x="0.5"
+                                                                y="0.5"
+                                                                width="16"
+                                                                height="16"
+                                                                stroke="#0F8A65"
+                                                            />
+                                                            <circle
+                                                                cx="8.5"
+                                                                cy="8.5"
+                                                                r="5.5"
+                                                                fill="#0F8A65"
+                                                            />
+                                                        </svg>
+                                                        <a
+                                                            href={`/product-detail/${product.product_id}`}
+                                                        >
+                                                            {
+                                                                product.product_name
+                                                            }
+                                                        </a>
+                                                    </h6>
+
+                                                    {/* Price Section */}
+                                                    <h5 className="text-primary">
+                                                        {hasDiscount ? (
+                                                            // Discounted scenario
+                                                            <>
+                                                                ₹
+                                                                <del
+                                                                    style={{
+                                                                        fontSize:
+                                                                            "14px",
+                                                                        marginLeft:
+                                                                            "0px",
+                                                                        color: "#727272",
+                                                                    }}
+                                                                >
+                                                                    {product.unit_price *
+                                                                        product.quantity}
+                                                                </del>
+                                                                <br />₹
+                                                                {product.sale_price *
+                                                                    product.quantity}
+                                                            </>
+                                                        ) : (
+                                                            // No discount scenario
+                                                            `₹${
+                                                                product.unit_price *
+                                                                product.quantity
+                                                            }`
+                                                        )}
+                                                    </h5>
+                                                </div>
+
+                                                <div className="dz-body sm:flex block justify-between">
+                                                    <ul className="dz-meta flex mx-[-10px]">
+                                                        <li className="leading-[21px] mx-[10px] text-sm text-[#727272]">
+                                                            <span className="text-primary font-medium">
+                                                                {product.product_description
+                                                                    ?.split(" ")
+                                                                    .slice(
+                                                                        0,
+                                                                        10
+                                                                    )
+                                                                    .join(" ")}
+                                                                ...
+                                                            </span>
+                                                            <br />
+                                                            {Array.isArray(
+                                                                addonIdArray
+                                                            ) &&
+                                                                addonIdArray.length >
+                                                                    0 && (
+                                                                    <>
+                                                                        <hr
+                                                                            style={{
+                                                                                border: "1px solid #ccc",
+                                                                                margin: "10px 0",
+                                                                            }}
+                                                                        />
+                                                                        <span
+                                                                            style={{
+                                                                                color: "rgb(87, 153, 225)",
+                                                                            }}
+                                                                        >
+                                                                            Your
+                                                                            Customisation
+                                                                        </span>
+                                                                        <br />
+                                                                        <span
+                                                                            style={{
+                                                                                color: "black",
+                                                                            }}
+                                                                        >
+                                                                            Added
+                                                                            Toppings:{" "}
+                                                                            {
+                                                                                product.addon_names
+                                                                            }
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                        </li>
+                                                    </ul>
+                                                    <div className="dz-body flex justify-between items-center">
+                                                        <div className="input-group flex flex-col items-start w-full">
+                                                            <h5
+                                                                className="text-primary text-right"
+                                                                style={{
+                                                                    textAlign:
+                                                                        "right",
+                                                                    marginBottom:
+                                                                        "0",
+                                                                }}
+                                                            >
+                                                                {product.total_addon_price ? (
+                                                                    <span
+                                                                        style={{
+                                                                            color: "red",
+                                                                        }}
+                                                                    >
+                                                                        ₹
+                                                                        {
+                                                                            product.total_addon_price
+                                                                        }
+                                                                    </span>
+                                                                ) : (
+                                                                    <span></span>
+                                                                )}
+                                                            </h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <p>No items in your cart.</p>
+                            )}
                         </div>
-                        );
-                    })
-                    ) : (
-                    <p>No items in your cart.</p>
-                                )}
-                            </div>
 
                         <div className="lg:w-1/3 w-full px-[15px] mb-[30px]">
                             <aside className="lg:sticky pl-5 max-xl:pl-0 pb-[1px] top-[100px]">
