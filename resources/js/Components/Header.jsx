@@ -188,7 +188,7 @@ function Header() {
                                 {/* Modified to show login button on mobile */}
                                 {userName ? (
                                     <div className="flex items-center space-x-2">
-                                        <span className="hidden md:inline text-sm md:text-base font-medium">
+                                        <span className="md:inline text-sm md:text-base font-medium">
                                             {userName}
                                         </span>
                                         <button

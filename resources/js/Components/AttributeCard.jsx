@@ -110,11 +110,7 @@ const AttributeCard = ({ isOpen, onClose, product }) => {
                 {/* Product Details */}
                 <div className="text-center mb-6">
                     <img
-                        src={
-                            product.main_image_url.startsWith("http")
-                                ? product.main_image_url
-                                : `/${product.main_image_url}`
-                        }
+                        src={`https://console.pizzaportindia.com/${product.main_image_url}`}
                         alt={product.product_name}
                         className="w-32 h-32 object-cover rounded-full mx-auto mb-4"
                     />

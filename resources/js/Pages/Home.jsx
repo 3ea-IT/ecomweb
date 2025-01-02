@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import MainLayout from "../Layouts/MainLayout";
 import { handleAddToCartClick } from "../utils/cart_model"; // Correct path to cart_model.js
 import { usePage } from "@inertiajs/react";
@@ -18,11 +18,6 @@ const SpecialMenu = ({ data }) => {
             toast.error(flash.error);
         }
     }, [flash, data]);
-
-    // const handleAddToCartClick = (product) => {
-    //     console.log("Add to Cart Clicked for Product:", product);
-    //     OpenCart("Add to Cart", product);
-    // };
 
     return (
         <>
@@ -92,12 +87,10 @@ const SpecialMenu = ({ data }) => {
                                 />
                             </div>
                         </div>
-                        {/* Repeat for additional slides */}
                     </div>
                 </div>
             </div>
             {/* Banner End */}
-
             {/* Special Menu Start */}
             <section className="lg:pt-[100px] pt-[50px] lg:pb-[70px] pb-[40px] bg-white relative overflow-hidden section-wrapper-2">
                 <div className="container">
@@ -113,13 +106,7 @@ const SpecialMenu = ({ data }) => {
                                 <div className="group rounded-lg menu-box box-hover text-center pt-10 px-5 pb-[30px] bg-white border border-grey-border hover:border-primary h-full flex duration-500 flex-col relative overflow-hidden z-[1]">
                                     <div className="w-[150px] min-w-[150px] h-[150px] mt-0 mx-auto mb-[10px] rounded-full border-[9px] border-white duration-500 z-[1]">
                                         <img
-                                            src={
-                                                product.main_image_url.startsWith(
-                                                    "http"
-                                                )
-                                                    ? product.main_image_url
-                                                    : `/${product.main_image_url}`
-                                            }
+                                            src={`https://console.pizzaportindia.com/${product.main_image_url}`}
                                             alt={product.product_name}
                                             className="rounded-full group-hover:animate-spin"
                                         />
@@ -524,7 +511,6 @@ const SpecialMenu = ({ data }) => {
                 />
             </section>
             {/* <!--  Testimonial's End --> */}
-
             {/* News & Blog Section */}
             <section className="content-inner sm:pb-[100px] pb-[40px] relative overflow-hidden">
                 <div className="container">
@@ -692,22 +678,110 @@ const SpecialMenu = ({ data }) => {
     );
 };
 
-// Home Component
 const Home = (props) => {
+    const { data } = props;
+
+    const [showModal, setShowModal] = useState(true);
+
     useEffect(() => {
         console.log("Props:", props); // Log props for debugging
-    }, [props]);
 
-    const { data } = props;
+        // Check if there's a saved orderType in localStorage
+        const orderType = localStorage.getItem("orderType");
+        if (orderType) {
+            setShowModal(false); // Hide the modal if an order type is already saved
+            console.log("Saved Order Type:", orderType); // Optionally, log the saved order type
+        }
+    }, [props]);
 
     if (!data) {
         return <div>Loading...</div>;
     }
 
+    const closeModal = (value) => {
+        // Save the selected order type in localStorage
+        localStorage.setItem("orderType", value);
+        setShowModal(false);
+    };
+
+    // Inline styles for the modal and overlay
+    const modalStyles = {
+        overlay: {
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+            zIndex: 9999,
+            display: showModal ? "flex" : "none",
+            justifyContent: "center",
+            alignItems: "center",
+        },
+        content: {
+            background: "white",
+            padding: "20px",
+            borderRadius: "10px",
+            textAlign: "center",
+            width: "300px",
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+        },
+        button: {
+            backgroundColor: "#e63900",
+            color: "white",
+            padding: "10px 20px",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+        },
+    };
+
     return (
         <MainLayout>
+            {showModal && (
+                <div style={modalStyles.overlay}>
+                    <div style={modalStyles.content}>
+                        <button
+                            style={{
+                                ...modalStyles.button,
+                                width: "100%", // Make buttons full-width
+                                marginBottom: "10px", // Space between buttons
+                                padding: "10px", // Add padding for better visual appearance
+                                textAlign: "center", // Ensure text is centered inside the button
+                            }}
+                            onClick={() => closeModal("DineIn")} // Pass value to closeModal
+                            value="DineIn"
+                        >
+                            Dine in
+                        </button>
+                        <button
+                            style={{
+                                ...modalStyles.button,
+                                width: "100%",
+                                marginBottom: "10px",
+                                padding: "10px",
+                                textAlign: "center",
+                            }}
+                            onClick={() => closeModal("Takeaway")} // Pass value to closeModal
+                            value="Takeaway"
+                        >
+                            Takeaway
+                        </button>
+                        <button
+                            style={{
+                                ...modalStyles.button,
+                                width: "100%",
+                                padding: "10px",
+                                textAlign: "center",
+                            }}
+                            onClick={() => closeModal("Dotpay")} // Pass value to closeModal
+                        >
+                            Delivery
+                        </button>
+                    </div>
+                </div>
+            )}
             <SpecialMenu data={data} />
-            {/* Pass the data prop to SpecialMenu */}
         </MainLayout>
     );
 };

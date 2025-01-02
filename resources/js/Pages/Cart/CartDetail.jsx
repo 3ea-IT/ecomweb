@@ -50,8 +50,8 @@ function CartDetail() {
             .toFixed(2);
     };
 
-    const deliveryCharge = 30.0;
-    const ConvenienceCharge = 15.0;
+    const deliveryCharge = 0.0;
+    const ConvenienceCharge = 0.0;
     const totalGst = parseFloat(GstcalculateTotal());
     const CouponCodeAmount = parseFloat(CouponCalculateTotal());
     const itemTotal = parseFloat(calculateTotal());
@@ -148,14 +148,6 @@ function CartDetail() {
     useEffect(() => {
         const fetchCartItems = async () => {
             const UserID = localStorage.getItem("userId"); // Fetch userId from localStorage
-            if (!UserID) {
-                alert(
-                    "User is not logged in. Please log in to view your cart."
-                );
-                setLoading(false);
-                return;
-            }
-
             try {
                 const response = await axios.get(
                     `${import.meta.env.VITE_API_URL}/cart-items`,
@@ -171,7 +163,7 @@ function CartDetail() {
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching cart items:", error.message);
-                alert("Failed to fetch cart data.");
+                // alert("Failed to fetch cart data.");
                 setLoading(false);
             }
         };
@@ -192,13 +184,6 @@ function CartDetail() {
         }
 
         const userId = localStorage.getItem("userId"); // Get user ID from localStorage
-
-        if (!userId) {
-            setCouponMessage(
-                "User is not logged in. Please log in to apply coupon."
-            );
-            return;
-        }
 
         try {
             // Make a request to validate the coupon code (this is an example, modify according to your API)
@@ -258,7 +243,13 @@ function CartDetail() {
             {/* <!-- Banner End --> */}
 
             {/* <!-- Search Section --> */}
-            <section className="lg:pt-[100px] sm:pt-[70px] pt-[50px] lg:pb-[100px] sm:pb-10 pb-5 relative bg-white">
+            <section
+                className="lg:pt-[100px] sm:pt-[70px] pt-[50px] lg:pb-[100px] sm:pb-10 pb-5 relative bg-white"
+                style={{
+                    border: "1px solid red",
+                    display: cartItems.length === 0 ? "none" : "", // If no items in cart, hide the section
+                }}
+            >
                 <div className="container">
                     <div className="row">
                         <div className="lg:w-2/3 w-full px-[15px]">
@@ -266,13 +257,6 @@ function CartDetail() {
                                 <h5 className="lg:mb-[15px] mb-5">
                                     ({countCart})Item you have selected
                                 </h5>
-                                <a
-                                    href="#offcanvasFilter"
-                                    id="filter-button2"
-                                    className="btn btn-primary filter-btn lg:hidden block mb-[15px] py-[5px] px-[18px] text-white"
-                                >
-                                    Filter
-                                </a>
                             </div>
 
                             {/* Cart List Section */}
@@ -301,9 +285,7 @@ function CartDetail() {
                                         >
                                             <div className="dz-media w-[100px] min-w-[100px]">
                                                 <img
-                                                    src={
-                                                        product.product_image_url
-                                                    }
+                                                    src={`https://console.pizzaportindia.com/${product.product_image_url}`}
                                                     className="h-full"
                                                     alt={product.product_name}
                                                 />
@@ -625,7 +607,10 @@ function CartDetail() {
                                                         {itemTotal}
                                                     </td>
                                                 </tr>
-                                                <tr className="charges border-b border-dashed border-[#22222233]">
+                                                <tr
+                                                    className="charges border-b border-dashed border-[#22222233]"
+                                                    hidden
+                                                >
                                                     <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">
                                                         Delivery Charges
                                                     </td>
@@ -645,7 +630,10 @@ function CartDetail() {
                                                         {totalGst}
                                                     </td>
                                                 </tr>
-                                                <tr className="tax border-b-2 border-[#22222233]">
+                                                <tr
+                                                    className="tax border-b-2 border-[#22222233]"
+                                                    hidden
+                                                >
                                                     <td className="pt-[6px] pb-[15px] font-medium text-sm leading-[21px] text-bodycolor">
                                                         Convenience Charges
                                                     </td>
@@ -660,7 +648,7 @@ function CartDetail() {
                                                             Amount
                                                         </td>
                                                         <td className="price pt-[6px] pb-[15px] text-primary font-semibold text-base leading-6 text-right">
-                                                            {CouponCodeAmount}
+                                                            - {CouponCodeAmount}
                                                         </td>
                                                     </tr>
                                                 )}
@@ -692,6 +680,55 @@ function CartDetail() {
                 </div>
             </section>
             {/* <!-- Cart Section --> */}
+
+            <section
+                className="lg:pt-[100px] sm:pt-[100px] pt-[50px] lg:pb-[100px] sm:pb-10 pb-5 relative bg-white"
+                style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexDirection: "column",
+                    display: cartItems.length != 0 ? "none" : "block", // If no items in cart, hide the section
+                }}
+            >
+                <div className="container">
+                    <div
+                        className="row text-center justify-center items-center"
+                        style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            flexDirection: "column", // Stack elements vertically
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                flexDirection: "column", // Stack elements vertically
+                                textAlign: "center", // Ensures the text is centered
+                            }}
+                        >
+                            <img
+                                src="/asset/image/empty-cart.png"
+                                alt="Main Slider 1"
+                                className="w-[200px] h-[200px] mb-4" // Image with margin bottom
+                            />
+                            <h3 className="mb-4 font-bold text-3xl">
+                                Your Cart is empty!
+                            </h3>
+
+                            <Link
+                                href="/menu" // Link to the menu or wherever you'd like
+                                className="mb-4 btn btn-primary py-3 px-7 text-white rounded mx-auto block"
+                            >
+                                Continue Shopping
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </MainLayout>
     );
 }

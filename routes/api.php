@@ -23,14 +23,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cart/add', [CartController::class, 'addToCart']);
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
-    Route::get('/cart-items', [CartController::class, 'cartItems']);
+
     Route::get('/check-out', [OrderController::class, 'index']);
     Route::post('/apply-coupon', [CartController::class, 'applyCoupon']);
 });
+Route::get(uri: '/cart-items', action: [CartController::class, 'cartItems']);
+
 Route::get('/order-items', [OrderController::class, 'OrderItems']);
 Route::get('/cart-count/{userId}', function ($userId) {
     $cart = Cart::where('user_id', $userId)->first();
-
     if ($cart) {
         $count = CartItem::where('cart_id', $cart->cart_id)->sum('quantity');
         return response()->json(['count' => $count]);
