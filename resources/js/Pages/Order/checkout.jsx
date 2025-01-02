@@ -546,19 +546,8 @@ function Checkout({ CartList = [] }) {
                                     </tbody>
                                 </table>
 
-                                <h5
-                                    hidden
-                                    className="xl:mb-[10px] pb-3 relative"
-                                >
-                                    Address:
-                                </h5>
-                                <h6
-                                    hidden
-                                    className="xl:mb-[20px] pb-3 relative"
-                                >
-                                    Address:
-                                </h6>
-
+<AddressSection />
+                            
                                 <h4 className="widget-title xl:mb-[30px] mb-5 pb-3 relative">
                                     Payment Method
                                 </h4>
@@ -601,6 +590,208 @@ function Checkout({ CartList = [] }) {
             </section>
             {/* <!-- cart Section --> */}
         </MainLayout>
+    );
+}
+
+function AddressSection() {
+    // State to track whether modal is open or closed
+    const [showModal, setShowModal] = useState(false);
+
+    // State to store address form data
+    const [addressForm, setAddressForm] = useState({
+        full_name: "",
+        address_line_1: "",
+        address_line_2: "",
+        city: "",
+        state: "",
+        country: "",
+        postal_code: "",
+        phone_number: "",
+    });
+
+    // Toggle the modal
+    const openModal = () => setShowModal(true);
+    const closeModal = () => setShowModal(false);
+
+    // Handle input changes
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setAddressForm((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    // Handle form submission (replace with your desired logic, e.g. API call)
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        // Perform validation or call an API here
+        console.log("New address data:", addressForm);
+
+        // Close the modal after submission (if desired)
+        closeModal();
+    };
+
+    return (
+        <div className="mt-6">
+            <h5 className="xl:mb-[10px] pb-3 relative">Address:</h5>
+            <button
+                className="btn btn-primary px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                onClick={openModal}
+            >
+                Add New Address
+            </button>
+            <br />
+            <br />
+
+            {/* Modal */}
+            {showModal && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 mt-20">
+                    {/* Background overlay */}
+                    <div
+                        className="absolute inset-0 bg-black opacity-50"
+                        onClick={closeModal}
+                    />
+
+                    {/* Modal content */}
+                    <div className=" bg-white w-full max-w-2xl max-h-[80vh] overflow-y-auto rounded-lg z-10 p-6 relative">
+                        <h2 className="text-xl font-semibold mb-4">
+                            Add a New Address
+                        </h2>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block mb-1 font-medium">
+                                    Full Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="full_name"
+                                    value={addressForm.full_name}
+                                    onChange={handleChange}
+                                    className="w-full border border-gray-300 rounded p-2"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block mb-1 font-medium">
+                                    Address Line 1
+                                </label>
+                                <input
+                                    type="text"
+                                    name="address_line_1"
+                                    value={addressForm.address_line_1}
+                                    onChange={handleChange}
+                                    className="w-full border border-gray-300 rounded p-2"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block mb-1 font-medium">
+                                    Address Line 2
+                                </label>
+                                <input
+                                    type="text"
+                                    name="address_line_2"
+                                    value={addressForm.address_line_2}
+                                    onChange={handleChange}
+                                    className="w-full border border-gray-300 rounded p-2"
+                                />
+                            </div>
+
+                            <div className="flex space-x-2">
+                                <div className="w-1/2">
+                                    <label className="block mb-1 font-medium">
+                                        City
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="city"
+                                        value={addressForm.city}
+                                        onChange={handleChange}
+                                        className="w-full border border-gray-300 rounded p-2"
+                                        required
+                                    />
+                                </div>
+                                <div className="w-1/2">
+                                    <label className="block mb-1 font-medium">
+                                        State
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="state"
+                                        value={addressForm.state}
+                                        onChange={handleChange}
+                                        className="w-full border border-gray-300 rounded p-2"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex space-x-2">
+                                <div className="w-1/2">
+                                    <label className="block mb-1 font-medium">
+                                        Country
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="country"
+                                        value={addressForm.country}
+                                        onChange={handleChange}
+                                        className="w-full border border-gray-300 rounded p-2"
+                                        required
+                                    />
+                                </div>
+                                <div className="w-1/2">
+                                    <label className="block mb-1 font-medium">
+                                        Postal Code
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="postal_code"
+                                        value={addressForm.postal_code}
+                                        onChange={handleChange}
+                                        className="w-full border border-gray-300 rounded p-2"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block mb-1 font-medium">
+                                    Phone Number
+                                </label>
+                                <input
+                                    type="text"
+                                    name="phone_number"
+                                    value={addressForm.phone_number}
+                                    onChange={handleChange}
+                                    className="w-full border border-gray-300 rounded p-2"
+                                    required
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-end space-x-4 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={closeModal}
+                                    className="bg-gray-400 text-white px-4 py-2 rounded"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                                >
+                                    Save Address
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }
 

@@ -1,36 +1,42 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import MainLayout from "../Layouts/MainLayout";
-import { handleAddToCartClick } from "../utils/cart_model"; // same function as in Home.jsx
-import { Link, usePage } from "@inertiajs/react";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Link } from "@inertiajs/react";
 
-function Menu(props) {
-    // Destructure the data prop passed from the server
-    const { data } = props;
-    // Access Inertia's flash messages (if any)
-    const { flash } = usePage().props;
+function Menu() {
+    const [activeCategory, setActiveCategory] = useState("all");
 
-    useEffect(() => {
-        // Trigger success/error toast messages if available
-        if (flash.success) {
-            toast.success(flash.success);
+    const categories = [
+        { id: "all", name: "ALL", iconClass: "flaticon-fast-food" },
+        { id: "drink", name: "COLD DRINK", iconClass: "flaticon-cocktail" },
+        { id: "pizza", name: "PIZZA", iconClass: "flaticon-pizza-slice" },
+        { id: "salad", name: "SALAD", iconClass: "flaticon-salad" },
+        { id: "sweet", name: "SWEETS", iconClass: "flaticon-cupcake" },
+        { id: "spicy", name: "SPICY", iconClass: "flaticon-chili-pepper" },
+        { id: "burger", name: "BURGER", iconClass: "flaticon-hamburger-1" },
+    ];
+
+    // Scroll to the corresponding section on the right
+    const handleCategoryClick = (categoryId) => {
+        setActiveCategory(categoryId);
+        if (categoryId === "all") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+            const section = document.getElementById(categoryId);
+            if (section) {
+                section.scrollIntoView({ behavior: "smooth" });
+            }
         }
-        if (flash.error) {
-            toast.error(flash.error);
-        }
-    }, [flash]);
+    };
 
     return (
         <MainLayout>
-            {/* <!-- Banner  --> */}
+            {/* Banner */}
             <section className="bg-[url('../images/banner/bnr3.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:opacity-100 after:w-full after:h-full after:top-0 after:left-0 pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] overflow-hidden bg-cover bg-center">
                 <div className="container table h-full relative z-[1] text-center">
                     <div className="dz-bnr-inr-entry align-middle table-cell">
                         <h2 className="font-lobster text-white mb-5 2xl:text-[70px] md:text-[60px] text-[40px] leading-[1.2]">
                             Our Menu
                         </h2>
-                        {/* <!-- Breadcrumb Row --> */}
                         <nav aria-label="breadcrumb" className="breadcrumb-row">
                             <ul className="breadcrumb bg-primary shadow-[0px_10px_20px_rgba(0,0,0,0.05)] rounded-[10px] inline-block lg:py-[13px] md:py-[10px] sm:py-[5px] py-[7px] lg:px-[30px] md:px-[18px] sm:px-5 px-3.5 m-0">
                                 <li className="breadcrumb-item p-0 inline-block text-[15px] font-normal">
@@ -43,112 +49,122 @@ function Menu(props) {
                                 </li>
                             </ul>
                         </nav>
-                        {/* <!-- Breadcrumb Row End --> */}
                     </div>
                 </div>
             </section>
-            {/* <!-- Banner End --> */}
+            {/* Banner End */}
 
-            {/* 
-        ================================
-        YOUR CATEGORY/FILTER SECTION
-        (Optional: keep if you want filters)
-        ================================
-      */}
-
-            {/* 
-        ================================
-        DYNAMIC MENU SECTION 
-        Similar to SpecialMenu in Home.jsx
-        ================================
-      */}
+            {/* Menu Section */}
             <section className="lg:pt-[100px] sm:pt-[70px] pt-[50px] lg:pb-[70px] sm:pb-10 pb-5 overflow-hidden relative bg-white">
                 <div className="container">
                     <div className="row">
-                        {/* If data is loading or empty, handle that */}
-                        {!data || data.length === 0 ? (
-                            <div className="col-12">
-                                <p>No Products Found</p>
-                            </div>
-                        ) : (
-                            data.map((product) => (
-                                <div
-                                    key={product.product_id}
-                                    className="lg:w-1/4 sm:w-1/2 w-full pl-[15px] pr-[15px] pb-[30px]"
-                                >
-                                    <div className="group rounded-lg menu-box box-hover text-center pt-10 px-5 pb-[30px] bg-white border border-grey-border hover:border-primary h-full flex duration-500 flex-col relative overflow-hidden z-[1]">
-                                        <div className="w-[150px] min-w-[150px] h-[150px] mt-0 mx-auto mb-[10px] rounded-full border-[9px] border-white duration-500 z-[1]">
-                                            <img
-                                                src={`https://console.pizzaportindia.com/${product.main_image_url}`}
-                                                alt={product.product_name}
-                                                className="rounded-full group-hover:animate-spin"
-                                            />
-                                        </div>
-                                        <div className="mt-auto">
-                                            <h4 className="mb-2.5">
-                                                <Link
-                                                    href={`/product-detail/${product.product_id}`}
-                                                >
-                                                    {product.product_name}
-                                                </Link>
-                                            </h4>
-                                            <p className="mb-2">
-                                                {product.product_description
-                                                    .split(" ")
-                                                    .slice(0, 10)
-                                                    .join(" ")}
-                                                {product.product_description.split(
-                                                    " "
-                                                ).length > 10
-                                                    ? "..."
-                                                    : ""}
-                                            </p>
-                                            {/* MRP / Sale Price logic (same as SpecialMenu) */}
-                                            <h5 className="text-primary">
-                                                {product.base_sale_price ? (
-                                                    <>
-                                                        ₹
-                                                        <del
-                                                            style={{
-                                                                fontSize:
-                                                                    "14px",
-                                                            }}
-                                                        >
-                                                            {product.base_mrp}
-                                                        </del>
-                                                    </>
-                                                ) : (
-                                                    `₹${product.base_mrp}`
-                                                )}
-                                            </h5>
-                                            {product.base_sale_price && (
-                                                <h5 className="text-primary">
-                                                    ₹{product.base_sale_price}
-                                                </h5>
-                                            )}
-
-                                            {/* Add to Cart Button */}
+                        {/* Left Sidebar (sticky) */}
+                        <div className="lg:w-3/12 md:w-4/12 w-full px-[15px]">
+                            <div className="bg-gray-50 p-4 rounded-lg mb-4 sticky top-[100px]">
+                                {/* ↑ This 'sticky top-[100px]' keeps this sidebar pinned  */}
+                                <ul className="space-y-2">
+                                    {categories.map((cat) => (
+                                        <li key={cat.id}>
                                             <button
+                                                className={`
+                          flex items-center w-full px-3 py-2 rounded
+                          ${
+                              activeCategory === cat.id
+                                  ? "bg-red-600 text-white"
+                                  : "bg-white text-black hover:text-red-600"
+                          }
+                        `}
                                                 onClick={() =>
-                                                    handleAddToCartClick(
-                                                        product.product_id
-                                                    )
+                                                    handleCategoryClick(cat.id)
                                                 }
-                                                className="btn btn-primary mt-[18px] bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition duration-200"
                                             >
-                                                Add to Cart
+                                                <i
+                                                    className={`${cat.iconClass} text-[25px] mr-3`}
+                                                />
+                                                {cat.name}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Right Column (scrolls normally) */}
+                        <div className="lg:w-9/12 md:w-8/12 w-full px-[15px]">
+                            {/* "All" section */}
+                            <section id="all" className="mb-[30px]">
+                                <h2 className="text-xl mb-4">All Items</h2>
+                                {/* Place your "all" items here */}
+                            </section>
+
+                            {/* Pizza */}
+                            <section id="pizza" className="mb-[30px]">
+                                <h2 className="text-xl mb-4">Pizza Section</h2>
+                                <div className="flex flex-wrap">
+                                    {/* Example item */}
+                                    <div className="lg:w-1/4 sm:w-1/2 w-full p-[15px]">
+                                        <div className="group rounded-lg menu-box border p-4 text-center">
+                                            <img
+                                                src="/asset/images/gallery/small/pic1.jpg"
+                                                alt="pizza"
+                                                className="rounded-full mx-auto mb-2 w-[100px] h-[100px]"
+                                            />
+                                            <h4>Pizza</h4>
+                                            <p>$55.00</p>
+                                            <button className="btn btn-primary mt-2">
+                                                Add To Cart
                                             </button>
                                         </div>
                                     </div>
+                                    {/* ... more pizza items ... */}
                                 </div>
-                            ))
-                        )}
+                            </section>
+
+                            {/* Cold Drink */}
+                            <section id="drink" className="mb-[30px]">
+                                <h2 className="text-xl mb-4">
+                                    Cold Drink Section
+                                </h2>
+                                <div className="flex flex-wrap">
+                                    {/* ... */}
+                                </div>
+                            </section>
+
+                            {/* Salad */}
+                            <section id="salad" className="mb-[30px]">
+                                <h2 className="text-xl mb-4">Salad Section</h2>
+                                <div className="flex flex-wrap">
+                                    {/* ... */}
+                                </div>
+                            </section>
+
+                            {/* Sweet */}
+                            <section id="sweet" className="mb-[30px]">
+                                <h2 className="text-xl mb-4">Sweet Section</h2>
+                                <div className="flex flex-wrap">
+                                    {/* ... */}
+                                </div>
+                            </section>
+
+                            {/* Spicy */}
+                            <section id="spicy" className="mb-[30px]">
+                                <h2 className="text-xl mb-4">Spicy Section</h2>
+                                <div className="flex flex-wrap">
+                                    {/* ... */}
+                                </div>
+                            </section>
+
+                            {/* Burger */}
+                            <section id="burger" className="mb-[30px]">
+                                <h2 className="text-xl mb-4">Burger Section</h2>
+                                <div className="flex flex-wrap">
+                                    {/* ... */}
+                                </div>
+                            </section>
+                        </div>
                     </div>
                 </div>
             </section>
-
-            {/* Toast Container for showing success/error notifications */}
-            <ToastContainer />
         </MainLayout>
     );
 }

@@ -257,9 +257,15 @@ function CartDetail() {
                                 <h5 className="lg:mb-[15px] mb-5">
                                     ({countCart})Item you have selected
                                 </h5>
+                                <a
+                                    href="#offcanvasFilter"
+                                    id="filter-button2"
+                                    className="btn btn-primary filter-btn lg:hidden block mb-[15px] py-[5px] px-[18px] text-white"
+                                >
+                                    Filter
+                                </a>
                             </div>
 
-                            {/* Cart List Section */}
                             {cartItems.length > 0 ? (
                                 cartItems.map((product) => {
                                     // Parse addon_ids if it's a string
@@ -278,6 +284,13 @@ function CartDetail() {
                                         addonIdArray = [];
                                     }
 
+                                    // Check if there's an actual discount:
+                                    // (sale_price is defined && less than unit_price)
+                                    const hasDiscount =
+                                        product.sale_price &&
+                                        parseFloat(product.sale_price) <
+                                            parseFloat(product.unit_price);
+
                                     return (
                                         <div
                                             key={product.cart_id}
@@ -290,6 +303,7 @@ function CartDetail() {
                                                     alt={product.product_name}
                                                 />
                                             </div>
+
                                             <div className="dz-content sm:p-5 p-2 flex flex-col w-full">
                                                 <div className="dz-head mb-4 flex items-center justify-between">
                                                     <h6 className="dz-name mb-0 flex items-center text-base">
@@ -323,8 +337,11 @@ function CartDetail() {
                                                             }
                                                         </a>
                                                     </h6>
+
+                                                    {/* Price Section */}
                                                     <h5 className="text-primary">
-                                                        {product.sale_price ? (
+                                                        {hasDiscount ? (
+                                                            // Discounted scenario
                                                             <>
                                                                 ₹
                                                                 <del
@@ -344,6 +361,7 @@ function CartDetail() {
                                                                     product.quantity}
                                                             </>
                                                         ) : (
+                                                            // No discount scenario
                                                             `₹${
                                                                 product.unit_price *
                                                                 product.quantity
@@ -351,6 +369,7 @@ function CartDetail() {
                                                         )}
                                                     </h5>
                                                 </div>
+
                                                 <div className="dz-body sm:flex block justify-between">
                                                     <ul className="dz-meta flex mx-[-10px]">
                                                         <li className="leading-[21px] mx-[10px] text-sm text-[#727272]">
@@ -393,10 +412,10 @@ function CartDetail() {
                                                                         >
                                                                             Added
                                                                             Toppings:{" "}
+                                                                            {
+                                                                                product.addon_names
+                                                                            }
                                                                         </span>
-                                                                        {
-                                                                            product.addon_names
-                                                                        }
                                                                     </>
                                                                 )}
                                                         </li>
@@ -413,18 +432,16 @@ function CartDetail() {
                                                                 }}
                                                             >
                                                                 {product.total_addon_price ? (
-                                                                    <>
-                                                                        <span
-                                                                            style={{
-                                                                                color: "red",
-                                                                            }}
-                                                                        >
-                                                                            ₹
-                                                                            {
-                                                                                product.total_addon_price
-                                                                            }
-                                                                        </span>
-                                                                    </>
+                                                                    <span
+                                                                        style={{
+                                                                            color: "red",
+                                                                        }}
+                                                                    >
+                                                                        ₹
+                                                                        {
+                                                                            product.total_addon_price
+                                                                        }
+                                                                    </span>
                                                                 ) : (
                                                                     <span></span>
                                                                 )}
