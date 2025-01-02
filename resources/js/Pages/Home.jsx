@@ -37,29 +37,24 @@ const SpecialMenu = ({ data }) => {
                                         <div className="md:w-7/12 px-[15px]">
                                             <div className="banner-content md:mb-[60px] mb-0">
                                                 <span className="font-medium md:text-xl text-base text-[var(--secondary-dark)] mb-[10px] block">
-                                                    High Quality Test Stations
+                                                A STORY OF THE BEST RESTAURANT
                                                 </span>
                                                 <h1 className="font-lobster mb-2.5 text-black2">
-                                                    Choosing The
-                                                    <br />
-                                                    Best{" "}
-                                                    <span className="text-primary">
-                                                        Quality Food
+                                                Pizzaport & <span className="text-primary">
+                                                    Cafe
+
                                                     </span>
+                                                
                                                 </h1>
                                                 <p className="max-w-[500px] lg:text-lg sm:text-base text-sm leading-[27px]">
-                                                    Lorem ipsum dolor sit amet,
-                                                    consectetur adipiscing elit,
-                                                    sed do eiusmod tempor
-                                                    incididunt ut labore et
-                                                    dolore magna aliqua.
+                                                Pizzaport & Cafe was conceptualised in 2000 and is currently in Lucknow and Andheri(W) Mumbai. The restaurant is known for delivering the best Pan Asian and Continental cuisine, which tastes divine with every bite, in addition to pizza. Since we only work with the most reputable vendors, the ingredients we utilise to make our toppings are always fresh and delectable. We’re driven to be the best at creating innovative recipes.
                                                 </p>
                                                 <div className="banner-btn flex items-center lg:mt-10 mt-[25px] gap-[30px]">
                                                     <Link
                                                         href="/menu"
                                                         className="btn btn-outline text-primary btn-md btn-hover-1"
                                                     >
-                                                        <span>View More</span>
+                                                        <span>Explore Menu</span>
                                                     </Link>
                                                 </div>
                                             </div>
@@ -67,9 +62,9 @@ const SpecialMenu = ({ data }) => {
                                         <div className="md:w-5/12 px-[15px]">
                                             <div className="banner-media">
                                                 <img
-                                                    src="/asset/images/main-slider/slider1/pic1.png"
+                                                    src="/assets/images/product/slice.png"
                                                     alt="Main Slider 1"
-                                                    className="xl:w-full lg:w-[450px] md:w-[100%] sm:w-[250px] w-[250px]"
+                                                    className="xl:w-[600px] lg:w-[500px] md:w-[100%] sm:w-[350px] w-[300px]"
                                                 />
                                             </div>
                                         </div>
@@ -143,38 +138,28 @@ const SpecialMenu = ({ data }) => {
                                                     ? "..."
                                                     : "")}
                                         </p>
-                                        <h5 className="text-primary">
-                                            {product.base_sale_price ? (
+                                        {/* Price Logic */}
+                                            {product.base_sale_price && parseFloat(product.base_sale_price) < parseFloat(product.base_mrp) ? (
+                                                /* Discounted scenario */
                                                 <>
+                                                <h5 className="text-primary">
                                                     ₹
-                                                    <del
-                                                        style={{
-                                                            fontSize: "14px",
-                                                        }}
-                                                    >
-                                                        {product.base_mrp}
-                                                    </del>
+                                                    <del style={{ fontSize: "14px" }}>{product.base_mrp}</del>
+                                                </h5>
+                                                <h5 className="text-primary">₹{product.base_sale_price}</h5>
                                                 </>
                                             ) : (
-                                                `₹${product.base_mrp}`
+                                                /* No discount scenario */
+                                                <h5 className="text-primary">₹{product.base_mrp}</h5>
                                             )}
-                                        </h5>
-                                        {product.base_sale_price && (
-                                            <h5 className="text-primary">
-                                                ₹{product.base_sale_price}
-                                            </h5>
-                                        )}
-                                        {/* "Add to Cart" Button */}
-                                        <button
-                                            onClick={() =>
-                                                handleAddToCartClick(
-                                                    product.product_id
-                                                )
-                                            }
-                                            className="btn btn-primary mt-[18px] bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition duration-200"
-                                        >
-                                            Add to Cart
-                                        </button>
+
+                                            {/* "Add to Cart" Button */}
+                                            <button
+                                                onClick={() => handleAddToCartClick(product.product_id)}
+                                                className="btn btn-primary mt-[18px] bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition duration-200"
+                                            >
+                                                Add to Cart
+                                            </button>
                                     </div>
                                 </div>
                             </div>
@@ -209,10 +194,9 @@ const SpecialMenu = ({ data }) => {
                                             <i className="flaticon-restaurant text-7xl text-yellow"></i>
                                         </div>
                                         <div className="icon-content overflow-hidden text-center">
-                                            <h5 className="mb-2">Restaurant</h5>
+                                            <h5 className="mb-2">American Pizza's</h5>
                                             <p className="sm:text-base text-[15px] group-hover:text-white">
-                                                Lorem ipsum dolor sit amet,
-                                                dipiscing elit, sed
+                                            Savor the taste of tradition with our hand-crafted pizzas, made with the finest ingredients and a passion for perfection. Each bite promises a crispy crust, fresh toppings, and authentic flavors.
                                             </p>
                                         </div>
                                     </div>
@@ -225,10 +209,9 @@ const SpecialMenu = ({ data }) => {
                                             <i className="flaticon-martini text-7xl text-yellow"></i>
                                         </div>
                                         <div className="icon-content overflow-hidden text-center">
-                                            <h5 className="mb-2">Bar</h5>
+                                            <h5 className="mb-2">Pan Asian</h5>
                                             <p className="sm:text-base text-[15px] group-hover:text-white">
-                                                Lorem ipsum dolor sit amet,
-                                                dipiscing elit, sed
+                                            Experience the vibrant and diverse flavors of Asia with our Pan-Asian cuisine, offering a fusion of bold spices, fresh ingredients, and traditional cooking techniques from across the region.
                                             </p>
                                         </div>
                                     </div>
@@ -241,10 +224,9 @@ const SpecialMenu = ({ data }) => {
                                             <i className="flaticon-coffee-cup text-7xl text-yellow"></i>
                                         </div>
                                         <div className="icon-content overflow-hidden text-center">
-                                            <h5 className="mb-2">Cafe</h5>
+                                            <h5 className="mb-2">Burger & Sandwich's</h5>
                                             <p className="sm:text-base text-[15px] group-hover:text-white">
-                                                Lorem ipsum dolor sit amet,
-                                                dipiscing elit, sed
+                                            Sink your teeth into our delicious burgers and sandwiches, made with premium ingredients and packed with mouthwatering flavors for the ultimate comfort food experience.
                                             </p>
                                         </div>
                                     </div>
@@ -257,10 +239,9 @@ const SpecialMenu = ({ data }) => {
                                             <i className="flaticon-cake text-7xl text-yellow"></i>
                                         </div>
                                         <div className="icon-content overflow-hidden text-center">
-                                            <h5 className="mb-2">Dessert</h5>
+                                            <h5 className="mb-2">Beverages</h5>
                                             <p className="sm:text-base text-[15px] group-hover:text-white">
-                                                Lorem ipsum dolor sit amet,
-                                                dipiscing elit, sed
+                                            Quench your thirst with our refreshing selection of beverages, from chilled soft drinks to handcrafted juices and signature mocktails, perfect for every occasion.
                                             </p>
                                         </div>
                                     </div>
@@ -336,24 +317,30 @@ const SpecialMenu = ({ data }) => {
                                         <div class="testimonial-1 bg-primary relative lg:py-[35px] lg:px-10 py-[25px] px-[15px] h-full lg:rounded-se-[10px] rounded-ee-[10px] rounded-se-none lg:rounded-es-none rounded-es-[10px] flex flex-col">
                                             <div class="testimonial-text relative mb-[10px]">
                                                 <p class="lg:text-[18px] max-2lg:text-[16px] text-base text-white leading-[1.8]">
-                                                    There are many variations of
-                                                    passages of Lorem Ipsum
-                                                    available, but the majority
-                                                    have suffered alteration in
-                                                    some form, by injected
-                                                    humour, or randomised words
-                                                    which don't look even
-                                                    slightly believable. If you
-                                                    are going to use a passage
-                                                    of Lorem Ipsum, you need to
-                                                    be sure there isn't anything
-                                                    embarrassing hidden in the
-                                                    middle of text.
+                                                I have been eating pizza since 2014 or maybe way before that . One of the best pizzas in town . I recently visited and tried their famous Indiana Pizza ,Chilli Paneer and Fried Rice . Pizza is a must try at this place                 
                                                 </p>
                                             </div>
                                             <div class="testimonial-info pl-[15px] lg:mt-[60px] max-2lg:mt-[40px] relative z-[1] after:content-[''] after:bg-[var(--secondary)] after:rounded after:h-[5px] after:w-[50px] after:absolute after:top-[25px] after:left-[-22px] after:rotate-90">
                                                 <h5 class="testimonial-name font-bold leading-[32px] text-white">
-                                                    John Doe
+                                                    Abhishekh Pandey
+                                                </h5>
+                                                <span class="testimonial-position text-white leading-[21px] text-sm block">
+                                                    Google
+                                                </span>
+                                            </div>
+                                            <i class="flaticon-right-quote quote absolute lg:right-[35px] right-5 bottom-[5px] lg:text-[140px] text-[85px] text-[var(--secondary)] inline-flex items-center"></i>
+                                        </div>
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <div class="testimonial-1 bg-primary relative lg:py-[35px] lg:px-10 py-[25px] px-[15px] h-full lg:rounded-se-[10px] rounded-ee-[10px] rounded-se-none lg:rounded-es-none rounded-es-[10px] flex flex-col">
+                                            <div class="testimonial-text relative mb-[10px]">
+                                                <p class="lg:text-[18px] max-2lg:text-[16px] text-base text-white leading-[1.8]">
+                                                The most scrumptious & delicious Chinese food in town. I don't think anyone will have a negative review about Pizza port & its food."                               
+                                                </p>
+                                            </div>
+                                            <div class="testimonial-info pl-[15px] lg:mt-[60px] max-2lg:mt-[40px] relative z-[1] after:content-[''] after:bg-[var(--secondary)] after:rounded after:h-[5px] after:w-[50px] after:absolute after:top-[25px] after:left-[-22px] after:rotate-90">
+                                                <h5 class="testimonial-name font-bold leading-[32px] text-white">
+                                                    the dailydelish
                                                 </h5>
                                                 <span class="testimonial-position text-white leading-[21px] text-sm block">
                                                     Food Expert
@@ -366,27 +353,16 @@ const SpecialMenu = ({ data }) => {
                                         <div class="testimonial-1 bg-primary relative lg:py-[35px] lg:px-10 py-[25px] px-[15px] h-full lg:rounded-se-[10px] rounded-ee-[10px] rounded-se-none lg:rounded-es-none rounded-es-[10px] flex flex-col">
                                             <div class="testimonial-text relative mb-[10px]">
                                                 <p class="lg:text-[18px] max-2lg:text-[16px] text-base text-white leading-[1.8]">
-                                                    There are many variations of
-                                                    passages of Lorem Ipsum
-                                                    available, but the majority
-                                                    have suffered alteration in
-                                                    some form, by injected
-                                                    humour, or randomised words
-                                                    which don't look even
-                                                    slightly believable. If you
-                                                    are going to use a passage
-                                                    of Lorem Ipsum, you need to
-                                                    be sure there isn't anything
-                                                    embarrassing hidden in the
-                                                    middle of text.
+                                                    
+                                 "Quiet good place for foodies. Pizza is very delicious, specially Dallas pizza. Love the noodles as well. Quality food. Love the place."                               
                                                 </p>
                                             </div>
                                             <div class="testimonial-info pl-[15px] lg:mt-[60px] max-2lg:mt-[40px] relative z-[1] after:content-[''] after:bg-[var(--secondary)] after:rounded after:h-[5px] after:w-[50px] after:absolute after:top-[25px] after:left-[-22px] after:rotate-90">
                                                 <h5 class="testimonial-name font-bold leading-[32px] text-white">
-                                                    Jolly Roy
+                                                    CoreVoice.. Suryanshu
                                                 </h5>
                                                 <span class="testimonial-position text-white leading-[21px] text-sm block">
-                                                    Food Expert
+                                                    Google
                                                 </span>
                                             </div>
                                             <i class="flaticon-right-quote quote absolute lg:right-[35px] right-5 bottom-[5px] lg:text-[140px] text-[85px] text-[var(--secondary)] inline-flex items-center"></i>
@@ -396,27 +372,17 @@ const SpecialMenu = ({ data }) => {
                                         <div class="testimonial-1 bg-primary relative lg:py-[35px] lg:px-10 py-[25px] px-[15px] h-full lg:rounded-se-[10px] rounded-ee-[10px] rounded-se-none lg:rounded-es-none rounded-es-[10px] flex flex-col">
                                             <div class="testimonial-text relative mb-[10px]">
                                                 <p class="lg:text-[18px] max-2lg:text-[16px] text-base text-white leading-[1.8]">
-                                                    There are many variations of
-                                                    passages of Lorem Ipsum
-                                                    available, but the majority
-                                                    have suffered alteration in
-                                                    some form, by injected
-                                                    humour, or randomised words
-                                                    which don't look even
-                                                    slightly believable. If you
-                                                    are going to use a passage
-                                                    of Lorem Ipsum, you need to
-                                                    be sure there isn't anything
-                                                    embarrassing hidden in the
-                                                    middle of text.
+                                                     
+                                 "This review is for everyone who lives in Lucknow or is visiting it.
+We went to this place & tried their Pizzas, it was excellent!"                               
                                                 </p>
                                             </div>
                                             <div class="testimonial-info pl-[15px] lg:mt-[60px] max-2lg:mt-[40px] relative z-[1] after:content-[''] after:bg-[var(--secondary)] after:rounded after:h-[5px] after:w-[50px] after:absolute after:top-[25px] after:left-[-22px] after:rotate-90">
                                                 <h5 class="testimonial-name font-bold leading-[32px] text-white">
-                                                    Thomas Hed
+                                                    Mohini W
                                                 </h5>
                                                 <span class="testimonial-position text-white leading-[21px] text-sm block">
-                                                    Food Expert
+                                                    Swiggy
                                                 </span>
                                             </div>
                                             <i class="flaticon-right-quote quote absolute lg:right-[35px] right-5 bottom-[5px] lg:text-[140px] text-[85px] text-[var(--secondary)] inline-flex items-center"></i>
@@ -426,27 +392,16 @@ const SpecialMenu = ({ data }) => {
                                         <div class="testimonial-1 bg-primary relative lg:py-[35px] lg:px-10 py-[25px] px-[15px] h-full lg:rounded-se-[10px] rounded-ee-[10px] rounded-se-none lg:rounded-es-none rounded-es-[10px] flex flex-col">
                                             <div class="testimonial-text relative mb-[10px]">
                                                 <p class="lg:text-[18px] max-2lg:text-[16px] text-base text-white leading-[1.8]">
-                                                    There are many variations of
-                                                    passages of Lorem Ipsum
-                                                    available, but the majority
-                                                    have suffered alteration in
-                                                    some form, by injected
-                                                    humour, or randomised words
-                                                    which don't look even
-                                                    slightly believable. If you
-                                                    are going to use a passage
-                                                    of Lorem Ipsum, you need to
-                                                    be sure there isn't anything
-                                                    embarrassing hidden in the
-                                                    middle of text.
+                                                     
+                                 "They serve the best taste of each and every food which they had in their list and their service is superfast, they are the best in Lucknow:)"                               
                                                 </p>
                                             </div>
                                             <div class="testimonial-info pl-[15px] lg:mt-[60px] max-2lg:mt-[40px] relative z-[1] after:content-[''] after:bg-[var(--secondary)] after:rounded after:h-[5px] after:w-[50px] after:absolute after:top-[25px] after:left-[-22px] after:rotate-90">
                                                 <h5 class="testimonial-name font-bold leading-[32px] text-white">
-                                                    Kally Mint
+                                                    Prince Singh
                                                 </h5>
                                                 <span class="testimonial-position text-white leading-[21px] text-sm block">
-                                                    Food Expert
+                                                    Google
                                                 </span>
                                             </div>
                                             <i class="flaticon-right-quote quote absolute lg:right-[35px] right-5 bottom-[5px] lg:text-[140px] text-[85px] text-[var(--secondary)] inline-flex items-center"></i>
@@ -456,57 +411,16 @@ const SpecialMenu = ({ data }) => {
                                         <div class="testimonial-1 bg-primary relative lg:py-[35px] lg:px-10 py-[25px] px-[15px] h-full lg:rounded-se-[10px] rounded-ee-[10px] rounded-se-none lg:rounded-es-none rounded-es-[10px] flex flex-col">
                                             <div class="testimonial-text relative mb-[10px]">
                                                 <p class="lg:text-[18px] max-2lg:text-[16px] text-base text-white leading-[1.8]">
-                                                    There are many variations of
-                                                    passages of Lorem Ipsum
-                                                    available, but the majority
-                                                    have suffered alteration in
-                                                    some form, by injected
-                                                    humour, or randomised words
-                                                    which don't look even
-                                                    slightly believable. If you
-                                                    are going to use a passage
-                                                    of Lorem Ipsum, you need to
-                                                    be sure there isn't anything
-                                                    embarrassing hidden in the
-                                                    middle of text.
+                                                     
+                                 "one of my favourite place for pizza since childhood...it is best place wid calm ambience...n their pizza(indiana) is my all tym favourite".                               
                                                 </p>
                                             </div>
                                             <div class="testimonial-info pl-[15px] lg:mt-[60px] max-2lg:mt-[40px] relative z-[1] after:content-[''] after:bg-[var(--secondary)] after:rounded after:h-[5px] after:w-[50px] after:absolute after:top-[25px] after:left-[-22px] after:rotate-90">
                                                 <h5 class="testimonial-name font-bold leading-[32px] text-white">
-                                                    Ronny Joy
+                                                    Bhavya Srivastava
                                                 </h5>
                                                 <span class="testimonial-position text-white leading-[21px] text-sm block">
-                                                    Food Expert
-                                                </span>
-                                            </div>
-                                            <i class="flaticon-right-quote quote absolute lg:right-[35px] right-5 bottom-[5px] lg:text-[140px] text-[85px] text-[var(--secondary)] inline-flex items-center"></i>
-                                        </div>
-                                    </div>
-                                    <div class="swiper-slide">
-                                        <div class="testimonial-1 bg-primary relative lg:py-[35px] lg:px-10 py-[25px] px-[15px] h-full lg:rounded-se-[10px] rounded-ee-[10px] rounded-se-none lg:rounded-es-none rounded-es-[10px] flex flex-col">
-                                            <div class="testimonial-text relative mb-[10px]">
-                                                <p class="lg:text-[18px] max-2lg:text-[16px] text-base text-white leading-[1.8]">
-                                                    There are many variations of
-                                                    passages of Lorem Ipsum
-                                                    available, but the majority
-                                                    have suffered alteration in
-                                                    some form, by injected
-                                                    humour, or randomised words
-                                                    which don't look even
-                                                    slightly believable. If you
-                                                    are going to use a passage
-                                                    of Lorem Ipsum, you need to
-                                                    be sure there isn't anything
-                                                    embarrassing hidden in the
-                                                    middle of text.
-                                                </p>
-                                            </div>
-                                            <div class="testimonial-info pl-[15px] lg:mt-[60px] max-2lg:mt-[40px] relative z-[1] after:content-[''] after:bg-[var(--secondary)] after:rounded after:h-[5px] after:w-[50px] after:absolute after:top-[25px] after:left-[-22px] after:rotate-90">
-                                                <h5 class="testimonial-name font-bold leading-[32px] text-white">
-                                                    Dolly kom
-                                                </h5>
-                                                <span class="testimonial-position text-white leading-[21px] text-sm block">
-                                                    Food Expert
+                                                    Zomato
                                                 </span>
                                             </div>
                                             <i class="flaticon-right-quote quote absolute lg:right-[35px] right-5 bottom-[5px] lg:text-[140px] text-[85px] text-[var(--secondary)] inline-flex items-center"></i>

@@ -130,7 +130,7 @@ function Header() {
                             <div className="w-[120px] md:w-[140px] lg:w-[180px]">
                                 <Link href="/">
                                     <img
-                                        src="/asset/image/Pizza-Port-Cafe-Logo.png"
+                                        src="/asset/image/Logo-4.png"
                                         alt="Pizza Port Cafe Logo"
                                         className="w-16 h-16 md:w-20 md:h-20"
                                     />
