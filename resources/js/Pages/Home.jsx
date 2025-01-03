@@ -54,7 +54,7 @@ const SpecialMenu = ({ data }) => {
                                                     to pizza. Since we only work
                                                     with the most reputable
                                                     vendors, the ingredients we
-                                                    utilise to make our toppings
+                                                    utilise to make oufr toppings
                                                     are always fresh and
                                                     delectable. We’re driven to
                                                     be the best at creating
@@ -212,7 +212,7 @@ const SpecialMenu = ({ data }) => {
                                 <div className="bg-[url('../images/gallery/grid/pic1.jpg')] icon-box-wrapper group text-center">
                                     <div className="inner-content relative z-[1]">
                                         <div className="mb-[10px]">
-                                            <i className="flaticon-restaurant text-7xl text-yellow"></i>
+                                            <i className="flaticon-pizza text-7xl text-yellow"></i>
                                         </div>
                                         <div className="icon-content overflow-hidden text-center">
                                             <h5 className="mb-2">
@@ -235,7 +235,7 @@ const SpecialMenu = ({ data }) => {
                                 <div className="bg-[url('../images/gallery/grid/pic2.jpg')] icon-box-wrapper group text-center">
                                     <div className="inner-content relative z-[1]">
                                         <div className="mb-[10px]">
-                                            <i className="flaticon-martini text-7xl text-yellow"></i>
+                                            <i className="flaticon-restaurant text-7xl text-yellow"></i>
                                         </div>
                                         <div className="icon-content overflow-hidden text-center">
                                             <h5 className="mb-2">Pan Asian</h5>
@@ -256,7 +256,7 @@ const SpecialMenu = ({ data }) => {
                                 <div className="bg-[url('../images/gallery/grid/pic3.jpg')] icon-box-wrapper group text-center">
                                     <div className="inner-content relative z-[1]">
                                         <div className="mb-[10px]">
-                                            <i className="flaticon-coffee-cup text-7xl text-yellow"></i>
+                                            <i className="flaticon-burger text-7xl text-yellow"></i>
                                         </div>
                                         <div className="icon-content overflow-hidden text-center">
                                             <h5 className="mb-2">
@@ -279,7 +279,7 @@ const SpecialMenu = ({ data }) => {
                                 <div className="bg-[url('../images/gallery/grid/pic4.jpg')] icon-box-wrapper group text-center">
                                     <div className="inner-content relative z-[1]">
                                         <div className="mb-[10px]">
-                                            <i className="flaticon-cake text-7xl text-yellow"></i>
+                                            <i className="flaticon-martini text-7xl text-yellow"></i>
                                         </div>
                                         <div className="icon-content overflow-hidden text-center">
                                             <h5 className="mb-2">Beverages</h5>
@@ -514,7 +514,7 @@ const SpecialMenu = ({ data }) => {
             </section>
             {/* <!--  Testimonial's End --> */}
             {/* News & Blog Section */}
-            <section className="content-inner sm:pb-[100px] pb-[40px] relative overflow-hidden">
+            <section className="content-inner sm:pb-[100px] pb-[40px] relative overflow-hidden hidden">
                 <div className="container">
                     <div className="2xl:mb-[50px] mb-[25px] relative mx-auto text-center">
                         <h2 className="font-lobster">News & Blog</h2>
@@ -701,9 +701,12 @@ const Home = (props) => {
     }
 
     const closeModal = (value) => {
-        // Save the selected order type in localStorage
-        localStorage.setItem("orderType", value);
-        setShowModal(false);
+        if (value === "Dotpay") {
+            window.location.href = "https://pizzaportandcafe.dotpe.in/";
+        } else {
+            setShowModal(false);
+            
+        }
     };
 
     // Inline styles for the modal and overlay
