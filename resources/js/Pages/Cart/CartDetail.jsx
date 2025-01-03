@@ -53,8 +53,8 @@ function CartDetail() {
             .toFixed(2);
     };
 
-    const deliveryCharge = 30.0;
-    const ConvenienceCharge = 15.0;
+    const deliveryCharge = 0.0;
+    const ConvenienceCharge = 0.0;
     const totalGst = parseFloat(GstcalculateTotal());
     const CouponCodeAmount = parseFloat(CouponCalculateTotal());
     const itemTotal = parseFloat(calculateTotal());
@@ -754,14 +754,16 @@ function CartDetail() {
                                         </h6>
                                         <table className="w-full">
                                             <tbody>
-                                                <tr className="border-b">
-                                                    <td className="py-2 text-sm font-medium text-gray-700">
-                                                        Addon Total
-                                                    </td>
-                                                    <td className="text-right text-primary font-semibold">
-                                                        ₹{addonTotal}
-                                                    </td>
-                                                </tr>
+                                                {addonTotal > 0 && (
+                                                    <tr className="border-b">
+                                                        <td className="py-2 text-sm font-medium text-gray-700">
+                                                            Addon Total
+                                                        </td>
+                                                        <td className="text-right text-primary font-semibold">
+                                                            ₹{addonTotal}
+                                                        </td>
+                                                    </tr>
+                                                )}
                                                 <tr className="border-b">
                                                     <td className="py-2 text-sm font-medium text-gray-700">
                                                         Product Total
@@ -770,7 +772,7 @@ function CartDetail() {
                                                         ₹{itemTotal}
                                                     </td>
                                                 </tr>
-                                                <tr className="border-b">
+                                                <tr hidden className="border-b">
                                                     <td className="py-2 text-sm font-medium text-gray-700">
                                                         Delivery Charges
                                                     </td>
@@ -778,7 +780,7 @@ function CartDetail() {
                                                         ₹{deliveryCharge}
                                                     </td>
                                                 </tr>
-                                                <tr className="border-b">
+                                                <tr hidden className="border-b">
                                                     <td className="py-2 text-sm font-medium text-gray-700">
                                                         Convenience Charges
                                                     </td>

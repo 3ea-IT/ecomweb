@@ -5,7 +5,7 @@ import { handleAddToCartClick } from "../utils/cart_model";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-function Menu({ categories }) {
+function Menu({ categories, setDrawer1Open }) {
     const [activeCategory, setActiveCategory] = useState("all");
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { flash } = usePage().props;
@@ -166,14 +166,15 @@ function Menu({ categories }) {
                                             <li key={cat.id}>
                                                 <button
                                                     className={`
-                            flex items-center w-full px-3 py-2 rounded
-                            ${
-                                activeCategory === cat.id
-                                    ? "bg-red-600 text-white"
-                                    : "bg-white text-black hover:text-red-600"
-                            }
-                            transition-all duration-300
-                        `}
+                                                                flex items-center w-full px-3 py-2 rounded
+                                                                ${
+                                                                    activeCategory ===
+                                                                    cat.id
+                                                                        ? "bg-red-600 text-white"
+                                                                        : "bg-white text-black hover:text-red-600"
+                                                                }
+                                                                transition-all duration-300
+                                                            `}
                                                     onClick={() =>
                                                         handleCategoryClick(
                                                             cat.id
@@ -203,6 +204,9 @@ function Menu({ categories }) {
                                                 <ProductCard
                                                     key={`all-${product.product_id}`}
                                                     product={product}
+                                                    setDrawer1Open={
+                                                        setDrawer1Open
+                                                    }
                                                 />
                                             ))
                                         )}
@@ -225,6 +229,9 @@ function Menu({ categories }) {
                                                     <ProductCard
                                                         key={product.product_id}
                                                         product={product}
+                                                        setDrawer1Open={
+                                                            setDrawer1Open
+                                                        } // Make sure to receive this prop
                                                     />
                                                 )
                                             )}
@@ -241,7 +248,7 @@ function Menu({ categories }) {
 }
 
 // ProductCard Component
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, setDrawer1Open }) => {
     return (
         <div className="group rounded-lg menu-box box-hover text-center pt-10 px-5 pb-[30px] bg-white border border-grey-border hover:border-primary h-full flex duration-500 flex-col relative overflow-hidden z-[1]">
             <div className="w-[150px] min-w-[150px] h-[150px] mt-0 mx-auto mb-[10px] rounded-full border-[9px] border-white duration-500 z-[1]">
@@ -287,7 +294,9 @@ const ProductCard = ({ product }) => {
                 )}
 
                 <button
-                    onClick={() => handleAddToCartClick(product.product_id)}
+                    onClick={() =>
+                        handleAddToCartClick(product.product_id, setDrawer1Open)
+                    }
                     className="btn btn-primary mt-[18px] bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition duration-200"
                 >
                     Add to Cart

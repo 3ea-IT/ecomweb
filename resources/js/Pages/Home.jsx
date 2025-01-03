@@ -108,7 +108,7 @@ const SpecialMenu = ({ data }) => {
             <section className="lg:pt-[100px] pt-[50px] lg:pb-[70px] pb-[40px] bg-white relative overflow-hidden section-wrapper-2">
                 <div className="container">
                     <div className="2xl:mb-[50px] mb-[25px] relative mx-auto text-center">
-                        <h2 className="font-lobster">Special Menu</h2>
+                        <h2 className="font-lobster">Most Selling Items</h2>
                     </div>
                     <div className="row">
                         {data.map((product) => (
@@ -186,6 +186,25 @@ const SpecialMenu = ({ data }) => {
                             </div>
                         ))}
                     </div>
+                    {/* Explore More Section */}
+                    <div className="flex justify-center mt-8 mb-4">
+                        <Link
+                            href="/menu"
+                            className="group relative inline-flex items-center justify-center px-8 py-4 overflow-hidden font-medium transition duration-300 ease-out border-2 border-red-600 rounded-full shadow-md text-xl hover:scale-105"
+                        >
+                            <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-red-600 group-hover:translate-x-0 ease">
+                                <i className="fa-solid fa-pizza-slice mr-2"></i>
+                                Explore Full Menu
+                            </span>
+                            <span className="absolute flex items-center justify-center w-full h-full text-red-600 transition-all duration-300 transform group-hover:translate-x-full ease">
+                                Explore Full Menu
+                                <i className="fa-solid fa-arrow-right ml-2"></i>
+                            </span>
+                            <span className="relative invisible">
+                                Explore Full Menu
+                            </span>
+                        </Link>
+                    </div>
                 </div>
                 <img
                     src="/asset/images/background/pic2.png"
@@ -212,7 +231,7 @@ const SpecialMenu = ({ data }) => {
                                 <div className="bg-[url('../images/gallery/grid/pic1.jpg')] icon-box-wrapper group text-center">
                                     <div className="inner-content relative z-[1]">
                                         <div className="mb-[10px]">
-                                            <i className="flaticon-restaurant text-7xl text-yellow"></i>
+                                            <i className="flaticon-pizza text-7xl text-yellow"></i>
                                         </div>
                                         <div className="icon-content overflow-hidden text-center">
                                             <h5 className="mb-2">

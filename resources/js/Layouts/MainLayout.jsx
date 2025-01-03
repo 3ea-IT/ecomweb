@@ -1,6 +1,6 @@
 // resources/js/Layouts/MainLayout.jsx
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../Components/Header";
 import Footer from "../Components/Footer";
 import { usePage } from "@inertiajs/react"; // Ensure correct import
@@ -8,7 +8,8 @@ import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 
 function MainLayout({ children }) {
-    // Provide a default empty object for flash to prevent undefined errors
+    const [isDrawer1Open, setDrawer1Open] = useState(false);
+
     const { flash = {} } = usePage().props;
 
     useEffect(() => {
@@ -18,7 +19,7 @@ function MainLayout({ children }) {
                 title: "Success",
                 text: flash.success,
                 confirmButtonText: "OK",
-                timer: 3000, // Auto close after 3 seconds
+                timer: 3000,
             });
         }
 
@@ -28,15 +29,23 @@ function MainLayout({ children }) {
                 title: "Error",
                 text: flash.error,
                 confirmButtonText: "OK",
-                timer: 3000, // Auto close after 3 seconds
+                timer: 3000,
             });
         }
     }, [flash]);
 
     return (
         <div>
-            <Header />
-            <main>{children}</main>
+            {/* Pass setDrawer1Open to Header */}
+            <Header
+                isDrawer1Open={isDrawer1Open}
+                setDrawer1Open={setDrawer1Open}
+            />
+            <main>
+                {React.isValidElement(children)
+                    ? React.cloneElement(children, { setDrawer1Open })
+                    : children}
+            </main>
             <Footer />
         </div>
     );

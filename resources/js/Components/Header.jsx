@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, usePage } from "@inertiajs/react";
-
-function Header() {
+function Header({ isDrawer1Open, setDrawer1Open }) {
     const { cartCount, auth } = usePage().props;
     const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [isDrawer1Open, setDrawer1Open] = useState(false);
+    // const [isDrawer1Open, setDrawer1Open] = useState(false);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
     const [email, setEmail] = useState("");
@@ -16,6 +15,10 @@ function Header() {
     const [user, setUser] = useState(null);
     const [userId, setUserID] = useState(null);
     const [localCartCount, setLocalCartCount] = useState(0);
+
+    const handleDrawerOpen = (value) => {
+        setDrawer1Open(value);
+    };
 
     // Existing functions remain unchanged
     const fetchCartCount = async () => {
@@ -414,12 +417,11 @@ function Header() {
                                 </button>
                                 <div className="p-6 lg:p-8">
                                     <div className="text-center mb-8">
-                                        <h4 className="text-2xl font-semibold mb-2">
+                                        <h4 className="text-2xl font-bold mb-2">
                                             Welcome Back
                                         </h4>
-                                        <p className="text-gray-600">
-                                            Join our 100% remote network of
-                                            creators and freelancers.
+                                        <p className="text-gray font-semibold">
+                                            LOGIN
                                         </p>
                                     </div>
                                     <form

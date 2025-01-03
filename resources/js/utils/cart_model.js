@@ -6,7 +6,7 @@ import { toast } from "react-toastify"; // Ensure react-toastify is installed vi
 import { Inertia } from "@inertiajs/inertia";
 
 // Set the base URL to your API
-axios.defaults.baseURL = "http://127.0.0.1:8000/api"; // Ensure this matches your API routes
+axios.defaults.baseURL = import.meta.env.VITE_API_URL; // Ensure this matches your API routes
 
 // Set default headers
 axios.defaults.headers.common["Accept"] = "application/json";
@@ -55,14 +55,40 @@ axios.interceptors.response.use(
  * Function to handle "Add to Cart" click event
  * @param {number} productId - The ID of the product to add to cart
  */
-export const handleAddToCartClick = async (productId) => {
+export const handleAddToCartClick = async (
+    productId,
+    setDrawer1OpenFromParent
+) => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+        toast.error("Please login to add items to cart", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+        });
+
+        console.log("xyz", setDrawer1OpenFromParent);
+        // Add a small delay to ensure the toast is visible before opening the drawer
+        if (
+            setDrawer1OpenFromParent &&
+            typeof setDrawer1OpenFromParent === "function"
+        ) {
+            console.log("Opening Drawer from Parent");
+            setDrawer1OpenFromParent(true);
+        }
+
+        return;
+    }
+
     try {
-        // Fetch product details dynamically
+        // Rest of your existing code for handling logged-in users
         const response = await axios.get(`/products/${productId}`);
         const product = response.data.data;
         console.log("Fetched Product:", product);
-
-        // Open the cart modal with the fetched product data
         OpenCart("Add to Cart", product);
     } catch (error) {
         console.error("Error fetching product details:", error);

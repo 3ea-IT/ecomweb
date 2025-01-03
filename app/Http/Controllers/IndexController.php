@@ -14,7 +14,12 @@ class IndexController extends Controller
 
     public function index()
     {
-        $data = Product::where('isaddon', '0')->get();
+        // Define the specific product IDs you want to fetch
+        $specificProductIds = [165, 135, 179, 50, 203, 30, 290, 231]; // Replace with your desired product IDs
+
+        $data = Product::where('isaddon', '0')
+            ->whereIn('product_id', $specificProductIds)
+            ->get();
 
         $user = Auth::user();
         $countCart = $user ? Cart::where('user_id', $user->user_id)->count() : 0;

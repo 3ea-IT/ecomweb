@@ -1,8 +1,8 @@
-/* resources/css/style.css */
+/* resources/css/style.css
 /* Custom styles for the top bar */
 .topbar {
     background-color: #000000;
-    color:white;
+    color: white;
 }
 
 /* Custom styles for the language dropdown */
@@ -17,7 +17,9 @@
 /* Ensure the carousel and images cover the full screen width */
 .carousel {
     width: 100vw;
-    margin-left: calc(50% - 50vw); /* Center the carousel to cover full viewport width */
+    margin-left: calc(
+        50% - 50vw
+    ); /* Center the carousel to cover full viewport width */
 }
 
 .carousel-item img {
@@ -54,8 +56,6 @@
     border-radius: 50%;
 }
 
-
-
 /* Custom styles for the About section */
 .about {
     background-color: #f9f9f9;
@@ -86,7 +86,8 @@ header {
 
 /* footer.css */
 .footer-section {
-    background: url('/asset/image/LatestTaste.jpg') no-repeat center center/cover;
+    background: url("/asset/image/LatestTaste.jpg") no-repeat center
+        center/cover;
     color: #fff;
     position: relative;
     padding: 60px 0;
@@ -166,5 +167,4 @@ header {
     .footer-section .col-md-3 {
         margin-bottom: 20px;
     }
-}
-
+} */

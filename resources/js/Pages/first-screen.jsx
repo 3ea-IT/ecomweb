@@ -16,7 +16,7 @@ const FirstScreen = () => {
 
         // Automatically redirect to home when "Dine" or "Takeaway" is clicked
         if (option === "dine" || option === "takeaway") {
-            window.location.href = "http://127.0.0.1:8000/home";
+            window.location.href = `${import.meta.env.VITE_BASE_URL}/home`;
         } else if (option === "dotpay") {
             // Redirect to Dotpay URL when "Dotpay" is clicked
             window.location.href = "https://pizzaportandcafe.dotpe.in/";
@@ -38,7 +38,7 @@ const FirstScreen = () => {
         ) {
             // If the selection exists and has not expired, skip the first screen and go to the home page
             setSelectionMade(true); // Skip the selection process
-            window.location.href = "http://127.0.0.1:8000/home"; // Automatically navigate to the home page
+            window.location.href = `${import.meta.env.VITE_BASE_URL}/home`; // Automatically navigate to the home page
         }
     }, []);
 

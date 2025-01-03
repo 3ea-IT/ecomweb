@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { Inertia } from "@inertiajs/inertia";
 
 // Set the base URL to your API
-axios.defaults.baseURL = "http://127.0.0.1:8000/api"; // Ensure this matches your API routes
+axios.defaults.baseURL = import.meta.env.VITE_API_URL; // Ensure this matches your API routes
 
 // Set default headers
 axios.defaults.headers.common["Accept"] = "application/json";
