@@ -20,6 +20,9 @@ Route::inertia('/outletsDetail', 'OutletsDetail');
 Route::inertia('/contact', 'Contact');
 Route::inertia('/ShopCart', 'Cart.CartDetail');
 Route::inertia('/OrderHistory', 'Order.OrderHistory');
+Route::inertia('/privacy-policy', 'FooterComp/PrivacyPolicy');
+Route::inertia('/terms-of-use', 'FooterComp/TermsofUse');
+Route::inertia('/refund-policy', 'FooterComp/RefundPolicy');
 
 // Define the GET route for displaying the registration form
 Route::inertia('/register', 'Register')->name('register.page');
@@ -40,3 +43,4 @@ Route::get('/orders/{orderId}', [OrderController::class, 'show'])
   ->name('orders.show');
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+

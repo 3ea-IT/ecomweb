@@ -138,22 +138,41 @@ function Footer() {
                     </div>
                 </div>
             </div>
-            <div className="container">
-                <div className="footer-bottom relative py-5 border-t border-[#ffffff1a]">
-                    <div className="row">
-                        <div className="md:w-1/2 w-full md:text-left text-center px-[15px]">
-                            <p className="text-sm text-[#999999]">
-                                Copyright 2024 All rights reserved.
-                            </p>
-                        </div>
-                        <div className="md:w-1/2 w-full md:text-right text-center px-[15px] md:mt-0 mt-[15px]">
-                            <span className="text-sm text-[#999999]">
-                               Powered By 3EA Ltd.
-                            </span>
+            
+  
+
+            <div class="container">
+			<div class="footer-bottom py-5 border-t border-[#ffffff1a] relative z-[1]">
+				<div class="lg:flex lg:justify-between">
+					<div class="lg:w-1/2 px-[15px] lg:text-left text-center">
+                    <p className="text-sm text-[#999999]">
+                                    Copyright 2024 All rights reserved.
+                                </p>
+					</div>
+					<div class="lg:w-1/2 px-[15px]">
+						<ul class="footer-link mx-[-15px] lg:text-right text-center">
+							<li class="inline-block sm:px-[15px] px-[5px] relative"><a href="/privacy-policy" class="text-[#666666] sm:text-sm text-[13px] tracking-[0.01em] font-normal">Privacy Policy</a></li>
+							<li class="inline-block sm:px-[15px] px-[5px] relative"><a href="/terms-of-use" class="text-[#666666] sm:text-sm text-[13px] tracking-[0.01em] font-normal">Terms Of Use</a></li>
+							<li class="inline-block sm:px-[15px] px-[5px] relative"><a href="/refund-policy" class="text-[#666666] sm:text-sm text-[13px] tracking-[0.01em] font-normal">Refund Policy</a></li>
+						</ul>
+					</div>
+				</div>
+            </div>
+        </div>
+
+
+                <div className="container">
+                    <div className="footer-bottom relative py-5 border-t border-[#ffffff1a]">
+                        <div className="row">
+                            
+                            <div className="md:w-1/2 w-full md:text-right text-center px-[15px] md:mt-0 mt-[15px]">
+                                <span className="text-sm text-[#999999]">
+                                Powered By 3EA
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
             <img
                 src="/asset/images/background/pic5.png"
                 alt=""
