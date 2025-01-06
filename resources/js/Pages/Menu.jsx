@@ -12,6 +12,7 @@ function Menu({ categories, setDrawer1Open }) {
     const [hasReachedEnd, setHasReachedEnd] = useState(false);
 
     useEffect(() => {
+        // Handle flash messages
         if (flash.success) {
             toast.success(flash.success);
         }
@@ -19,21 +20,55 @@ function Menu({ categories, setDrawer1Open }) {
             toast.error(flash.error);
         }
 
+        // Set up intersection observer for category sections
+        const observerOptions = {
+            root: null,
+            rootMargin: "-50% 0px", // Trigger when section is in the middle of viewport
+            threshold: 0,
+        };
+
+        const observerCallback = (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    setActiveCategory(entry.target.id);
+                }
+            });
+        };
+
+        const observer = new IntersectionObserver(
+            observerCallback,
+            observerOptions
+        );
+
+        // Observe all category sections including "all" section
+        const allSection = document.getElementById("all");
+        if (allSection) observer.observe(allSection);
+
+        categories.forEach((category) => {
+            const section = document.getElementById(
+                category.category_id.toString()
+            );
+            if (section) observer.observe(section);
+        });
+
         // Handle sidebar scrolling
         const handleScroll = () => {
             const sidebar = document.getElementById("category-sidebar");
             if (sidebar) {
                 const sidebarBottom = sidebar.getBoundingClientRect().bottom;
                 const pageBottom = window.innerHeight;
-
-                // Check if we've scrolled to the end of the sidebar's content area
                 setHasReachedEnd(sidebarBottom <= pageBottom);
             }
         };
 
         window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, [flash]);
+
+        // Cleanup
+        return () => {
+            observer.disconnect();
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, [flash, categories]);
 
     const sidebarCategories = [
         { id: "all", name: "ALL", iconClass: "flaticon-fast-food" },
@@ -48,13 +83,18 @@ function Menu({ categories, setDrawer1Open }) {
         setActiveCategory(categoryId);
         setIsMobileMenuOpen(false);
 
-        if (categoryId === "all") {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        } else {
-            const section = document.getElementById(categoryId);
-            if (section) {
-                section.scrollIntoView({ behavior: "smooth" });
-            }
+        const section = document.getElementById(categoryId);
+        if (section) {
+            // Add offset to account for any fixed headers
+            const offset = 100; // Adjust this value based on your header height
+            const elementPosition = section.getBoundingClientRect().top;
+            const offsetPosition =
+                elementPosition + window.pageYOffset - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth",
+            });
         }
     };
 
@@ -249,58 +289,81 @@ function Menu({ categories, setDrawer1Open }) {
 
 // ProductCard Component
 const ProductCard = ({ product, setDrawer1Open }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const description = product.product_description || "";
+    const shortDescription = description.split(" ").slice(0, 10).join(" ");
+    const hasLongDescription = description.split(" ").length > 10;
+
+    const handleReadMore = (e) => {
+        e.preventDefault();
+        handleAddToCartClick(product.product_id, setDrawer1Open);
+    };
+
     return (
-        <div className="group rounded-lg menu-box box-hover text-center pt-10 px-5 pb-[30px] bg-white border border-grey-border hover:border-primary h-full flex duration-500 flex-col relative overflow-hidden z-[1]">
-            <div className="w-[150px] min-w-[150px] h-[150px] mt-0 mx-auto mb-[10px] rounded-full border-[9px] border-white duration-500 z-[1]">
+        <div className="group rounded-lg bg-white border border-grey-border hover:border-primary h-full flex duration-500 flex-col relative overflow-hidden shadow-sm hover:shadow-lg">
+            {/* Image Container */}
+            <div className="w-full aspect-[4/3] overflow-hidden">
                 <img
                     src={`https://console.pizzaportindia.com/${product.main_image_url}`}
                     alt={product.product_name}
-                    className="rounded-full group-hover:animate-spin"
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                 />
             </div>
-            <div className="mt-auto">
-                <h4 className="mb-2.5">
+
+            {/* Content Container */}
+            <div className="p-4 flex flex-col flex-grow">
+                <h4 className="text-lg font-semibold mb-2 line-clamp-2">
                     <Link href={`/product-detail/${product.product_id}`}>
                         {product.product_name}
                     </Link>
                 </h4>
-                <p className="mb-2">
-                    {product.product_description
-                        ?.split(" ")
-                        .slice(0, 10)
-                        .join(" ")}
-                    {product.product_description?.split(" ").length > 10
-                        ? "..."
-                        : ""}
+
+                <p className="text-gray-600 text-sm mb-3 flex-grow">
+                    {shortDescription}
+                    {hasLongDescription && (
+                        <button
+                            onClick={handleReadMore}
+                            className="text-primary ml-1 hover:underline font-bold"
+                        >
+                            Read more →
+                        </button>
+                    )}
                 </p>
 
                 {/* Price Display */}
-                {product.base_sale_price &&
-                parseFloat(product.base_sale_price) <
-                    parseFloat(product.base_mrp) ? (
-                    <>
-                        <h5 className="text-primary">
-                            ₹
-                            <del style={{ fontSize: "14px" }}>
-                                {product.base_mrp}
-                            </del>
-                        </h5>
-                        <h5 className="text-primary">
-                            ₹{product.base_sale_price}
-                        </h5>
-                    </>
-                ) : (
-                    <h5 className="text-primary">₹{product.base_mrp}</h5>
-                )}
-
-                <button
-                    onClick={() =>
-                        handleAddToCartClick(product.product_id, setDrawer1Open)
-                    }
-                    className="btn btn-primary mt-[18px] bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition duration-200"
-                >
-                    Add to Cart
-                </button>
+                <div className="mt-auto">
+                    <div className="flex items-center justify-between mb-3">
+                        <div>
+                            {product.base_sale_price &&
+                            parseFloat(product.base_sale_price) <
+                                parseFloat(product.base_mrp) ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-400 line-through text-sm">
+                                        ₹{product.base_mrp}
+                                    </span>
+                                    <span className="text-primary font-semibold">
+                                        ₹{product.base_sale_price}
+                                    </span>
+                                </div>
+                            ) : (
+                                <span className="text-primary font-semibold">
+                                    ₹{product.base_mrp}
+                                </span>
+                            )}
+                        </div>
+                        <button
+                            onClick={() =>
+                                handleAddToCartClick(
+                                    product.product_id,
+                                    setDrawer1Open
+                                )
+                            }
+                            className="bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 transition duration-200"
+                        >
+                            Add
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

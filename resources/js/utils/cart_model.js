@@ -89,7 +89,7 @@ export const handleAddToCartClick = async (
         const response = await axios.get(`/products/${productId}`);
         const product = response.data.data;
         console.log("Fetched Product:", product);
-        OpenCart("Add to Cart", product);
+        OpenCart("", product);
     } catch (error) {
         console.error("Error fetching product details:", error);
         toast.error(
@@ -104,10 +104,10 @@ export const handleAddToCartClick = async (
  * @param {object} product - Product data
  */
 export const OpenCart = (title, product) => {
-    // Destructure product details
     const {
         product_id,
         product_name,
+        product_description,
         main_image_url,
         variations,
         addons,
@@ -115,74 +115,150 @@ export const OpenCart = (title, product) => {
         base_mrp,
     } = product;
 
-    console.log("Product in OpenCart:", product); // Existing debugging
-
-    // Construct HTML content for the modal
     const content = `
-        <div class="flex flex-col items-center space-y-4">
-            <img src="${
-                main_image_url.startsWith("http")
-                    ? main_image_url
-                    : "https://console.pizzaportindia.com/" + main_image_url
-            }" alt="${product_name}" class="w-32 h-32 object-cover rounded-full mb-4">
-            <h3 class="text-xl font-semibold mb-2">${product_name}</h3>
-            
-            ${
-                variations && variations.length > 0
-                    ? `
-            <div class="mb-4 w-full">
-                <label for="variation" class="block text-gray-700 mb-1">Select Variation:</label>
-                <select id="variation" class="w-full px-3 py-2 border rounded">
-                    <option value="">-- Select --</option>
-                    ${variations
-                        .map(
-                            (variation) =>
-                                `<option value="${variation.variation_id}">${variation.variation_name} - ₹${variation.base_sp}</option>`
-                        )
-                        .join("")}
-                </select>
+        <div class="flex flex-col w-full">
+            <!-- Image Container -->
+            <div class="mb-3 w-full">
+                <img 
+                    src="${
+                        main_image_url.startsWith("http")
+                            ? main_image_url
+                            : "https://console.pizzaportindia.com/" +
+                              main_image_url
+                    }" 
+                    alt="${product_name}" 
+                    class="w-full h-full object-cover"
+                >
             </div>
-            `
-                    : ""
-            }
             
-            ${
-                addons && addons.length > 0
-                    ? `
-            <div class="mb-4 w-full">
-                <label class="block text-gray-700 mb-1">Select Add-ons:</label>
-                ${addons
-                    .map(
-                        (addon) => `
-                            <div class="flex items-center mb-1">
-                                <input type="checkbox" id="addon-${addon.product_id}" value="${addon.product_id}" class="addon-checkbox mr-2">
-                                <label for="addon-${addon.product_id}" class="text-gray-700">${addon.product_name} (+₹${addon.base_sale_price})</label>
-                            </div>
-                        `
-                    )
-                    .join("")}
-            </div>
-            `
-                    : ""
-            }
-            
-            <div class="mb-4 w-full">
-                <label for="quantity" class="block text-gray-700 mb-1">Quantity:</label>
-                <input type="number" id="quantity" min="1" value="1" class="w-full px-3 py-2 border rounded">
+            <!-- Scrollable Content -->
+            <div class="overflow-y-auto px-3 pb-20 no-scrollbar [-ms-overflow-style:none] [scrollbar-width:none]" style="max-height: calc(100vh - 180px);">
+                <!-- Product Details -->
+                <div class="mb-3">
+                    <h3 class="text-base font-bold mb-1">${product_name}</h3>
+                    <p class="text-xs text-gray-600">${
+                        product_description || ""
+                    }</p>
+                </div>
+                
+                <!-- Size Selection -->
+                ${
+                    variations && variations.length > 0
+                        ? `
+                    <div class="mb-3">
+                        <h4 class="text-xs font-semibold text-gray-700 mb-2 text-left">Change Size</h4>
+                        <div class="space-y-2">
+                            ${variations
+                                .map(
+                                    (variation, index) => `
+                                <label class="flex items-center justify-between p-2 hover:bg-gray-50 cursor-pointer">
+                                    <div class="flex items-center">
+                                        <input type="radio" name="variation" value="${
+                                            variation.variation_id
+                                        }" 
+                                            ${index === 0 ? "checked" : ""} 
+                                            class="w-3 h-3 text-red-600 border-gray-300 focus:ring-red-500">
+                                        <span class="ml-2 text-xs">${
+                                            variation.variation_name
+                                        }</span>
+                                    </div>
+                                    <span class="text-xs font-semibold">₹${
+                                        variation.base_sp
+                                    }</span>
+                                </label>
+                            `
+                                )
+                                .join("")}
+                        </div>
+                    </div>
+                `
+                        : ""
+                }
+                
+                <!-- Add Extra -->
+                ${
+                    addons && addons.length > 0
+                        ? `
+                    <div class="mb-3">
+                        <h4 class="text-xs font-semibold text-gray-700 mb-2 text-left">Add Extra</h4>
+                        <div class="space-y-2">
+                            ${addons
+                                .map(
+                                    (addon) => `
+                                <label class="flex items-center justify-between p-2 hover:bg-gray-50 cursor-pointer">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="addon-${addon.product_id}" value="${addon.product_id}" 
+                                            class="w-3 h-3 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                        <span class="ml-2 text-xs">${addon.product_name}</span>
+                                    </div>
+                                    <span class="text-xs font-semibold">+₹${addon.base_sale_price}</span>
+                                </label>
+                            `
+                                )
+                                .join("")}
+                        </div>
+                    </div>
+                `
+                        : ""
+                }
+                
+                <!-- Quantity -->
+                <div class="mb-4">
+                    <h4 class="text-xs font-semibold text-gray-700 mb-2 text-left">Quantity</h4>
+                    <div class="flex items-center space-x-2">
+                        <div class="flex items-center border rounded-lg">
+                            <button type="button" onclick="document.getElementById('quantity').stepDown()" 
+                                class="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-l-lg text-sm">
+                                -
+                            </button>
+                            <input type="number" id="quantity" min="1" value="1" 
+                                class="w-10 text-center border-none focus:ring-0 text-sm" readonly>
+                            <button type="button" onclick="document.getElementById('quantity').stepUp()" 
+                                class="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-r-lg text-sm">
+                                +
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <style>
+            /* Updated comprehensive scrollbar hiding styles */
+            .no-scrollbar::-webkit-scrollbar {
+                display: none;
+                width: 0;
+                background: transparent;
+            }
+            
+            .no-scrollbar {
+                -ms-overflow-style: none !important;
+                scrollbar-width: none !important;
+            }
+            
+            /* Ensure no scrollbar in all contexts */
+            * {
+                scrollbar-width: none !important;
+            }
+            
+            *::-webkit-scrollbar {
+                display: none;
+                width: 0;
+                background: transparent;
+            }
+        </style>
     `;
 
-    console.log("Constructed Content for Swal:", content); // New debugging
-
     Swal.fire({
-        title: title,
         html: content,
         showCancelButton: true,
-        confirmButtonColor: "#ee2737", // Primary color
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Add to Cart",
+        confirmButtonColor: "#ee2737",
+        cancelButtonColor: "#374151",
+        confirmButtonText: "Add",
+        cancelButtonText: "Cancel",
         focusConfirm: false,
+        width: window.innerWidth < 640 ? "100%" : "400px",
+        padding: 0,
         showClass: {
             popup: "animate__animated animate__fadeInUp animate__faster",
         },
@@ -190,30 +266,55 @@ export const OpenCart = (title, product) => {
             popup: "animate__animated animate__fadeOutDown animate__faster",
         },
         customClass: {
-            popup: "bg-white text-black",
-            title: "text-[#ee2737]",
-            confirmButton: "bg-[#ee2737] text-white",
-            cancelButton: "bg-gray-500 text-white",
+            popup: "!m-0 rounded-t-lg !h-[90vh] fixed bottom-0",
+            confirmButton:
+                "bg-red-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-red-700",
+            cancelButton:
+                "bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-700",
+            actions:
+                "fixed bottom-0 left-0 right-0 bg-white border-t p-3 flex justify-end gap-2",
+            container: "!m-0 !p-0",
+            htmlContainer: "!m-0 !p-0",
+        },
+        willOpen: (popup) => {
+            const actions = popup.querySelector(".swal2-actions");
+            const container = popup.querySelector(".swal2-html-container");
+            const content = popup.querySelector(".overflow-y-auto");
+
+            if (actions) {
+                actions.style.position = "fixed";
+                actions.style.bottom = "0";
+                actions.style.backgroundColor = "white";
+                actions.style.zIndex = "10";
+                actions.style.margin = "0";
+                actions.style.width = "100%";
+            }
+            if (container) {
+                container.style.marginTop = "0";
+                container.style.padding = "0";
+            }
+            if (content) {
+                content.style.msOverflowStyle = "none";
+                content.style.scrollbarWidth = "none";
+            }
         },
         preConfirm: () => {
-            const variation = document.getElementById("variation")?.value;
+            const variation = document.querySelector(
+                'input[name="variation"]:checked'
+            )?.value;
             const quantity =
                 parseInt(document.getElementById("quantity")?.value, 10) || 1;
-            const addonElements = document.querySelectorAll(
-                ".addon-checkbox:checked"
-            );
-            const addon_ids = Array.from(addonElements).map((el) =>
-                parseInt(el.value, 10)
-            );
+            const addon_ids = Array.from(
+                document.querySelectorAll('input[type="checkbox"]:checked')
+            ).map((el) => parseInt(el.value, 10));
 
-            // Validation
             if (variations && variations.length > 0 && !variation) {
-                Swal.showValidationMessage("Please select a variation.");
+                Swal.showValidationMessage("Please select a size");
                 return false;
             }
 
             if (quantity < 1) {
-                Swal.showValidationMessage("Quantity must be at least 1.");
+                Swal.showValidationMessage("Please select a valid quantity");
                 return false;
             }
 
@@ -222,13 +323,6 @@ export const OpenCart = (title, product) => {
     }).then((result) => {
         if (result.isConfirmed) {
             const { variation_id, addon_ids, quantity } = result.value;
-            console.log("Adding to Cart:", {
-                product_id,
-                variation_id,
-                addon_ids,
-                quantity,
-            });
-            // Handle the add to cart logic here, such as sending an API request
             axios
                 .post("/cart/add", {
                     product_id,
@@ -237,21 +331,22 @@ export const OpenCart = (title, product) => {
                     quantity,
                 })
                 .then((response) => {
-                    Swal.fire(
-                        "Added!",
-                        "Product has been added to your cart.",
-                        "success"
-                    );
-                    // Optionally, update the cart count or other UI elements
+                    Swal.fire({
+                        icon: "success",
+                        title: "Added to cart!",
+                        showConfirmButton: false,
+                        timer: 1500,
+                    });
                 })
                 .catch((error) => {
                     console.error("Error adding to cart:", error);
-                    Swal.fire(
-                        "Error!",
-                        error.response?.data?.error ||
-                            "Failed to add product to cart.",
-                        "error"
-                    );
+                    Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text:
+                            error.response?.data?.error ||
+                            "Failed to add to cart",
+                    });
                 });
         }
     });

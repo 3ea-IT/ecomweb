@@ -110,82 +110,120 @@ const SpecialMenu = ({ data }) => {
                     <div className="2xl:mb-[50px] mb-[25px] relative mx-auto text-center">
                         <h2 className="font-lobster">Most Selling Items</h2>
                     </div>
-                    <div className="row">
-                        {data.map((product) => (
-                            <div
-                                key={product.product_id}
-                                className="lg:w-1/4 sm:w-1/2 w-full pl-[15px] pr-[15px] pb-[30px]"
-                            >
-                                <div className="group rounded-lg menu-box box-hover text-center pt-10 px-5 pb-[30px] bg-white border border-grey-border hover:border-primary h-full flex duration-500 flex-col relative overflow-hidden z-[1]">
-                                    <div className="w-[150px] min-w-[150px] h-[150px] mt-0 mx-auto mb-[10px] rounded-full border-[9px] border-white duration-500 z-[1]">
-                                        <img
-                                            src={`https://console.pizzaportindia.com/${product.main_image_url}`}
-                                            alt={product.product_name}
-                                            className="rounded-full group-hover:animate-spin"
-                                        />
-                                    </div>
-                                    <div className="mt-auto">
-                                        <h5 className="mb-2">
-                                            <Link
-                                                href={`/product-detail/${product.product_id}`}
-                                            >
-                                                {product.product_name}
-                                            </Link>
-                                        </h5>
-                                        <p className="mb-2">
-                                            {product.product_description
-                                                .split(" ")
-                                                .slice(0, 10)
-                                                .join(" ") +
-                                                (product.product_description.split(
-                                                    " "
-                                                ).length > 10
-                                                    ? "..."
-                                                    : "")}
-                                        </p>
-                                        {/* Price Logic */}
-                                        {product.base_sale_price &&
-                                        parseFloat(product.base_sale_price) <
-                                            parseFloat(product.base_mrp) ? (
-                                            /* Discounted scenario */
-                                            <>
-                                                <h5 className="text-primary">
-                                                    ₹
-                                                    <del
-                                                        style={{
-                                                            fontSize: "14px",
-                                                        }}
-                                                    >
-                                                        {product.base_mrp}
-                                                    </del>
-                                                </h5>
-                                                <h5 className="text-primary">
-                                                    ₹{product.base_sale_price}
-                                                </h5>
-                                            </>
-                                        ) : (
-                                            /* No discount scenario */
-                                            <h5 className="text-primary">
-                                                ₹{product.base_mrp}
-                                            </h5>
-                                        )}
 
-                                        {/* "Add to Cart" Button */}
-                                        <button
-                                            onClick={() =>
-                                                handleAddToCartClick(
-                                                    product.product_id
-                                                )
-                                            }
-                                            className="btn btn-primary mt-[18px] bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition duration-200"
-                                        >
-                                            Add to Cart
-                                        </button>
+                    {/* Product Grid */}
+                    <div className="row">
+                        {data.map((product) => {
+                            // If you want the "short description" + "read more" logic from menu.jsx:
+                            const description =
+                                product.product_description || "";
+                            const shortDescription = description
+                                .split(" ")
+                                .slice(0, 10)
+                                .join(" ");
+                            const hasLongDescription =
+                                description.split(" ").length > 10;
+
+                            return (
+                                <div
+                                    key={product.product_id}
+                                    className="lg:w-1/4 sm:w-1/2 w-full pl-[15px] pr-[15px] pb-[30px]"
+                                >
+                                    {/* 
+                                        BELOW is the same card styling from menu.jsx (ProductCard).
+                                        We are simply pasting the same classNames and layout 
+                                        so it looks identical to how it does on the Menu page.
+                                    */}
+                                    <div className="group rounded-lg bg-white border border-grey-border hover:border-primary h-full flex duration-500 flex-col relative overflow-hidden shadow-sm hover:shadow-lg">
+                                        {/* Image Container */}
+                                        <div className="w-full aspect-[4/3] overflow-hidden">
+                                            <img
+                                                src={`https://console.pizzaportindia.com/${product.main_image_url}`}
+                                                alt={product.product_name}
+                                                className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                                            />
+                                        </div>
+
+                                        {/* Content Container */}
+                                        <div className="p-4 flex flex-col flex-grow">
+                                            <h4 className="text-lg font-semibold mb-2 line-clamp-2">
+                                                <Link
+                                                    href={`/product-detail/${product.product_id}`}
+                                                >
+                                                    {product.product_name}
+                                                </Link>
+                                            </h4>
+
+                                            <p className="text-gray-600 text-sm mb-3 flex-grow">
+                                                {shortDescription}
+                                                {hasLongDescription && (
+                                                    <button
+                                                        onClick={() =>
+                                                            handleAddToCartClick(
+                                                                product.product_id
+                                                            )
+                                                        }
+                                                        className="text-primary ml-1 hover:underline"
+                                                    >
+                                                        Read more →
+                                                    </button>
+                                                )}
+                                            </p>
+
+                                            {/* Price Display */}
+                                            <div className="mt-auto">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div>
+                                                        {product.base_sale_price &&
+                                                        parseFloat(
+                                                            product.base_sale_price
+                                                        ) <
+                                                            parseFloat(
+                                                                product.base_mrp
+                                                            ) ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-gray-400 line-through text-sm">
+                                                                    ₹
+                                                                    {
+                                                                        product.base_mrp
+                                                                    }
+                                                                </span>
+                                                                <span className="text-primary font-semibold">
+                                                                    ₹
+                                                                    {
+                                                                        product.base_sale_price
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-primary font-semibold">
+                                                                ₹
+                                                                {
+                                                                    product.base_mrp
+                                                                }
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleAddToCartClick(
+                                                                product.product_id
+                                                            )
+                                                        }
+                                                        className="bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 transition duration-200"
+                                                    >
+                                                        Add
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+                                    {/* End of Product Card */}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
+
                     {/* Explore More Section */}
                     <div className="flex justify-center mt-8 mb-4">
                         <Link
