@@ -5,8 +5,9 @@ import { usePage } from "@inertiajs/react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import toast styles
 import { Link } from "@inertiajs/react";
+import ReviewCarousel from "../Components/ReviewCarousel";
 
-const SpecialMenu = ({ data }) => {
+const SpecialMenu = ({ data, reviews }) => {
     const { flash } = usePage().props;
 
     useEffect(() => {
@@ -364,7 +365,7 @@ const SpecialMenu = ({ data }) => {
             {/* <!-- Quality Service End--> */}
 
             {/* <!-- Testimonial's Start  --> */}
-            <section
+            {/* <section
                 id="testimonials"
                 class="sm:py-[100px] py-[40px] bg-white relative overflow-hidden"
             >
@@ -568,8 +569,13 @@ const SpecialMenu = ({ data }) => {
                     alt=""
                     class="bottom-0 right-[-355px] absolute 2xl:block hidden animate-move"
                 />
-            </section>
+            </section> */}
             {/* <!--  Testimonial's End --> */}
+
+            {/* <!-- Reviews --> */}
+            <ReviewCarousel reviews={reviews} />
+            {/* <!-- Reviews End --> */}
+
             {/* News & Blog Section */}
             <section className="content-inner sm:pb-[100px] pb-[40px] relative overflow-hidden hidden">
                 <div className="container">
@@ -739,6 +745,7 @@ const SpecialMenu = ({ data }) => {
 
 const Home = (props) => {
     const { data } = props;
+    const { reviews } = props;
 
     const [showModal, setShowModal] = useState(true);
 
@@ -843,7 +850,7 @@ const Home = (props) => {
                     </div>
                 </div>
             )}
-            <SpecialMenu data={data} />
+            <SpecialMenu data={data} reviews={reviews} />
         </MainLayout>
     );
 };

@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Cart;
+use App\Models\Review;
 use Illuminate\Support\Facades\Auth;
 
 class IndexController extends Controller
@@ -14,11 +15,20 @@ class IndexController extends Controller
 
     public function index()
     {
-        // Define the specific product IDs you want to fetch
-        $specificProductIds = [165, 135, 179, 50, 203, 30, 290, 231]; // Replace with your desired product IDs
+        $specificProductIds = [165, 135, 179, 50, 203, 30, 290, 231];
 
         $data = Product::where('isaddon', '0')
             ->whereIn('product_id', $specificProductIds)
+            ->get();
+
+        // Fetch featured reviews for homepage
+        $reviews = Review::where(function ($query) {
+            $query->where('display_section', 'home')
+                ->orWhere('display_section', 'both');
+        })
+            ->where('is_featured', true)
+            ->latest()
+            ->take(5)
             ->get();
 
         $user = Auth::user();
@@ -26,6 +36,7 @@ class IndexController extends Controller
 
         return Inertia::render('Home', [
             'data' => $data,
+            'reviews' => $reviews,
             'countCart' => $countCart
         ]);
     }

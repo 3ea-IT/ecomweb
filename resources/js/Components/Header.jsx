@@ -154,23 +154,31 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                                 >
                                     Outlets
                                 </Link>
-                                <Link
+                                {/* <Link
                                     href="/about"
                                     className="hover:text-primary transition-colors"
                                 >
                                     About
-                                </Link>
+                                </Link> */}
                                 <Link
                                     href="/menu"
                                     className="hover:text-primary transition-colors"
                                 >
                                     Menu
                                 </Link>
+                                {isLoggedIn && (
+                                    <Link
+                                        href="/OrderHistory"
+                                        className="hover:text-primary transition-colors"
+                                    >
+                                        Orders
+                                    </Link>
+                                )}
                                 <Link
-                                    href="/OrderHistory"
+                                    href="/reviews"
                                     className="hover:text-primary transition-colors"
                                 >
-                                    Orders
+                                    Reviews
                                 </Link>
                                 <Link
                                     href="/blogs"

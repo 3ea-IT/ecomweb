@@ -7,6 +7,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\ReviewController;
 
 Route::get('/', [IndexController::class, 'index'])->name('home');
 
@@ -42,5 +43,6 @@ Route::get('/orders/{orderId}', [OrderController::class, 'show'])
   ->middleware('auth:sanctum')
   ->name('orders.show');
 
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews');
 
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
