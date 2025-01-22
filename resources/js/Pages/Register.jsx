@@ -1,19 +1,32 @@
 // resources/js/Pages/Register.jsx
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import MainLayout from "../Layouts/MainLayout";
 import { Link, useForm, usePage } from "@inertiajs/react";
+import { CheckCircle, X } from "lucide-react";
 
 function Register() {
-    const { flash = {} } = usePage().props; // Provide default empty object
+    const autocompleteInitialized = useRef(false);
+    const { googleMapsApiKey, flash } = usePage().props;
+    const [showSuccess, setShowSuccess] = useState(false);
 
-    // Initialize form state using Inertia's useForm hook
+    // Watch for flash messages from the backend
+    useEffect(() => {
+        if (flash.message) {
+            setShowSuccess(true);
+            const timer = setTimeout(() => {
+                setShowSuccess(false);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [flash.message]);
+
     const { data, setData, post, processing, errors } = useForm({
         first_name: "",
         last_name: "",
         email: "",
         phone: "",
-        password_hash: "",
+        password: "",
         password_confirmation: "",
         address_line_1: "",
         address_line_2: "",
@@ -21,7 +34,131 @@ function Register() {
         state: "",
         country: "",
         postal_code: "",
+        drop_landmark: "",
+        drop_lat: "",
+        drop_lng: "",
     });
+
+    useEffect(() => {
+        if (!googleMapsApiKey || autocompleteInitialized.current) {
+            return;
+        }
+
+        const loadGoogleMapsScript = () => {
+            const script = document.createElement("script");
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`;
+            script.async = true;
+            script.defer = true;
+
+            // Add onload and onerror handlers
+            script.onload = () => {
+                if (window.google && window.google.maps) {
+                    initAutocomplete();
+                } else {
+                    console.error(
+                        "Google Maps API loaded, but 'google.maps' is not available."
+                    );
+                }
+            };
+
+            script.onerror = () => {
+                console.error("Failed to load Google Maps API script.");
+            };
+
+            document.head.appendChild(script);
+        };
+
+        const initAutocomplete = () => {
+            const input = document.getElementById("address_line_1");
+            if (!input) {
+                console.error("Address input field not found.");
+                return;
+            }
+
+            const autocomplete = new google.maps.places.Autocomplete(input, {
+                types: ["address"],
+                fields: ["address_components", "formatted_address", "geometry"],
+            });
+
+            autocomplete.addListener("place_changed", () => {
+                const place = autocomplete.getPlace();
+
+                if (!place.geometry) {
+                    console.error("No place details available.");
+                    return;
+                }
+
+                const addressData = {
+                    street_number: "",
+                    route: "",
+                    subpremise: "",
+                    city: "",
+                    state: "",
+                    country: "",
+                    postal_code: "",
+                };
+
+                place.address_components.forEach((component) => {
+                    const type = component.types[0];
+                    switch (type) {
+                        case "street_number":
+                            addressData.street_number = component.long_name;
+                            break;
+                        case "route":
+                            addressData.route = component.long_name;
+                            break;
+                        case "subpremise":
+                            addressData.subpremise = component.long_name;
+                            break;
+                        case "locality":
+                            addressData.city = component.long_name;
+                            break;
+                        case "administrative_area_level_1":
+                            addressData.state = component.long_name;
+                            break;
+                        case "country":
+                            addressData.country = component.long_name;
+                            break;
+                        case "postal_code":
+                            addressData.postal_code = component.long_name;
+                            break;
+                    }
+                });
+
+                const address_line_1 =
+                    `${addressData.street_number} ${addressData.route}`.trim();
+                const address_line_2 = addressData.subpremise
+                    ? `Unit ${addressData.subpremise}`
+                    : "";
+
+                setData((prevData) => ({
+                    ...prevData,
+                    address_line_1,
+                    address_line_2,
+                    city: addressData.city || "",
+                    state: addressData.state || "",
+                    country: addressData.country || "",
+                    postal_code: addressData.postal_code || "",
+                    drop_lat: place.geometry.location.lat(),
+                    drop_lng: place.geometry.location.lng(),
+                }));
+            });
+
+            autocompleteInitialized.current = true;
+        };
+
+        loadGoogleMapsScript();
+
+        return () => {
+            const script = document.querySelector(
+                `script[src*="maps.googleapis.com/maps/api"]`
+            );
+            if (script) {
+                script.remove();
+            }
+            autocompleteInitialized.current = false;
+        };
+    }, [googleMapsApiKey]);
 
     // Handle phone number input with validation
     const handlePhoneChange = (e) => {
@@ -31,14 +168,55 @@ function Register() {
         }
     };
 
-    // Handle form submission
+    // Add success notification handling
     const handleSubmit = (e) => {
         e.preventDefault();
         post("/register");
     };
 
+    const showNotification = () => {
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 5000); // Hide after 5 seconds
+    };
+
     return (
         <MainLayout>
+            {showSuccess && (
+                <div
+                    className="fixed top-4 right-4 z-50 max-w-md bg-white rounded-lg shadow-lg border-l-4 border-green-500 p-4"
+                    role="alert"
+                >
+                    <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                            <CheckCircle
+                                className="h-6 w-6 text-green-500"
+                                aria-hidden="true"
+                            />
+                        </div>
+                        <div className="ml-3">
+                            <p className="text-sm font-medium text-gray-900">
+                                Registration Successful!
+                            </p>
+                            <p className="mt-1 text-sm text-gray-500">
+                                {flash.message ||
+                                    "Your account has been created successfully."}
+                            </p>
+                        </div>
+                        <div className="ml-auto pl-3">
+                            <div className="-mx-1.5 -my-1.5">
+                                <button
+                                    type="button"
+                                    className="inline-flex rounded-md p-1.5 text-gray-500 hover:bg-gray-100 focus:outline-none"
+                                    onClick={() => setShowSuccess(false)}
+                                >
+                                    <span className="sr-only">Dismiss</span>
+                                    <X className="h-5 w-5" aria-hidden="true" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Banner Section */}
             <section
                 className="relative z-[1] pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] bg-cover bg-center overflow-hidden"
@@ -264,6 +442,7 @@ function Register() {
                                     <div className="w-full mb-[30px] px-[15px]">
                                         <div className="relative flex items-center gap-2 w-full border-b border-white">
                                             <input
+                                                id="address_line_1"
                                                 type="text"
                                                 required
                                                 placeholder="Address Line 1"
@@ -313,6 +492,23 @@ function Register() {
                                                 {errors.address_line_2}
                                             </span>
                                         )}
+                                    </div>
+
+                                    <div className="w-full mb-[30px] px-[15px]">
+                                        <div className="relative flex items-center gap-2 w-full border-b border-white">
+                                            <input
+                                                type="text"
+                                                placeholder="Landmark (Optional)"
+                                                value={data.drop_landmark}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        "drop_landmark",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="bg-transparent text-white placeholder:text-white border-0 outline-none focus:ring-0 text-lg w-full"
+                                            />
+                                        </div>
                                     </div>
 
                                     {/* City */}

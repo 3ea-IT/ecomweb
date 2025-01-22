@@ -18,7 +18,6 @@ class CartController extends Controller
 
     public function cartItems(Request $request)
     {
-        // Fetch the user_id dynamically from the request
         $userId = $request->input('user_id');
 
         if (!$userId) {
@@ -26,12 +25,13 @@ class CartController extends Controller
         }
 
         $countCart = Cart::join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
-            ->where('carts.user_id', $userId) // Use dynamic user_id
+            ->where('carts.user_id', $userId)
             ->sum('cart_items.quantity');
 
         $CartList = DB::table('carts')
             ->join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
             ->join('products', 'cart_items.product_id', '=', 'products.product_id')
+            ->leftJoin('variations', 'cart_items.variation_id', '=', 'variations.variation_id')
             ->leftJoin('tax_slabs', 'products.tax_slab_id', '=', 'tax_slabs.tax_slab_id')
             ->leftJoin('coupons', 'cart_items.applied_coupon_id', '=', 'coupons.coupon_id')
             ->select(
@@ -45,17 +45,23 @@ class CartController extends Controller
                 'tax_slabs.gst as gst',
                 'coupons.discount_value as cou_discount_value',
                 'coupons.coupon_code as coupon_code',
+                'variations.variation_name',
                 DB::raw("(
-                    SELECT GROUP_CONCAT(product_name SEPARATOR ', ')
-                    FROM products
-                    WHERE FIND_IN_SET(
-                        products.product_id,
-                        REPLACE(REPLACE(REPLACE(cart_items.addon_ids, '\"', ''), '[', ''), ']', '')
-                    )
-                ) AS addon_names")
+                SELECT GROUP_CONCAT(product_name SEPARATOR ', ')
+                FROM products
+                WHERE FIND_IN_SET(
+                    products.product_id,
+                    REPLACE(REPLACE(REPLACE(cart_items.addon_ids, '\"', ''), '[', ''), ']', '')
+                )
+            ) AS addon_names")
             )
-            ->where('carts.user_id', $userId) // Use dynamic user_id
+            ->where('carts.user_id', $userId)
             ->get();
+
+        // Multiply addon price by quantity for each item
+        foreach ($CartList as $item) {
+            $item->total_addon_price = $item->total_addon_price * $item->quantity;
+        }
 
         return response()->json([
             'countCart' => $countCart,
@@ -106,55 +112,47 @@ class CartController extends Controller
 
             // Calculate total_addon_price
             $total_addon_price = 0.00;
-            if (!empty($validated['addon_ids'])) {
+            $addon_ids = $validated['addon_ids'] ?? [];
+            sort($addon_ids); // Sort addon_ids for consistent comparison
+
+            if (!empty($addon_ids)) {
                 // Fetch add-ons based on addon_ids
-                $addons = Product::whereIn('product_id', $validated['addon_ids'])->where('isaddon', 1)->get();
+                $addons = Product::whereIn('product_id', $addon_ids)
+                    ->where('isaddon', 1)
+                    ->get();
                 foreach ($addons as $addon) {
                     $total_addon_price += $addon->base_sale_price;
                 }
             }
 
-            // Calculate total_price based on sale_price availability
-            if (!is_null($sale_price)) {
-                $total_price = ($sale_price * $validated['quantity']) + $total_addon_price;
-            } else {
-                $total_price = ($unit_price * $validated['quantity']) + $total_addon_price;
-            }
+            // Calculate total_price
+            $base_price = !is_null($sale_price) ? $sale_price : $unit_price;
+            $total_price = ($base_price * $validated['quantity']) + ($total_addon_price * $validated['quantity']);
 
-            // Check if the product with the same variation already exists in the cart
+            // Check if the exact same product configuration exists in the cart
             $cartItem = CartItem::where('cart_id', $cart->cart_id)
                 ->where('product_id', $validated['product_id'])
                 ->where('variation_id', $variationId)
+                ->where(function ($query) use ($addon_ids) {
+                    if (empty($addon_ids)) {
+                        $query->whereNull('addon_ids')
+                            ->orWhere('addon_ids', '[]');
+                    } else {
+                        // Convert stored JSON addon_ids to PHP array and compare
+                        $query->whereRaw('JSON_CONTAINS(addon_ids, ?)', [json_encode($addon_ids)])
+                            ->whereRaw('JSON_LENGTH(addon_ids) = ?', [count($addon_ids)]);
+                    }
+                })
                 ->first();
 
             if ($cartItem) {
-                // Update quantity and prices
+                // Update quantity and recalculate prices for existing item
                 $cartItem->quantity += $validated['quantity'];
-
-                // Update unit_price and sale_price if applicable
-                $cartItem->unit_price = $unit_price;
-                $cartItem->sale_price = $sale_price;
-
-                // Update total_addon_price
-                $cartItem->total_addon_price += $total_addon_price;
-
-                // Recalculate total_price based on the presence of sale_price
-                if (!is_null($cartItem->sale_price)) {
-                    $cartItem->total_price = ($cartItem->sale_price * $cartItem->quantity) + $cartItem->total_addon_price;
-                } else {
-                    $cartItem->total_price = ($cartItem->unit_price * $cartItem->quantity) + $cartItem->total_addon_price;
-                }
-
-                // Merge and deduplicate addon_ids
-                if (!empty($validated['addon_ids'])) {
-                    $existing_addons = $cartItem->addon_ids ?? [];
-                    $merged_addons = array_unique(array_merge($existing_addons, $validated['addon_ids']));
-                    $cartItem->addon_ids = $merged_addons;
-                }
-
+                $cartItem->total_price = ($base_price * $cartItem->quantity) +
+                    ($total_addon_price * $cartItem->quantity);
                 $cartItem->save();
             } else {
-                // Create new cart item
+                // Create new cart item for different configuration
                 $cartItem = CartItem::create([
                     'cart_id' => $cart->cart_id,
                     'product_id' => $validated['product_id'],
@@ -164,7 +162,7 @@ class CartController extends Controller
                     'total_addon_price' => $total_addon_price,
                     'total_price' => $total_price,
                     'variation_id' => $variationId,
-                    'addon_ids' => $validated['addon_ids'] ?? [],
+                    'addon_ids' => $addon_ids,
                 ]);
             }
 
@@ -306,59 +304,92 @@ class CartController extends Controller
 
     public function applyCoupon(Request $request)
     {
-        // Validate the incoming data
         $validated = $request->validate([
             'coupon_code' => 'required',
             'user_id' => 'required'
         ]);
 
-        $couponCode = $validated['coupon_code'];
         $userId = $validated['user_id'];
+        $couponCode = $validated['coupon_code'];
 
-        // Fetch the user-specific cart items
-        $UserDataId = Cart::where('user_id', $userId)->first();
-
-        // If the user does not have a cart, return an error
-        if (!$UserDataId) {
-            return response()->json(['success' => false, 'message' => 'User cart not found.']);
+        // Get cart details
+        $cart = Cart::where('user_id', $userId)->first();
+        if (!$cart) {
+            return response()->json(['success' => false, 'message' => 'Cart not found']);
         }
 
-        // Fetch the user-specific cart items
-        $cartItems = CartItem::where('cart_id', $UserDataId->cart_id)->get();
+        // Get coupon details
+        $coupon = Coupon::where('coupon_code', $couponCode)
+            ->where('is_active', 1)
+            ->first();
 
-        // Find the coupon by code
-        $coupon = Coupon::where('coupon_code', $couponCode)->first();
-
-        // If the coupon doesn't exist
         if (!$coupon) {
             return response()->json(['success' => false, 'message' => 'Invalid coupon code']);
         }
 
-        // Check if the coupon is expired (status 0 means expired)
-        if ($coupon->is_active === 0) {
-            return response()->json(['success' => false, 'message' => 'Coupon has expired']);
+        // Validate coupon
+        $cartTotal = CartItem::where('cart_id', $cart->cart_id)
+            ->sum(DB::raw('quantity * COALESCE(sale_price, unit_price)'));
+
+        // Check minimum purchase amount
+        if ($coupon->minimum_purchase_amount && $cartTotal < $coupon->minimum_purchase_amount) {
+            return response()->json([
+                'success' => false,
+                'message' => "Minimum purchase amount of ₹{$coupon->minimum_purchase_amount} required"
+            ]);
         }
 
-        // Apply coupon only if it's valid
-        $applied = false;
-        foreach ($cartItems as $cartItem) {
-            $cartItem->applied_coupon_id = $coupon->coupon_id;
-            if ($cartItem->save()) {
-                $applied = true; // Mark that the coupon was successfully applied
+        // Check usage per user
+        $userUsageCount = DB::table('coupon_logs')
+            ->where('user_id', $userId)
+            ->where('coupon_id', $coupon->coupon_id)
+            ->count();
+
+        if ($userUsageCount >= $coupon->usage_per_user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You have exceeded the maximum usage limit for this coupon'
+            ]);
+        }
+
+        // Check product applicability
+        if ($coupon->applicable_to === 'Specific Products') {
+            $applicableProducts = json_decode($coupon->applicable_products, true);
+            $cartProducts = CartItem::where('cart_id', $cart->cart_id)
+                ->pluck('product_id')
+                ->toArray();
+
+            if (!array_intersect($cartProducts, $applicableProducts)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This coupon is not applicable to your cart items'
+                ]);
             }
         }
 
-        // If the coupon was applied successfully to at least one item, increment the use_count
-        if ($applied) {
-            $coupon->used_count = $coupon->used_count + 1; // Increment use_count
-            $coupon->save(); // Save the updated coupon
-            return response()->json([
-                'success' => true,
-                'message' => 'Coupon applied successfully!'
+        // Apply coupon without logging to `coupon_logs`
+        DB::transaction(function () use ($cart, $coupon, $userId) {
+            // Update cart items to apply the coupon
+            CartItem::where('cart_id', $cart->cart_id)
+                ->update(['applied_coupon_id' => $coupon->coupon_id]);
+
+            // **Removed Logging to `coupon_logs`**
+            /*
+            DB::table('coupon_logs')->insert([
+                'user_id' => $userId,
+                'coupon_id' => $coupon->coupon_id,
+                'created_at' => now()
             ]);
-        } else {
-            return response()->json(['success' => false, 'message' => 'Failed to apply coupon.']);
-        }
+            */
+
+            // Update coupon usage count
+            $coupon->increment('used_count');
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Coupon applied successfully!'
+        ]);
     }
 
     public function removeCoupon(Request $request)
@@ -382,5 +413,107 @@ class CartController extends Controller
                 'message' => 'Failed to remove coupon'
             ], 500);
         }
+    }
+
+    public function getAvailableCoupons(Request $request)
+    {
+        $userId = $request->input('user_id');
+
+        if (!$userId) {
+            return response()->json(['error' => 'User ID is required'], 400);
+        }
+
+        // Get cart total
+        $cartTotal = Cart::join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
+            ->where('carts.user_id', $userId)
+            ->sum(DB::raw('cart_items.quantity * COALESCE(cart_items.sale_price, cart_items.unit_price)'));
+
+        // Get cart product IDs
+        $cartProductIds = Cart::join('cart_items', 'carts.cart_id', '=', 'cart_items.cart_id')
+            ->where('carts.user_id', $userId)
+            ->pluck('cart_items.product_id')
+            ->toArray();
+
+        // Get current date for comparisons
+        $currentDate = now()->toDateString();
+
+        // **Fetch Applied Coupon IDs to Exclude Them**
+        $appliedCouponIds = CartItem::whereHas('cart', function ($query) use ($userId) {
+            $query->where('user_id', $userId);
+        })->whereNotNull('applied_coupon_id')
+            ->pluck('applied_coupon_id')
+            ->toArray();
+
+        // Get available coupons excluding already applied coupons
+        $coupons = DB::table('coupons')
+            ->where('is_active', 1)
+            ->where('is_visible', 1)
+            ->whereNotIn('coupon_id', $appliedCouponIds)
+            ->where(function ($query) use ($cartTotal) {
+                $query->whereNull('minimum_purchase_amount')
+                    ->orWhere('minimum_purchase_amount', '<=', $cartTotal);
+            })
+            ->where(function ($query) use ($currentDate) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $currentDate);
+            })
+            ->where(function ($query) use ($currentDate) {
+                $query->whereNull('start_date')
+                    ->orWhere('start_date', '<=', $currentDate);
+            })
+            ->get();
+
+        // Filter coupons based on usage and applicability
+        $availableCoupons = $coupons->filter(function ($coupon) use ($userId, $cartProductIds) {
+            // Check usage per user
+            $userUsageCount = DB::table('coupon_logs')
+                ->where('user_id', $userId)
+                ->where('coupon_id', $coupon->coupon_id)
+                ->count();
+
+            if ($userUsageCount >= $coupon->usage_per_user) {
+                return false;
+            }
+
+            // Check total usage
+            if ($coupon->used_count >= $coupon->max_uses && $coupon->max_uses != 0) {
+                return false;
+            }
+
+            // Check product applicability
+            if ($coupon->applicable_to === 'Specific Products') {
+                // Decode the applicable_products JSON
+                $applicableProducts = json_decode($coupon->applicable_products, true);
+
+                // Ensure $applicableProducts is an array
+                if (!is_array($applicableProducts)) {
+                    // If it's not an array, attempt to convert it
+                    // Handle cases where it's a single product ID as string or integer
+                    if (is_string($applicableProducts) || is_int($applicableProducts)) {
+                        $applicableProducts = [$applicableProducts];
+                    } else {
+                        // If it's null or another type, treat as no applicable products
+                        $applicableProducts = [];
+                    }
+                }
+
+                // If applicableProducts is empty after decoding, skip this coupon
+                if (empty($applicableProducts)) {
+                    return false;
+                }
+
+                // Check if any cart product IDs intersect with applicable products
+                if (!array_intersect($cartProductIds, $applicableProducts)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        return response()->json([
+            'coupons' => $availableCoupons->values(), // Reset keys
+            'cartTotal' => $cartTotal
+        ]);
     }
 }

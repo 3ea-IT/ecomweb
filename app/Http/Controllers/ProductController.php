@@ -13,10 +13,10 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['error' => 'User not authenticated.'], 401);
-        }
+        // $user = Auth::user();
+        // if (!$user) {
+        //     return response()->json(['error' => 'User not authenticated.'], 401);
+        // }
 
         // Fetch all active main products (isaddon = 0) with their active variations and add-ons
         $products = Product::where('is_active', 1)
@@ -39,10 +39,10 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['error' => 'User not authenticated.'], 401);
-        }
+        // $user = Auth::user();
+        // if (!$user) {
+        //     return response()->json(['error' => 'User not authenticated.'], 401);
+        // }
 
         // Fetch the active main product with its active variations and add-ons
         $product = Product::where('is_active', 1)

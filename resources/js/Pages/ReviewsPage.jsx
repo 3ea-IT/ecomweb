@@ -1,13 +1,9 @@
 import React, { useState } from "react";
-import { Star, Search, CheckCircle } from "lucide-react";
+import { Star, CheckCircle } from "lucide-react";
 import MainLayout from "../Layouts/MainLayout";
 
 const ReviewsPage = ({ reviews }) => {
     const [selectedPlatform, setSelectedPlatform] = useState("all");
-    const [selectedRating, setSelectedRating] = useState(0);
-    const [searchTerm, setSearchTerm] = useState("");
-
-    // NEW: State to handle which image is currently selected for the modal
     const [selectedImage, setSelectedImage] = useState(null);
 
     const platforms = [
@@ -31,37 +27,25 @@ const ReviewsPage = ({ reviews }) => {
     };
 
     const filteredReviews = reviews.data.filter((review) => {
-        const matchesPlatform =
+        return (
             selectedPlatform === "all" ||
-            review.platform.toLowerCase() === selectedPlatform;
-        const matchesRating =
-            selectedRating === 0 || review.rating >= selectedRating;
-        const matchesSearch =
-            review.review_text
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-            review.reviewer_name
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
-
-        return matchesPlatform && matchesRating && matchesSearch;
+            review.platform.toLowerCase() === selectedPlatform
+        );
     });
 
-    // NEW: Helper to open the modal with a specific image
     const openImageModal = (imageUrl) => {
         setSelectedImage(imageUrl);
     };
 
-    // NEW: Helper to close the modal
     const closeImageModal = () => {
         setSelectedImage(null);
     };
 
     return (
         <MainLayout>
-            <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-16">
+            <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
                 {/* Hero Section */}
-                <div className="relative bg-gray-900 text-white">
+                <div className="relative bg-gray-900 text-white mt-14">
                     <div className="absolute inset-0 overflow-hidden">
                         <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-orange-500/20"></div>
                         <div
@@ -81,62 +65,28 @@ const ReviewsPage = ({ reviews }) => {
                     </div>
                 </div>
 
-                {/* Filters Section */}
-                <div className="sticky top-20 bg-white/80 backdrop-blur-lg border-b z-10">
-                    <div className="container mx-auto px-4 py-6">
-                        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                            {/* Platform Filter */}
-                            <div className="flex gap-2 flex-wrap">
+                {/* Updated Filters Section - Horizontal Scroll */}
+                <div className="sticky top-16 bg-white/90 backdrop-blur-lg border-b z-20 shadow-sm">
+                    <div className="overflow-x-auto scrollbar-hide">
+                        <div className="container mx-auto px-4 py-4">
+                            <div className="flex gap-3 min-w-max">
                                 {platforms.map((platform) => (
                                     <button
                                         key={platform.name}
                                         onClick={() =>
                                             setSelectedPlatform(platform.name)
                                         }
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all
-                      ${
-                          selectedPlatform === platform.name
-                              ? "bg-gray-900 text-white"
-                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+                                        className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap
+                                            ${
+                                                selectedPlatform ===
+                                                platform.name
+                                                    ? "bg-gray-900 text-white shadow-md"
+                                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                            }`}
                                     >
                                         {platform.label}
                                     </button>
                                 ))}
-                            </div>
-
-                            {/* Rating Filter */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                                {[5, 4, 3].map((rating) => (
-                                    <button
-                                        key={rating}
-                                        onClick={() =>
-                                            setSelectedRating(rating)
-                                        }
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1
-                      ${
-                          selectedRating === rating
-                              ? "bg-yellow-400 text-gray-900"
-                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                                    >
-                                        {rating}+ <Star className="w-4 h-4" />
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Search */}
-                            <div className="relative w-full md:w-auto">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search reviews..."
-                                    value={searchTerm}
-                                    onChange={(e) =>
-                                        setSearchTerm(e.target.value)
-                                    }
-                                    className="w-full md:w-auto pl-10 pr-4 py-2 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-900"
-                                />
                             </div>
                         </div>
                     </div>
@@ -150,11 +100,6 @@ const ReviewsPage = ({ reviews }) => {
                                 key={index}
                                 className="bg-white rounded-2xl shadow-lg overflow-hidden group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                             >
-                                {/* 
-                  Instead of making the image 100% visible in the card
-                  (which might break your layout), keep it cropped here.
-                  Then open the full image in a modal on click.
-                */}
                                 <div
                                     className="relative h-48 bg-gray-100 overflow-hidden cursor-pointer"
                                     onClick={() =>
@@ -181,7 +126,6 @@ const ReviewsPage = ({ reviews }) => {
                                     </div>
                                 </div>
 
-                                {/* Review Content */}
                                 <div className="p-6">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="font-semibold text-lg">
@@ -253,20 +197,15 @@ const ReviewsPage = ({ reviews }) => {
                 </div>
             </div>
 
-            {/* 
-        Modal/Lightbox Section:
-        This appears only if selectedImage is set.
-      */}
+            {/* Modal/Lightbox */}
             {selectedImage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4">
                     <div className="relative max-w-4xl w-full max-h-full overflow-auto">
-                        {/* The full-size image */}
                         <img
                             src={selectedImage}
                             alt="Full View"
                             className="mx-auto rounded-lg shadow-lg"
                         />
-                        {/* Close Button */}
                         <button
                             onClick={closeImageModal}
                             className="absolute top-2 right-2 text-white bg-black/50 p-2 rounded-full hover:bg-black"

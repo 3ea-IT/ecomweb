@@ -1,313 +1,686 @@
 import React, { useState, useEffect } from "react";
+import { usePage, Link } from "@inertiajs/react";
 import MainLayout from "../../Layouts/MainLayout";
-import { Link } from "@inertiajs/react";
 import axios from "axios";
 
-function Checkout({ CartList = [] }) {
+// Simple summary component
+const OrderSummary = ({ cartItems }) => {
+    const calculateSubtotal = () => {
+        return cartItems.reduce((total, item) => {
+            const price = item.sale_price || item.unit_price;
+            return total + price * item.quantity;
+        }, 0);
+    };
+
+    const calculateAddonTotal = () => {
+        return cartItems.reduce(
+            (total, item) => total + (item.total_addon_price || 0),
+            0
+        );
+    };
+
+    const calculateGST = () => {
+        return cartItems.reduce((total, item) => {
+            const price = item.sale_price || item.unit_price;
+            const itemTotal = price * item.quantity;
+            const gstPercentage = item.gst || 0;
+            return total + (itemTotal * gstPercentage) / 100;
+        }, 0);
+    };
+
+    const calculateDiscount = () => {
+        let totalDiscount = 0;
+        const processedCoupons = new Set();
+
+        cartItems.forEach((item) => {
+            if (
+                item.applied_coupon_id &&
+                !processedCoupons.has(item.applied_coupon_id)
+            ) {
+                totalDiscount += parseFloat(item.cou_discount_value || 0);
+                processedCoupons.add(item.applied_coupon_id);
+            }
+        });
+        return totalDiscount;
+    };
+
+    const subtotal = calculateSubtotal();
+    const addonTotal = calculateAddonTotal();
+    const gstTotal = calculateGST();
+    const discount = calculateDiscount();
+    const finalTotal = subtotal + addonTotal + gstTotal - discount;
+
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h4 className="text-lg font-semibold mb-4">Order Summary</h4>
+            <div className="space-y-3">
+                <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>₹{subtotal.toFixed(2)}</span>
+                </div>
+                {addonTotal > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                        <span>Add-ons Total</span>
+                        <span>₹{addonTotal.toFixed(2)}</span>
+                    </div>
+                )}
+                <div className="flex justify-between text-gray-600">
+                    <span>GST</span>
+                    <span>₹{gstTotal.toFixed(2)}</span>
+                </div>
+                {discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                        <span>Discount Applied</span>
+                        <span>-₹{discount.toFixed(2)}</span>
+                    </div>
+                )}
+                <div className="border-t pt-3 mt-3">
+                    <div className="flex justify-between font-semibold">
+                        <span>Total Amount</span>
+                        <span>₹{finalTotal.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ----------------------------------------------
+
+const Checkout = ({ CartList = [] }) => {
+    const [initialLoading, setInitialLoading] = useState(true);
     const [loading, setLoading] = useState(false);
+
     const [cartItems, setCartItems] = useState(CartList);
-    const [paymentMethod, setPaymentMethod] = useState("");
     const [addresses, setAddresses] = useState([]);
     const [selectedAddress, setSelectedAddress] = useState(null);
 
-    // Fetch user's addresses
-    useEffect(() => {
-        const fetchAddresses = async () => {
-            const userId = localStorage.getItem("userId");
-            if (!userId) return;
+    const [showAddressModal, setShowAddressModal] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState("");
 
-            try {
-                const response = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/user-addresses`,
-                    {
-                        params: { user_id: userId },
-                    }
-                );
-                setAddresses(response.data);
-                // Set default address if available
-                const defaultAddress = response.data.find(
-                    (addr) => addr.is_default === 1
-                );
-                if (defaultAddress) {
-                    setSelectedAddress(defaultAddress.address_id);
+    // 1) Get Google Maps key from Inertia page props
+    const { googleMapsApiKey } = usePage().props;
+    const [googleScriptLoaded, setGoogleScriptLoaded] = useState(false);
+
+    // Form state for "Add New Address"
+    const [addressForm, setAddressForm] = useState({
+        full_name: "",
+        address_line_1: "",
+        address_line_2: "",
+        city: "",
+        state: "",
+        country: "",
+        postal_code: "",
+        phone_number: "",
+        drop_landmark: "",
+        drop_lat: null,
+        drop_lng: null,
+        is_default: false,
+    });
+
+    // We'll store a reference to the map + marker, if you want to manipulate them later
+    const [map, setMap] = useState(null);
+    const [marker, setMarker] = useState(null);
+
+    // For controlling whether we show the address section:
+    const [orderType, setOrderType] = useState("");
+
+    // ----------------------------------------------
+    // A) LOAD GOOGLE MAPS SCRIPT ONCE
+    // ----------------------------------------------
+    useEffect(() => {
+        if (!googleMapsApiKey) return; // No key => skip
+        if (window.google && window.google.maps) {
+            // Already loaded => just mark as loaded
+            setGoogleScriptLoaded(true);
+            return;
+        }
+        // If we haven't appended yet, do so now
+        if (!googleScriptLoaded) {
+            const script = document.createElement("script");
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}`;
+            script.async = true;
+            script.defer = true;
+            script.onload = () => {
+                setGoogleScriptLoaded(true);
+            };
+            document.body.appendChild(script);
+        }
+    }, [googleMapsApiKey, googleScriptLoaded]);
+
+    // ----------------------------------------------
+    // B) FETCHING DATA ON PAGE LOAD
+    // ----------------------------------------------
+    const fetchAddresses = async () => {
+        const userId = localStorage.getItem("userId");
+        if (!userId) return;
+
+        try {
+            const response = await axios.get(
+                `${import.meta.env.VITE_API_URL}/user-addresses`,
+                {
+                    params: { user_id: userId },
                 }
+            );
+            setAddresses(response.data);
+
+            // Set default address if available
+            const defaultAddress = response.data.find(
+                (addr) => addr.is_default === 1
+            );
+            if (defaultAddress) {
+                setSelectedAddress(defaultAddress.address_id);
+            } else if (response.data.length) {
+                setSelectedAddress(response.data[0].address_id);
+            }
+        } catch (error) {
+            console.error("Error fetching addresses:", error);
+        }
+    };
+
+    const fetchCartItems = async () => {
+        const userId = localStorage.getItem("userId");
+        if (!userId) {
+            alert("User is not logged in. Please log in to view your cart.");
+            return;
+        }
+        try {
+            const response = await axios.get(
+                `${import.meta.env.VITE_API_URL}/cart-items`,
+                {
+                    params: { user_id: userId },
+                }
+            );
+            if (response.data?.CartList) {
+                setCartItems(response.data.CartList);
+            }
+        } catch (error) {
+            console.error("Error fetching cart items:", error.message);
+            alert("Failed to fetch cart data.");
+        }
+    };
+
+    useEffect(() => {
+        const loadData = async () => {
+            setInitialLoading(true);
+            try {
+                await fetchCartItems();
+                await fetchAddresses();
+                const localOrderType = localStorage.getItem("orderType");
+                setOrderType(localOrderType || "");
             } catch (error) {
-                console.error("Error fetching addresses:", error);
+                console.error("Error loading checkout data:", error);
+            } finally {
+                setInitialLoading(false);
             }
         };
-
-        fetchAddresses();
+        loadData();
     }, []);
 
-    // Calculate all amount of product
-    const calculateTotal = () => {
-        return cartItems
-            .reduce((total, cartItem) => {
-                const price = cartItem.sale_price || cartItem.unit_price;
-                return total + price * cartItem.quantity;
-            }, 0)
-            .toFixed(2);
-    };
+    // ----------------------------------------------
+    // C) PAYMENT LOGIC
+    // ----------------------------------------------
+    const calculateOrderTotals = () => {
+        const processedCoupons = new Set();
+        let subtotal = 0;
+        let addonTotal = 0;
+        let gstTotal = 0;
+        let discountTotal = 0;
 
-    // Calculate all amount of the addon product
-    const AddoncalculateTotal = () => {
-        return cartItems
-            .reduce((AddonTotal, cartItem) => {
-                const AddonPrice = cartItem.total_addon_price || 0; // Ensure addon price defaults to 0
-                return AddonTotal + AddonPrice;
-            }, 0)
-            .toFixed(2);
-    };
+        cartItems.forEach((item) => {
+            const price = item.sale_price || item.unit_price;
+            subtotal += price * item.quantity;
+            addonTotal += item.total_addon_price || 0;
 
-    // Calculate all GST amount
-    const GstcalculateTotal = () => {
-        const totalGst = cartItems.reduce((totalGst, cartItem) => {
-            const price = cartItem.sale_price || cartItem.unit_price; // Use sale price if available
-            const itemTotal = price * cartItem.quantity;
-            // Calculate GST for the item
-            const gstPercentage = cartItem.gst || 0; // Default GST to 0 if not provided
-            const itemGst = (itemTotal * gstPercentage) / 100;
-            return totalGst + itemGst; // Accumulate total GST
-        }, 0);
-        return Math.round(totalGst); // Return the rounded total GST
-    };
+            const itemTotal = price * item.quantity;
+            const gstRate = item.gst || 0;
+            gstTotal += (itemTotal * gstRate) / 100;
 
-    const CouponCalculateTotal = () => {
-        return cartItems
-            .reduce((CouponTotal, cartItem) => {
-                const CouponPrice =
-                    parseFloat(cartItem.cou_discount_value) || 0;
-                return CouponTotal + CouponPrice;
-            }, 0)
-            .toFixed(2);
-    };
+            if (
+                item.applied_coupon_id &&
+                !processedCoupons.has(item.applied_coupon_id)
+            ) {
+                discountTotal += parseFloat(item.cou_discount_value || 0);
+                processedCoupons.add(item.applied_coupon_id);
+            }
+        });
 
-    const deliveryCharge = 0.0; // Example delivery charge
-    const ConvenienceCharge = 0.0; // Example Convenience Charge
-    const CouponCodeAmount = parseFloat(CouponCalculateTotal());
-    const totalGst = parseFloat(GstcalculateTotal());
-    const itemTotal = parseFloat(calculateTotal()); // Convert string to number
-    const addonTotal = parseFloat(AddoncalculateTotal()); // Convert string to number
-    const totalAmount = (
-        itemTotal +
-        addonTotal +
-        totalGst +
-        deliveryCharge +
-        ConvenienceCharge -
-        CouponCodeAmount
-    ).toFixed(2);
+        return {
+            subtotal,
+            addonTotal,
+            gstTotal,
+            discountTotal,
+            finalTotal: subtotal + addonTotal + gstTotal - discountTotal,
+        };
+    };
 
     const handleAddToOrder = async (e) => {
         e.preventDefault();
-
         if (!paymentMethod) {
             alert("Please select a payment method.");
             return;
         }
-
-        if (!selectedAddress) {
+        if (orderType === "Delivery" && !selectedAddress) {
             alert("Please select or add a delivery address.");
             return;
         }
 
-        if (paymentMethod === "cod") {
-            const orderId = await createOrder();
-            if (orderId) {
-                alert("Order placed successfully!");
-                setLoading(false);
-                window.location.href = "/";
-            }
-        } else if (paymentMethod === "card") {
-            const orderId = await createOrder();
-            if (orderId) {
-                initiateRazorpay(orderId);
-            }
-        }
-    };
-
-    const createOrder = async () => {
         setLoading(true);
-        const UserID = localStorage.getItem("userId");
+        const userId = localStorage.getItem("userId");
         const OrderType = localStorage.getItem("orderType");
 
         try {
-            const payload = {
-                user_id: UserID,
-                OrderType: OrderType,
-                shipping_address_id: selectedAddress,
-                shipping_charges: deliveryCharge,
-                tax_amount: totalGst,
-                coupon_amount: CouponCodeAmount,
-                total_amount: totalAmount,
-                payment_method: paymentMethod,
-                order_status: "Pending",
+            const totals = calculateOrderTotals();
+            const createOrderResp = await axios.post(
+                `${import.meta.env.VITE_API_URL}/create-razorpay-order`,
+                {
+                    amount: Math.round(totals.finalTotal * 100), // in paise
+                    total_amount: totals.finalTotal,
+                    shipping_address_id: selectedAddress,
+                    shipping_charges: 0,
+                    tax_amount: totals.gstTotal,
+                    coupon_amount: totals.discountTotal,
+                    subtotal_amount: totals.subtotal,
+                    payment_method: paymentMethod,
+                    user_id: userId,
+                    OrderType: OrderType,
+                }
+            );
+
+            if (createOrderResp.data.razorpay_order_id) {
+                const { razorpay_order_id } = createOrderResp.data;
+
+                const options = {
+                    key: import.meta.env.VITE_RAZORPAY_KEY,
+                    amount: Math.round(totals.finalTotal * 100),
+                    currency: "INR",
+                    name: "Pizza Port",
+                    description: "Order Payment",
+                    order_id: razorpay_order_id,
+                    handler: async function (response) {
+                        try {
+                            const verificationResponse = await axios.post(
+                                `${
+                                    import.meta.env.VITE_API_URL
+                                }/confirm-payment`,
+                                {
+                                    razorpay_payment_id:
+                                        response.razorpay_payment_id,
+                                    razorpay_order_id:
+                                        response.razorpay_order_id,
+                                    razorpay_signature:
+                                        response.razorpay_signature,
+                                }
+                            );
+
+                            if (
+                                verificationResponse.data.message ===
+                                "Payment verified and order updated successfully."
+                            ) {
+                                alert("Order placed successfully!");
+                                window.location.href = "/";
+                            }
+                        } catch (error) {
+                            console.error(
+                                "Payment verification failed:",
+                                error
+                            );
+                            alert(
+                                "Payment verification failed. Please contact support."
+                            );
+                        }
+                    },
+                    prefill: {
+                        name: "Customer Name",
+                        email: "customer@example.com",
+                        contact: "9999999999",
+                    },
+                    theme: { color: "#3399cc" },
+                };
+                const razorpay = new window.Razorpay(options);
+                razorpay.open();
+            }
+        } catch (error) {
+            console.error("Error initiating payment:", error);
+            alert("Could not initiate payment. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ----------------------------------------------
+    // D) ADD NEW ADDRESS + MAP LOGIC
+    // ----------------------------------------------
+    const handleOpenAddressModal = () => {
+        setShowAddressModal(true);
+        // Reset form each time
+        setAddressForm({
+            full_name: "",
+            address_line_1: "",
+            address_line_2: "",
+            city: "",
+            state: "",
+            country: "",
+            postal_code: "",
+            phone_number: "",
+            drop_landmark: "",
+            drop_lat: null,
+            drop_lng: null,
+            is_default: false,
+        });
+    };
+
+    const handleCloseAddressModal = () => {
+        setShowAddressModal(false);
+    };
+
+    // Initialize Map once the modal is open AND script is loaded
+    useEffect(() => {
+        if (showAddressModal && googleScriptLoaded) {
+            initMap();
+        }
+    }, [showAddressModal, googleScriptLoaded]);
+
+    // Add these console logs to your useEffect for script loading:
+    useEffect(() => {
+        console.log("Google Maps API Key:", googleMapsApiKey); // Will only show if key exists
+        if (!googleMapsApiKey) {
+            console.error("No Google Maps API key found");
+            return;
+        }
+
+        if (window.google && window.google.maps) {
+            console.log("Google Maps already loaded");
+            setGoogleScriptLoaded(true);
+            return;
+        }
+
+        if (!googleScriptLoaded) {
+            console.log("Loading Google Maps script...");
+            const script = document.createElement("script");
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`;
+            script.async = true;
+            script.defer = true;
+            script.onload = () => {
+                console.log("Google Maps script loaded successfully");
+                setGoogleScriptLoaded(true);
+            };
+            script.onerror = (error) => {
+                console.error("Error loading Google Maps script:", error);
+            };
+            document.body.appendChild(script);
+        }
+    }, [googleMapsApiKey, googleScriptLoaded]);
+
+    // Replace your existing initMap function with this updated version:
+    const initMap = () => {
+        console.log("Initializing map...");
+        if (!window.google) {
+            console.error("Google Maps not loaded yet");
+            return;
+        }
+
+        const mapDiv = document.getElementById("addressMap");
+        if (!mapDiv) {
+            console.error("Map container not found");
+            return;
+        }
+
+        // Ensure the map container has the correct styles
+        mapDiv.style.width = "100%";
+        mapDiv.style.height = "300px";
+        mapDiv.style.position = "relative";
+
+        // Create search input
+        const searchInput = document.createElement("input");
+        searchInput.setAttribute("type", "text");
+        searchInput.setAttribute("placeholder", "Search for your location");
+        searchInput.style.cssText = `
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: calc(100% - 60px);
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        font-size: 14px;
+        z-index: 1;
+        background: white;
+    `;
+        mapDiv.appendChild(searchInput);
+
+        // Lucknow coordinates
+        const lucknowCenter = { lat: 26.8467, lng: 80.9462 };
+
+        try {
+            const mapOptions = {
+                center: lucknowCenter,
+                zoom: 13,
+                mapTypeControl: true,
+                streetViewControl: true,
+                fullscreenControl: true,
+                zoomControl: true,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
             };
 
+            const mapObj = new google.maps.Map(mapDiv, mapOptions);
+            setMap(mapObj);
+
+            const markerObj = new google.maps.Marker({
+                position: lucknowCenter,
+                map: mapObj,
+                draggable: true,
+                animation: google.maps.Animation.DROP,
+            });
+            setMarker(markerObj);
+
+            // Initialize the Places service
+            const searchBox = new google.maps.places.SearchBox(searchInput);
+
+            // Bias the SearchBox results towards current map's viewport
+            mapObj.addListener("bounds_changed", () => {
+                searchBox.setBounds(mapObj.getBounds());
+            });
+
+            // Listen for the event when a user selects a prediction
+            searchBox.addListener("places_changed", () => {
+                const places = searchBox.getPlaces();
+
+                if (places.length === 0) {
+                    return;
+                }
+
+                const place = places[0];
+                if (!place.geometry || !place.geometry.location) {
+                    console.log("Returned place contains no geometry");
+                    return;
+                }
+
+                // If the place has a geometry, then present it on a map
+                if (place.geometry.viewport) {
+                    mapObj.fitBounds(place.geometry.viewport);
+                } else {
+                    mapObj.setCenter(place.geometry.location);
+                    mapObj.setZoom(17);
+                }
+
+                // Update marker position
+                markerObj.setPosition(place.geometry.location);
+
+                // Update form with new location details
+                setAddressForm((prev) => ({
+                    ...prev,
+                    drop_lat: place.geometry.location.lat(),
+                    drop_lng: place.geometry.location.lng(),
+                    address_line_1:
+                        place.formatted_address || prev.address_line_1,
+                    city:
+                        place.address_components?.find((c) =>
+                            c.types.includes("locality")
+                        )?.long_name || prev.city,
+                    state:
+                        place.address_components?.find((c) =>
+                            c.types.includes("administrative_area_level_1")
+                        )?.long_name || prev.state,
+                    postal_code:
+                        place.address_components?.find((c) =>
+                            c.types.includes("postal_code")
+                        )?.long_name || prev.postal_code,
+                    country:
+                        place.address_components?.find((c) =>
+                            c.types.includes("country")
+                        )?.long_name || prev.country,
+                }));
+            });
+
+            // Update coordinates when marker is dragged
+            markerObj.addListener("dragend", () => {
+                const pos = markerObj.getPosition();
+                if (!pos) return;
+
+                // Update form with new coordinates
+                setAddressForm((prev) => ({
+                    ...prev,
+                    drop_lat: pos.lat(),
+                    drop_lng: pos.lng(),
+                }));
+
+                // Reverse geocode the coordinates to get address details
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ location: pos }, (results, status) => {
+                    if (status === "OK" && results[0]) {
+                        const place = results[0];
+                        setAddressForm((prev) => ({
+                            ...prev,
+                            address_line_1: place.formatted_address,
+                            city:
+                                place.address_components?.find((c) =>
+                                    c.types.includes("locality")
+                                )?.long_name || prev.city,
+                            state:
+                                place.address_components?.find((c) =>
+                                    c.types.includes(
+                                        "administrative_area_level_1"
+                                    )
+                                )?.long_name || prev.state,
+                            postal_code:
+                                place.address_components?.find((c) =>
+                                    c.types.includes("postal_code")
+                                )?.long_name || prev.postal_code,
+                            country:
+                                place.address_components?.find((c) =>
+                                    c.types.includes("country")
+                                )?.long_name || prev.country,
+                        }));
+                    }
+                });
+            });
+
+            // Try to get user's current location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                        };
+                        mapObj.setCenter(pos);
+                        markerObj.setPosition(pos);
+                        setAddressForm((prev) => ({
+                            ...prev,
+                            drop_lat: pos.lat,
+                            drop_lng: pos.lng,
+                        }));
+                    },
+                    () => {
+                        console.log(
+                            "Geolocation failed. Using default center."
+                        );
+                    }
+                );
+            }
+        } catch (error) {
+            console.error("Error initializing map:", error);
+        }
+    };
+
+    const handleAddressSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            const userId = localStorage.getItem("userId");
+            if (!userId) {
+                alert("Please login first.");
+                return;
+            }
+            const payload = { ...addressForm, user_id: userId };
+
+            // Post to your user-addresses endpoint
             const response = await axios.post(
-                `${import.meta.env.VITE_API_URL}/orders`,
+                `${import.meta.env.VITE_API_URL}/user-addresses`,
                 payload
             );
 
-            if (response.status === 201) {
-                return response.data.order_id;
-            } else {
-                alert(response.data.message || "Failed to place the order.");
-                return null;
-            }
-        } catch (error) {
-            console.error("Error creating order:", error);
-            alert("Could not create the order. Please try again.");
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const initiateRazorpay = async (orderId) => {
-        setLoading(true);
-
-        try {
-            // Create Razorpay order
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_URL}/create-razorpay-order`,
-                {
-                    amount: totalAmount * 100, // Amount in paise
-                    order_id: orderId,
+            if (response.status === 201 || response.status === 200) {
+                // Refresh address list
+                await fetchAddresses();
+                // Select the newly added address
+                if (response.data?.address_id) {
+                    setSelectedAddress(response.data.address_id);
                 }
-            );
-
-            const { razorpay_order_id } = response.data;
-
-            // Razorpay Checkout Options
-            const options = {
-                key: import.meta.env.VITE_RAZORPAY_KEY,
-                amount: totalAmount * 100,
-                currency: "INR",
-                name: "Pizza Port",
-                description: "Order Payment",
-                order_id: razorpay_order_id,
-                handler: async function (response) {
-                    // Confirm payment
-                    const paymentPayload = {
-                        razorpay_payment_id: response.razorpay_payment_id,
-                        razorpay_order_id: response.razorpay_order_id,
-                        razorpay_signature: response.razorpay_signature,
-                    };
-
-                    await confirmPayment(paymentPayload);
-                },
-                prefill: {
-                    name: "Customer Name",
-                    email: "customer@example.com",
-                    contact: "9999999999",
-                },
-            };
-
-            const paymentObject = new window.Razorpay(options);
-            paymentObject.open();
+                setShowAddressModal(false);
+            }
         } catch (error) {
-            console.error("Error initiating Razorpay:", error);
-            alert("Payment failed. Please try again.");
+            console.error("Error adding address:", error);
+            alert("Failed to add address. Please try again.");
         } finally {
             setLoading(false);
         }
     };
 
-    const confirmPayment = async (paymentPayload) => {
-        setLoading(true);
-
-        try {
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_URL}/confirm-payment`,
-                paymentPayload
-            );
-
-            if (
-                response.status === 200 &&
-                response.data.message ===
-                    "Payment verified and order updated successfully."
-            ) {
-                // If the payment is successful, show success message
-                alert("Payment Successful!");
-                window.location.href = "/";
-            } else {
-                // If for some reason the backend fails, show an error message
-                alert("Payment confirmation failed. Please contact support.");
-            }
-        } catch (error) {
-            // In case of an error, show an error message
-            console.error("Error confirming payment:", error);
-            alert("Payment confirmation failed. Please contact support.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        const fetchCartItems = async () => {
-            const UserID = localStorage.getItem("userId"); // Fetch userId from localStorage
-            if (!UserID) {
-                alert(
-                    "User is not logged in. Please log in to view your cart."
-                );
-                setLoading(false);
-                return;
-            }
-
-            try {
-                const response = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/cart-items`,
-                    {
-                        params: {
-                            user_id: UserID, // Send userId as a query parameter
-                        },
-                    }
-                );
-
-                setCartItems(response.data.CartList);
-            } catch (error) {
-                console.error("Error fetching cart items:", error.message);
-                alert("Failed to fetch cart data.");
-            }
-        };
-
-        fetchCartItems();
-    }, []);
-
-    const fetchOrderData = async () => {
-        try {
-            const response = await axios.get(
-                `${import.meta.env.VITE_API_URL}/check-out`,
-                {
-                    headers: {
-                        Accept: "application/json",
-                        // Include the sanctum token if you've stored it
-                        Authorization: `Bearer ${localStorage.getItem(
-                            "token"
-                        )}`,
-                    },
-                }
-            );
-            console.log(response.data);
-        } catch (error) {
-            console.error("Error fetching order data:", error.message);
-            if (error.response?.status === 401) {
-                // Redirect to login if unauthorized
-                window.location.href = "/login";
-            }
-        }
-    };
-
-    fetchOrderData();
+    // ----------------------------------------------
+    // E) RENDER
+    // ----------------------------------------------
+    if (initialLoading) {
+        return (
+            <MainLayout>
+                <div className="flex justify-center items-center h-screen">
+                    {/* Simple Spinner */}
+                    <svg
+                        className="animate-spin h-12 w-12 text-red-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                        ></circle>
+                        <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8H4z"
+                        ></path>
+                    </svg>
+                </div>
+            </MainLayout>
+        );
+    }
 
     return (
         <MainLayout>
-            {/* <!-- Banner Section --> */}
+            {/* Banner Section */}
             <section className="bg-[url('../images/banner/bnr1.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:opacity-100 after:w-full after:h-full after:top-0 after:left-0 pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] overflow-hidden bg-cover bg-center">
                 <div className="container table h-full relative z-[1] text-center">
                     <div className="dz-bnr-inr-entry align-middle table-cell">
                         <h2 className="font-lobster text-white mb-5 2xl:text-[70px] md:text-[60px] text-[40px] leading-[1.2]">
-                            Shop Cart
+                            Checkout
                         </h2>
                         <nav aria-label="breadcrumb" className="breadcrumb-row">
                             <ul className="breadcrumb bg-primary shadow-[0px_10px_20px_rgba(0,0,0,0.05)] rounded-[10px] inline-block lg:py-[13px] md:py-[10px] sm:py-[5px] py-[7px] lg:px-[30px] md:px-[18px] sm:px-5 px-3.5 m-0">
@@ -317,20 +690,20 @@ function Checkout({ CartList = [] }) {
                                     </Link>
                                 </li>
                                 <li className="breadcrumb-item text-white p-0 inline-block text-[15px] pl-2 font-normal active">
-                                    Shop Cart
+                                    Checkout
                                 </li>
                             </ul>
                         </nav>
                     </div>
                 </div>
             </section>
-            {/* <!-- Banner End --> */}
+            {/* Banner End */}
 
-            {/* <!-- Cart Section --> */}
+            {/* Checkout Section */}
             <section className="py-8 sm:py-12 lg:py-[100px] relative bg-white">
                 <div className="container px-4 sm:px-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Order Summary */}
+                        {/* Left Column - Cart Items */}
                         <div className="w-full">
                             <div className="widget">
                                 <h4 className="widget-title text-xl sm:text-2xl mb-4 pb-3 relative">
@@ -375,6 +748,14 @@ function Checkout({ CartList = [] }) {
                                                             addonIdArray = [];
                                                         }
 
+                                                        const price =
+                                                            cartItem.sale_price ||
+                                                            cartItem.unit_price;
+                                                        const itemTotal = (
+                                                            price *
+                                                            cartItem.quantity
+                                                        ).toFixed(2);
+
                                                         return (
                                                             <tr key={index}>
                                                                 <td className="p-[15px] font-medium border border-[#00000020] product-item-img">
@@ -403,7 +784,6 @@ function Checkout({ CartList = [] }) {
                                                                                         margin: "10px 0",
                                                                                     }}
                                                                                 />
-
                                                                                 <span
                                                                                     style={{
                                                                                         color: "black",
@@ -433,18 +813,7 @@ function Checkout({ CartList = [] }) {
                                                                     }
                                                                 </td>
                                                                 <td className="p-[15px] font-medium border border-[#00000020] text-bodycolor">
-                                                                    {cartItem.sale_price ? (
-                                                                        <>
-                                                                            ₹
-                                                                            {cartItem.sale_price *
-                                                                                cartItem.quantity}
-                                                                        </>
-                                                                    ) : (
-                                                                        `₹${
-                                                                            cartItem.unit_price *
-                                                                            cartItem.quantity
-                                                                        }`
-                                                                    )}
+                                                                    ₹{itemTotal}
                                                                     <br />
                                                                     {cartItem.total_addon_price >
                                                                     0 ? (
@@ -463,15 +832,7 @@ function Checkout({ CartList = [] }) {
                                                                                 cartItem.total_addon_price
                                                                             }
                                                                         </>
-                                                                    ) : (
-                                                                        <span
-                                                                            style={{
-                                                                                color: "#727272",
-                                                                                fontSize:
-                                                                                    "14px",
-                                                                            }}
-                                                                        ></span>
-                                                                    )}
+                                                                    ) : null}
                                                                 </td>
                                                             </tr>
                                                         );
@@ -491,89 +852,123 @@ function Checkout({ CartList = [] }) {
                                     </table>
                                 </div>
                             </div>
+                            {/* Order Summary Component */}
+                            <OrderSummary cartItems={cartItems} />
                         </div>
 
-                        {/* Checkout Form */}
+                        {/* Right Column - Checkout Form */}
                         <div className="w-full">
                             <form
                                 className="shop-form widget"
                                 onSubmit={handleAddToOrder}
                             >
-                                {/* <h4 className="widget-title text-xl sm:text-2xl mb-4 pb-3 relative">
-                                    Delivery Address
-                                </h4>
-
-                                <div className="mb-6">
-                                    {addresses.map((address) => (
-                                        <div
-                                            key={address.address_id}
-                                            className="border rounded-lg p-4 mb-3 cursor-pointer hover:border-primary"
-                                            onClick={() =>
-                                                setSelectedAddress(
-                                                    address.address_id
-                                                )
-                                            }
-                                            style={{
-                                                borderColor:
-                                                    selectedAddress ===
-                                                    address.address_id
-                                                        ? "#ff0000"
-                                                        : "#e5e7eb",
-                                            }}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <input
-                                                    type="radio"
-                                                    name="address"
-                                                    checked={
-                                                        selectedAddress ===
-                                                        address.address_id
-                                                    }
-                                                    onChange={() =>
-                                                        setSelectedAddress(
-                                                            address.address_id
-                                                        )
-                                                    }
-                                                    className="w-4 h-4 text-primary"
-                                                />
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {address.full_name}
-                                                    </p>
-                                                    <p className="text-sm text-gray-600">
-                                                        {address.address_line_1}
-                                                        {address.address_line_2 &&
-                                                            `, ${address.address_line_2}`}
-                                                    </p>
-                                                    <p className="text-sm text-gray-600">
-                                                        {address.city},{" "}
-                                                        {address.state}{" "}
-                                                        {address.postal_code}
-                                                    </p>
-                                                    <p className="text-sm text-gray-600">
-                                                        {address.phone_number}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                {/* Conditionally show address selection if orderType=Delivery */}
+                                {orderType === "Delivery" && (
+                                    <>
+                                        <h4 className="widget-title text-xl sm:text-2xl mb-4 pb-3 relative">
+                                            Delivery Address
+                                        </h4>
+                                        <div className="mb-6">
+                                            {addresses.length > 0 ? (
+                                                addresses.map((address) => (
+                                                    <div
+                                                        key={address.address_id}
+                                                        className="border rounded-lg p-4 mb-3 cursor-pointer hover:border-primary"
+                                                        onClick={() =>
+                                                            setSelectedAddress(
+                                                                address.address_id
+                                                            )
+                                                        }
+                                                        style={{
+                                                            borderColor:
+                                                                selectedAddress ===
+                                                                address.address_id
+                                                                    ? "#ff0000"
+                                                                    : "#e5e7eb",
+                                                        }}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <input
+                                                                type="radio"
+                                                                name="address"
+                                                                checked={
+                                                                    selectedAddress ===
+                                                                    address.address_id
+                                                                }
+                                                                onChange={() =>
+                                                                    setSelectedAddress(
+                                                                        address.address_id
+                                                                    )
+                                                                }
+                                                                className="w-4 h-4 text-primary"
+                                                            />
+                                                            <div>
+                                                                <p className="font-medium">
+                                                                    {
+                                                                        address.full_name
+                                                                    }
+                                                                </p>
+                                                                <p className="text-sm text-gray-600">
+                                                                    {
+                                                                        address.address_line_1
+                                                                    }
+                                                                    {address.address_line_2 &&
+                                                                        `, ${address.address_line_2}`}
+                                                                </p>
+                                                                <p className="text-sm text-gray-600">
+                                                                    {
+                                                                        address.city
+                                                                    }
+                                                                    ,{" "}
+                                                                    {
+                                                                        address.state
+                                                                    }{" "}
+                                                                    {
+                                                                        address.postal_code
+                                                                    }
+                                                                </p>
+                                                                <p className="text-sm text-gray-600">
+                                                                    {
+                                                                        address.phone_number
+                                                                    }
+                                                                </p>
+                                                                {address.drop_lat &&
+                                                                    address.drop_lng && (
+                                                                        <p className="text-xs text-gray-500">
+                                                                            Lat:{" "}
+                                                                            {
+                                                                                address.drop_lat
+                                                                            }
+                                                                            ,
+                                                                            Lng:{" "}
+                                                                            {
+                                                                                address.drop_lng
+                                                                            }
+                                                                        </p>
+                                                                    )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p>
+                                                    No saved addresses. Please
+                                                    add one!
+                                                </p>
+                                            )}
+                                            {/* Add new address button */}
+                                            <button
+                                                type="button"
+                                                onClick={handleOpenAddressModal}
+                                                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+                                            >
+                                                Add New Address
+                                            </button>
                                         </div>
-                                    ))}
-                                </div>
+                                    </>
+                                )}
 
-
-                                <AddressSection
-                                    onAddressAdded={(newAddress) => {
-                                        setAddresses((prev) => [
-                                            ...prev,
-                                            newAddress,
-                                        ]);
-                                        setSelectedAddress(
-                                            newAddress.address_id
-                                        );
-                                    }}
-                                /> */}
-
-                                {/* Payment Method */}
-                                <h4 className="widget-title text-xl sm:text-2xl mt-8 mb-4 pb-3 relative">
+                                <h4 className="widget-title text-xl sm:text-2xl mb-4 pb-3 relative">
                                     Payment Method
                                 </h4>
                                 <div className="form-group pb-5 w-full">
@@ -588,10 +983,7 @@ function Checkout({ CartList = [] }) {
                                         <option value="">
                                             Select Payment Method
                                         </option>
-                                        {/* <option value="cod">
-                                            Cash on Delivery
-                                        </option> */}
-                                        <option value="card">
+                                        <option value="Razorpay">
                                             Online Payment
                                         </option>
                                     </select>
@@ -614,86 +1006,27 @@ function Checkout({ CartList = [] }) {
                     </div>
                 </div>
             </section>
-            {/* <!-- cart Section --> */}
-        </MainLayout>
-    );
-}
 
-function AddressSection({ onAddressAdded }) {
-    const [showModal, setShowModal] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [addressForm, setAddressForm] = useState({
-        full_name: "",
-        address_line_1: "",
-        address_line_2: "",
-        city: "",
-        state: "",
-        country: "",
-        postal_code: "",
-        phone_number: "",
-        is_default: false,
-    });
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            const userId = localStorage.getItem("userId");
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_URL}/user-addresses`,
-                {
-                    ...addressForm,
-                    user_id: userId,
-                }
-            );
-
-            if (response.status === 201) {
-                onAddressAdded(response.data);
-                setShowModal(false);
-                setAddressForm({
-                    full_name: "",
-                    address_line_1: "",
-                    address_line_2: "",
-                    city: "",
-                    state: "",
-                    country: "",
-                    postal_code: "",
-                    phone_number: "",
-                    is_default: false,
-                });
-            }
-        } catch (error) {
-            console.error("Error adding address:", error);
-            alert("Failed to add address. Please try again.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div>
-            <button
-                type="button"
-                onClick={() => setShowModal(true)}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-            >
-                Add New Address
-            </button>
-
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            {/* Address Modal */}
+            {showAddressModal && (
+                // 1) Add a margin-top or a top offset to avoid going behind the header
+                <div
+                    className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto"
+                    style={{ marginTop: "80px" }} // or use a tailwind class like "mt-20"
+                >
                     <div
                         className="fixed inset-0 bg-black opacity-50"
-                        onClick={() => setShowModal(false)}
+                        onClick={handleCloseAddressModal}
                     />
-
-                    <div className="bg-white w-full max-w-md rounded-lg z-10 p-6 relative max-h-[70vh] overflow-y-auto">
+                    <div className="bg-white w-full max-w-2xl rounded-lg z-10 p-6 relative max-h-[90vh] overflow-y-auto">
                         <h2 className="text-xl font-semibold mb-4">
                             Add New Address
                         </h2>
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <form
+                            onSubmit={handleAddressSubmit}
+                            className="space-y-4"
+                        >
+                            {/* -- Address fields -- */}
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium">
                                     Full Name
@@ -711,7 +1044,6 @@ function AddressSection({ onAddressAdded }) {
                                     required
                                 />
                             </div>
-
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium">
                                     Address Line 1
@@ -729,7 +1061,6 @@ function AddressSection({ onAddressAdded }) {
                                     required
                                 />
                             </div>
-
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium">
                                     Address Line 2
@@ -787,25 +1118,6 @@ function AddressSection({ onAddressAdded }) {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="block text-sm font-medium">
-                                        Postal Code
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={addressForm.postal_code}
-                                        onChange={(e) =>
-                                            setAddressForm((prev) => ({
-                                                ...prev,
-                                                postal_code: e.target.value,
-                                            }))
-                                        }
-                                        className="w-full p-2 border rounded-md"
-                                        required
-                                        pattern="[0-9]*"
-                                        maxLength="6"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium">
                                         Country
                                     </label>
                                     <input
@@ -821,6 +1133,23 @@ function AddressSection({ onAddressAdded }) {
                                         required
                                     />
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium">
+                                        Postal Code
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={addressForm.postal_code}
+                                        onChange={(e) =>
+                                            setAddressForm((prev) => ({
+                                                ...prev,
+                                                postal_code: e.target.value,
+                                            }))
+                                        }
+                                        className="w-full p-2 border rounded-md"
+                                        required
+                                    />
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -828,7 +1157,7 @@ function AddressSection({ onAddressAdded }) {
                                     Phone Number
                                 </label>
                                 <input
-                                    type="tel"
+                                    type="text"
                                     value={addressForm.phone_number}
                                     onChange={(e) =>
                                         setAddressForm((prev) => ({
@@ -838,11 +1167,26 @@ function AddressSection({ onAddressAdded }) {
                                     }
                                     className="w-full p-2 border rounded-md"
                                     required
-                                    pattern="[0-9]*"
-                                    maxLength="10"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium">
+                                    Drop Landmark
+                                </label>
+                                <input
+                                    type="text"
+                                    value={addressForm.drop_landmark}
+                                    onChange={(e) =>
+                                        setAddressForm((prev) => ({
+                                            ...prev,
+                                            drop_landmark: e.target.value,
+                                        }))
+                                    }
+                                    className="w-full p-2 border rounded-md"
                                 />
                             </div>
 
+                            {/* is_default checkbox */}
                             <div className="flex items-center space-x-2 mt-4">
                                 <input
                                     type="checkbox"
@@ -861,10 +1205,33 @@ function AddressSection({ onAddressAdded }) {
                                 </label>
                             </div>
 
+                            {/* Google Map Container */}
+                            <div
+                                className="mt-4 relative"
+                                style={{ minHeight: "300px" }}
+                            >
+                                <label className="block text-sm font-medium mb-2">
+                                    Map
+                                </label>
+                                <div
+                                    id="addressMap"
+                                    className="relative w-full h-[300px] border rounded-lg"
+                                ></div>
+                                {addressForm.drop_lat &&
+                                    addressForm.drop_lng && (
+                                        <p className="text-sm mt-1">
+                                            Current Marker Position: (Lat:{" "}
+                                            {addressForm.drop_lat}, Lng:{" "}
+                                            {addressForm.drop_lng})
+                                        </p>
+                                    )}
+                            </div>
+
+                            {/* Buttons */}
                             <div className="flex justify-end space-x-4 mt-6">
                                 <button
                                     type="button"
-                                    onClick={() => setShowModal(false)}
+                                    onClick={handleCloseAddressModal}
                                     className="px-4 py-2 text-gray-600 hover:text-gray-800"
                                 >
                                     Cancel
@@ -881,8 +1248,8 @@ function AddressSection({ onAddressAdded }) {
                     </div>
                 </div>
             )}
-        </div>
+        </MainLayout>
     );
-}
+};
 
 export default Checkout;

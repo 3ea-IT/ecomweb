@@ -1,116 +1,88 @@
-import React from 'react'
-import MainLayout from '../Layouts/MainLayout';
-import { Link } from '@inertiajs/react';
+import React from "react";
+import MainLayout from "../Layouts/MainLayout";
+import { Link } from "@inertiajs/react";
+import { Calendar, Eye, Clock } from "lucide-react";
 
-function Blog() {
-  return (
-    <MainLayout>
-        {/* <!-- Banner  --> */}
-        <section className="bg-[url('../images/banner/bnr3.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:opacity-100 after:w-full after:h-full after:top-0 after:left-0  pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] overflow-hidden bg-cover bg-center">
-            <div className="container table h-full relative z-[1] text-center">
-                <div className="dz-bnr-inr-entry align-middle table-cell">
-                    <h2 className="font-lobster text-white mb-5 2xl:text-[70px] md:text-[60px] text-[40px] leading-[1.2]">Our Blogs</h2>
-                    {/* <!-- Breadcrumb Row --> */}
-                    <nav aria-label="breadcrumb" className="breadcrumb-row">
-                        <ul className="breadcrumb bg-primary shadow-[0px_10px_20px_rgba(0,0,0,0.05)] rounded-[10px] inline-block lg:py-[13px] md:py-[10px] sm:py-[5px] py-[7px] lg:px-[30px] md:px-[18px] sm:px-5 px-3.5 m-0">
-                            <li className="breadcrumb-item p-0 inline-block text-[15px] font-normal"><Link href="/" className="text-white">Home</Link></li>
-                            <li className="breadcrumb-item text-white p-0 inline-block text-[15px] pl-2 font-normal active">Our Blogs</li>
-                        </ul>
-                    </nav>
-                    {/* <!-- Breadcrumb Row End --> */}
+const BlogCard = ({ blog }) => (
+    <div className="group bg-white rounded-xl shadow-lg overflow-hidden transition-transform duration-300 hover:-translate-y-1">
+        <div className="aspect-[16/9] overflow-hidden">
+            <img
+                src={blog.cover_image}
+                alt={blog.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+        </div>
+        <div className="p-6">
+            <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                <div className="flex items-center gap-1">
+                    <Calendar size={16} className="text-primary" />
+                    <span>
+                        {new Date(blog.published_at).toLocaleDateString()}
+                    </span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <Eye size={16} className="text-primary" />
+                    <span>{blog.views} views</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <Clock size={16} className="text-primary" />
+                    <span>{blog.read_time} min read</span>
                 </div>
             </div>
-        </section>
-        {/* <!-- Banner End --> */}
 
-        {/* <!-- Blog Section --> */}
-        <section className="content-inner-1 sm:pt-[100px] pt-[50px] lg:pb-[100px] pb-[70px] relative bg-white">
-            <div className="container">
-                <div className="row loadmore-content">
-                    <div className="lg:w-1/3 md:1/2 w-full px-[15px]">
-                        <div className="overlay-shine rounded-lg overflow-hidden shadow-[0_15px_55px_rgba(34,34,34,0.1)] bg-white group mb-[30px]">
-                            <div className="dz-media w-full h-full mb-0 relative overflow-hidden">
-                                <a href="javascript:void(0);" className="block">
-                                    <img src="/asset/images/blog/grid3/pic1.jpg" alt="/" className="block w-full group-hover:scale-110 duration-500" />
-                                </a>
-                            </div>
-                            <div className="content flex-col flex p-[30px] max-xl:p-5 relative">
-                                <div className="mb-2.5">
-                                    <ul className="flex">
-                                        <li className="inline-block relative text-[13px] mr-3">
-                                            <a href="javascript:void(0);" className="text-sm font-medium text-bodycolor"><i className="flaticon-calendar-date text-xs text-primary mr-[5px] translate-y-[1px] scale-150"></i> 30 Nov 2024</a>
-                                        </li>
-                                        <li className="inline-block relative text-[13px] mr-3">
-                                            <a href="javascript:void(0);" className="text-sm font-medium text-bodycolor"><i className="flaticon-chat-bubble text-base text-primary mr-[5px]"></i> 3.5K </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <h5 className="mb-2">Paradise Taste of Dishes</h5>
-                                <p>There are many variations of passages of Lorem Ipsum available, but the majority have.</p>
-                                <div>
-                                    <Link href="/blogsDetail" className="py-3 px-6 text-sm font-medium relative inline-flex items-center justify-center rounded-md mt-[18px]  bg-primary border-primary text-white btn-hover-2">Read More</Link>
-                                </div>
-                            </div>
-                        </div>
+            <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
+                <Link href={`/blogs/${blog.slug}`}>{blog.title}</Link>
+            </h3>
+
+            <p className="text-gray-600 mb-4 line-clamp-2">{blog.brief}</p>
+
+            <Link
+                href={`/blogs/${blog.slug}`}
+                className="inline-flex items-center text-primary font-medium hover:gap-2 transition-all"
+            >
+                Read More <span className="ml-1">→</span>
+            </Link>
+        </div>
+    </div>
+);
+
+export default function Blog({ blogs }) {
+    return (
+        <MainLayout>
+            <div className="relative">
+                {/* Hero Section */}
+                <section
+                    className="relative h-[300px] flex items-center justify-center bg-gradient-to-r from-primary to-primary/80 overflow-hidden mt-20"
+                    style={{
+                        backgroundImage:
+                            "url(/assets/images/extras/blogs-cover.avif)",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                    }}
+                >
+                    <div className="absolute inset-0 bg-black/50" />
+                    <div className="relative z-10 text-center px-4">
+                        <h1 className="text-5xl font-bold text-white mb-4">
+                            Our Blog
+                        </h1>
+                        <p className="text-xl text-white/90 max-w-2xl mx-auto">
+                            Discover our latest articles, tips, and stories
+                            about food and hospitality
+                        </p>
                     </div>
-                    <div className="lg:w-1/3 md:1/2 w-full px-[15px]">
-                        <div className="overlay-shine rounded-lg overflow-hidden shadow-[0_15px_55px_rgba(34,34,34,0.1)] bg-white group mb-[30px]">
-                            <div className="dz-media w-full h-full mb-0 relative overflow-hidden">
-                                <a href="javascript:void(0);" className="block">
-                                    <img src="/asset/images/blog/grid3/pic2.jpg" alt="/" className="block w-full group-hover:scale-110 duration-500" />
-                                </a>
-                            </div>
-                            <div className="content flex-col flex p-[30px] max-xl:p-5 relative">
-                                <div className="mb-2.5">
-                                    <ul className="flex">
-                                        <li className="inline-block relative text-[13px] mr-3">
-                                            <a href="javascript:void(0);" className="text-sm font-medium text-bodycolor"><i className="flaticon-calendar-date text-xs text-primary mr-[5px] translate-y-[1px] scale-150"></i> 30 Nov 2024</a>
-                                        </li>
-                                        <li className="inline-block relative text-[13px] mr-3">
-                                            <a href="javascript:void(0);" className="text-sm font-medium text-bodycolor"><i className="flaticon-chat-bubble text-xs text-primary mr-[5px] translate-y-[1px] scale-150"></i> 3.5K </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <h5 className="mb-2">Taste of Paradise Dishes</h5>
-                                <p>There are many variations of passages of Lorem Ipsum available, but the majority have.</p>
-                                <div>
-                                    <Link href="/blogsDetail" className="py-3 px-6 text-sm font-medium relative inline-flex items-center justify-center rounded-md mt-[18px]  bg-primary border-primary text-white btn-hover-2">Read More</Link>
-                                </div>
-                            </div>
-                        </div>
+                </section>
+
+                {/* Blog Grid */}
+                <section className="py-16 px-4 max-w-7xl mx-auto">
+                    <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-8">
+                        {blogs.data.map((blog) => (
+                            <BlogCard key={blog.id} blog={blog} />
+                        ))}
                     </div>
-                    <div className="lg:w-1/3 md:1/2 w-full px-[15px]">
-                        <div className="overlay-shine rounded-lg overflow-hidden shadow-[0_15px_55px_rgba(34,34,34,0.1)] bg-white group mb-[30px]">
-                            <div className="dz-media w-full h-full mb-0 relative overflow-hidden">
-                                <a href="javascript:void(0);" className="block">
-                                    <img src="/asset/images/blog/grid3/pic3.jpg" alt="/" className="block w-full group-hover:scale-110 duration-500" />
-                                </a>
-                            </div>
-                            <div className="content flex-col flex p-[30px] max-xl:p-5 relative">
-                                <div className="mb-2.5">
-                                    <ul className="flex">
-                                        <li className="inline-block relative text-[13px] mr-3">
-                                            <a href="javascript:void(0);" className="text-sm font-medium text-bodycolor"><i className="flaticon-calendar-date text-xs text-primary mr-[5px] translate-y-[1px] scale-150"></i> 30 Nov 2024</a>
-                                        </li>
-                                        <li className="inline-block relative text-[13px] mr-3">
-                                            <a href="javascript:void(0);" className="text-sm font-medium text-bodycolor"><i className="flaticon-chat-bubble text-xs text-primary mr-[5px] translate-y-[1px] scale-150"></i> 3.5K </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <h5 className="mb-2">The Fork & Knife</h5>
-                                <p>There are many variations of passages of Lorem Ipsum available, but the majority have.</p>
-                                <div>
-                                    <Link href="/blogsDetail" className="py-3 px-6 text-sm font-medium relative inline-flex items-center justify-center rounded-md mt-[18px]  bg-primary border-primary text-white btn-hover-2">Read More</Link>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
+                    {/* Pagination - Add your pagination component here */}
+                </section>
             </div>
-        </section>
-        {/* <!-- Blog Section --> */}
-    </MainLayout>
-  )
+        </MainLayout>
+    );
 }
-
-export default Blog

@@ -3743,7 +3743,7 @@ img {
 
 /* Pointer ring */
 
-#cursor {
+/* #cursor {
     position: fixed;
     top: -5px;
     left: -5px;
@@ -3769,7 +3769,7 @@ img {
     transition: top 0.15s ease-out, left 0.15s ease-out, width 0.15s ease-out,
         height 0.15s ease-out, background-color 0.15s ease-out;
     z-index: 100000;
-}
+} */
 
 /* Sticky header  */
 
@@ -4496,7 +4496,7 @@ h6 a,
 
 [data-body-bg="color_1"] {
     /* background-color: #7da640; */
-    background-color: #ee2737;
+    background-color: #ffffff;
 }
 
 [data-body-bg="color_2"] {

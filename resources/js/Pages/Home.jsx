@@ -36,11 +36,12 @@ const SpecialMenu = ({ data, reviews }) => {
                                                     A STORY OF THE BEST
                                                     RESTAURANT
                                                 </span>
-                                                <h1 className="font-lobster mb-2.5 text-black2">
-                                                    Pizzaport &{" "}
-                                                    <span className="text-primary">
-                                                        Cafe
+                                                <h1 className="font-lobster text-4xl md:text-5xl lg:text-6xl text-gray-800 mb-4">
+                                                    Pizzaport{" "}
+                                                    <span className="font-serif font-bold">
+                                                        &{" "}
                                                     </span>
+                                                    <span>Cafe</span>
                                                 </h1>
                                                 <p className="max-w-[500px] lg:text-lg sm:text-base text-sm leading-[27px]">
                                                     Pizzaport & Cafe was
@@ -64,9 +65,9 @@ const SpecialMenu = ({ data, reviews }) => {
                                                 <div className="banner-btn flex items-center lg:mt-10 mt-[25px] gap-[30px]">
                                                     <Link
                                                         href="/menu"
-                                                        className="btn btn-outline text-primary btn-md btn-hover-1"
+                                                        className="inline-flex items-center px-8 py-3 rounded-full bg-primary text-white hover:bg-primary/90 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
                                                     >
-                                                        <span>
+                                                        <span className="font-medium">
                                                             Explore Menu
                                                         </span>
                                                     </Link>
@@ -76,7 +77,7 @@ const SpecialMenu = ({ data, reviews }) => {
                                         <div className="md:w-5/12 px-[15px]">
                                             <div className="banner-media">
                                                 <img
-                                                    src="/assets/images/product/slice.png"
+                                                    src="/assets/images/extras/burger_main.png"
                                                     alt="Main Slider 1"
                                                     className="xl:w-[600px] lg:w-[500px] md:w-[100%] sm:w-[350px] w-[300px]"
                                                 />
@@ -109,7 +110,7 @@ const SpecialMenu = ({ data, reviews }) => {
             <section className="lg:pt-[100px] pt-[50px] lg:pb-[70px] pb-[40px] bg-white relative overflow-hidden section-wrapper-2">
                 <div className="container">
                     <div className="2xl:mb-[50px] mb-[25px] relative mx-auto text-center">
-                        <h2 className="font-lobster">Most Selling Items</h2>
+                        <h2 className="font-lobster">Best Selling Items</h2>
                     </div>
 
                     {/* Product Grid */}
@@ -262,7 +263,7 @@ const SpecialMenu = ({ data, reviews }) => {
             <section className="bg-light relative section-wrapper-3  after:content-[''] after:h-[200px] after:w-full after:bg-white after:absolute after:bottom-0 after:left-0 after:z-[0] sm:py-[100px] py-[50px]">
                 <div className="container">
                     <div className="2xl:mb-[50px] mb-[25px] relative mx-auto text-center">
-                        <h2 className="font-lobster">Quality Service's</h2>
+                        <h2 className="font-lobster">Quality Services</h2>
                     </div>
                     <div className="icon-wrapper1 bg-white rounded-[15px] relative z-[1]">
                         <div className="row">
@@ -274,7 +275,7 @@ const SpecialMenu = ({ data, reviews }) => {
                                         </div>
                                         <div className="icon-content overflow-hidden text-center">
                                             <h5 className="mb-2">
-                                                American Pizza's
+                                                American Pizzas
                                             </h5>
                                             <p className="sm:text-base text-[15px] group-hover:text-white">
                                                 Savor the taste of tradition
@@ -318,7 +319,7 @@ const SpecialMenu = ({ data, reviews }) => {
                                         </div>
                                         <div className="icon-content overflow-hidden text-center">
                                             <h5 className="mb-2">
-                                                Burger & Sandwich's
+                                                Burger & Sandwiches
                                             </h5>
                                             <p className="sm:text-base text-[15px] group-hover:text-white">
                                                 Sink your teeth into our
@@ -723,18 +724,95 @@ const SpecialMenu = ({ data, reviews }) => {
             </section>
             {/* News & Blog Section End */}
 
+            <section className="relative py-16 bg-[url('/assets/images/extras/reservation-bg.png')] bg-cover bg-center bg-no-repeat">
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-black/70"></div>
+
+                {/* Content Container */}
+                <div className="container relative z-10">
+                    <div className="max-w-4xl mx-auto text-center text-white">
+                        <h2 className="font-lobster text-4xl md:text-5xl lg:text-6xl mb-4">
+                            Reserve Your Special Moments
+                        </h2>
+                        <p className="text-lg md:text-xl mb-8 text-gray-200">
+                            Create unforgettable memories at Pizzaport & Cafe.
+                            Perfect for birthdays, anniversaries, or any
+                            celebration.
+                        </p>
+                        <Link
+                            href="/reservations"
+                            className="inline-flex items-center px-8 py-4 bg-primary hover:bg-primary/90 text-white rounded-full text-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                        >
+                            <span className="mr-2">Book Now</span>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                            >
+                                <path
+                                    fillRule="evenodd"
+                                    d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                                    clipRule="evenodd"
+                                />
+                            </svg>
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Decorative Elements */}
+                <div className="absolute bottom-0 left-0 w-full overflow-hidden">
+                    <div className="relative h-16">
+                        <div
+                            className="absolute bottom-0 left-0 w-[200%] h-20 bg-white"
+                            style={{
+                                clipPath: "polygon(100% 0, 0% 100%, 100% 100%)",
+                                opacity: "0.1",
+                            }}
+                        ></div>
+                    </div>
+                </div>
+            </section>
+
             {/* Map Iframe Section */}
-            <div className="map-iframe style-1 relative">
-                <iframe
-                    className="w-full lg:h-[400px] sm:h-[350px] h-[300px] mb-[-10px]"
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3558.656913465935!2d80.94247997527054!3d26.88263937666514!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399bfd7fd5e8d487%3A0x5c3761f18a185ba3!2sPizzaport%20%26%20Cafe!5e0!3m2!1sen!2sin!4v1734323022706!5m2!1sen!2sin"
-                    width="400"
-                    height="350"
-                    style={{ border: 0 }}
-                    allowFullScreen=""
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                ></iframe>
+            <div className="relative p-6 bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl">
+                {/* Title Section */}
+                <h3 className="text-2xl font-bold mb-4 text-gray-800 border-b pb-2">
+                    Find Us Here
+                </h3>
+
+                {/* Map Wrapper */}
+                <div className="relative overflow-hidden rounded-xl">
+                    {/* Info Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-4 transform translate-y-full hover:translate-y-0 transition-transform duration-300">
+                        <h4 className="font-semibold text-lg">
+                            Pizzaport & Cafe
+                        </h4>
+                        <p className="text-sm opacity-90">
+                            Best dining experience in town
+                        </p>
+                        <div className="mt-2 text-sm space-y-1">
+                            <p className="flex items-center gap-2">
+                                <span className="w-4">📍</span> Location Address
+                            </p>
+                            <p className="flex items-center gap-2">
+                                <span className="w-4">📞</span> +1234567890
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Map iframe */}
+                    <iframe
+                        className="w-full lg:h-[400px] sm:h-[350px] h-[300px] transition-all duration-300 hover:brightness-105"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3558.656913465935!2d80.94247997527054!3d26.88263937666514!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399bfd7fd5e8d487%3A0x5c3761f18a185ba3!2sPizzaport%20%26%20Cafe!5e0!3m2!1sen!2sin!4v1734323022706!5m2!1sen!2sin"
+                        width="400"
+                        height="350"
+                        style={{ border: 0 }}
+                        allowFullScreen=""
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                    ></iframe>
+                </div>
             </div>
             {/* Map Iframe Section End */}
 
@@ -754,10 +832,10 @@ const Home = (props) => {
 
         // Check if there's a saved orderType in localStorage
         const orderType = localStorage.getItem("orderType");
-        if (orderType) {
-            setShowModal(false); // Hide the modal if an order type is already saved
-            console.log("Saved Order Type:", orderType); // Optionally, log the saved order type
-        }
+        // if (orderType) {
+        //     setShowModal(false); // Hide the modal if an order type is already saved
+        //     console.log("Saved Order Type:", orderType); // Optionally, log the saved order type
+        // }
     }, [props]);
 
     if (!data) {
@@ -765,8 +843,10 @@ const Home = (props) => {
     }
 
     const closeModal = (value) => {
-        if (value === "Dotpay") {
-            window.location.href = "https://pizzaportandcafe.dotpe.in/";
+        if (value === "Delivery") {
+            // window.location.href = "https://pizzaportandcafe.dotpe.in/";
+            localStorage.setItem("orderType", value);
+            setShowModal(false);
         } else {
             localStorage.setItem("orderType", value);
             setShowModal(false);
@@ -843,7 +923,7 @@ const Home = (props) => {
                                 padding: "10px",
                                 textAlign: "center",
                             }}
-                            onClick={() => closeModal("Dotpay")} // Pass value to closeModal
+                            onClick={() => closeModal("Delivery")} // Pass value to closeModal
                         >
                             Delivery
                         </button>

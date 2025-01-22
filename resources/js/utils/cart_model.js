@@ -51,6 +51,85 @@ axios.interceptors.response.use(
     }
 );
 
+// Add new function to handle localStorage cart
+export const getGuestCart = () => {
+    const cart = localStorage.getItem("guestCart");
+    return cart ? JSON.parse(cart) : [];
+};
+
+export const updateGuestCart = (cart) => {
+    localStorage.setItem("guestCart", JSON.stringify(cart));
+};
+
+export const mergeGuestCart = async () => {
+    try {
+        const guestCart = JSON.parse(localStorage.getItem("guestCart") || "[]");
+        if (guestCart.length === 0) return;
+
+        // Track successful merges to remove from guest cart
+        const successfulMerges = [];
+
+        for (const item of guestCart) {
+            try {
+                // Extract addon_ids from the stored addon_ids array or string
+                let addonIds = [];
+                if (item.addon_ids) {
+                    // Handle both string and array formats
+                    if (typeof item.addon_ids === "string") {
+                        addonIds = item.addon_ids
+                            .split(",")
+                            .map((id) => parseInt(id.trim()));
+                    } else if (Array.isArray(item.addon_ids)) {
+                        addonIds = item.addon_ids;
+                    }
+                }
+
+                // Prepare payload matching your CartController expectations
+                const payload = {
+                    product_id: item.product_id,
+                    variation_id: item.variation_id || null,
+                    addon_ids: addonIds,
+                    quantity: item.quantity,
+                };
+
+                // Make request to add item to cart
+                await axios.post("/cart/add", payload);
+
+                // Mark this item for removal from guest cart
+                successfulMerges.push(item.cart_item_id);
+            } catch (error) {
+                console.error(
+                    `Failed to merge cart item ${item.product_id}:`,
+                    error
+                );
+                // Continue with next item even if this one fails
+            }
+        }
+
+        // Remove successfully merged items from guest cart
+        if (successfulMerges.length > 0) {
+            const remainingItems = guestCart.filter(
+                (item) => !successfulMerges.includes(item.cart_item_id)
+            );
+
+            if (remainingItems.length === 0) {
+                // All items merged successfully, clear guest cart
+                localStorage.removeItem("guestCart");
+            } else {
+                // Update guest cart with remaining items
+                localStorage.setItem(
+                    "guestCart",
+                    JSON.stringify(remainingItems)
+                );
+            }
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Error merging guest cart:", error);
+        return false;
+    }
+};
 /**
  * Function to handle "Add to Cart" click event
  * @param {number} productId - The ID of the product to add to cart
@@ -60,36 +139,31 @@ export const handleAddToCartClick = async (
     setDrawer1OpenFromParent
 ) => {
     const userId = localStorage.getItem("userId");
+
     if (!userId) {
-        toast.error("Please login to add items to cart", {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-        });
-
-        console.log("xyz", setDrawer1OpenFromParent);
-        // Add a small delay to ensure the toast is visible before opening the drawer
-        if (
-            setDrawer1OpenFromParent &&
-            typeof setDrawer1OpenFromParent === "function"
-        ) {
-            console.log("Opening Drawer from Parent");
-            setDrawer1OpenFromParent(true);
+        try {
+            // Fetch product details
+            const response = await axios.get(`/products/${productId}`);
+            const product = response.data.data;
+            console.log("Fetched Product:", product);
+            // Instead of showing login prompt, open cart modal for guest
+            OpenCart("", product, true);
+        } catch (error) {
+            console.error("Error fetching product details:", error);
+            toast.error(
+                error.response?.data?.error ||
+                    "Failed to fetch product details."
+            );
         }
-
         return;
     }
 
+    // Existing logged-in user flow
     try {
-        // Rest of your existing code for handling logged-in users
         const response = await axios.get(`/products/${productId}`);
         const product = response.data.data;
         console.log("Fetched Product:", product);
-        OpenCart("", product);
+        OpenCart("", product, false);
     } catch (error) {
         console.error("Error fetching product details:", error);
         toast.error(
@@ -103,7 +177,7 @@ export const handleAddToCartClick = async (
  * @param {string} title - Title of the modal
  * @param {object} product - Product data
  */
-export const OpenCart = (title, product) => {
+export const OpenCart = (title, product, isGuest = false) => {
     const {
         product_id,
         product_name,
@@ -180,7 +254,7 @@ export const OpenCart = (title, product) => {
                     addons && addons.length > 0
                         ? `
                     <div class="mb-3">
-                        <h4 class="text-xs font-semibold text-gray-700 mb-2 text-left">Add Extra</h4>
+                        <h4 class="text-xs font-semibold text-gray-700 mb-2 text-left">Make it EXTRA yummy</h4>
                         <div class="space-y-2">
                             ${addons
                                 .map(
@@ -323,31 +397,78 @@ export const OpenCart = (title, product) => {
     }).then((result) => {
         if (result.isConfirmed) {
             const { variation_id, addon_ids, quantity } = result.value;
-            axios
-                .post("/cart/add", {
+
+            if (isGuest) {
+                // Handle guest cart
+                const guestCart = getGuestCart();
+
+                // Find selected variation and addons
+                const selectedVariation = variations.find(
+                    (v) => v.variation_id === variation_id
+                );
+                const selectedAddons = addons.filter((addon) =>
+                    addon_ids.includes(addon.product_id)
+                );
+
+                const cartItem = {
+                    cart_item_id: Date.now(), // Unique identifier
                     product_id,
+                    product_name,
+                    product_description,
+                    product_image_url: main_image_url,
                     variation_id,
+                    variation_name: selectedVariation?.variation_name,
                     addon_ids,
+                    addon_names: selectedAddons
+                        .map((a) => a.product_name)
+                        .join(", "),
                     quantity,
-                })
-                .then((response) => {
-                    Swal.fire({
-                        icon: "success",
-                        title: "Added to cart!",
-                        showConfirmButton: false,
-                        timer: 1500,
-                    });
-                })
-                .catch((error) => {
-                    console.error("Error adding to cart:", error);
-                    Swal.fire({
-                        icon: "error",
-                        title: "Oops...",
-                        text:
-                            error.response?.data?.error ||
-                            "Failed to add to cart",
-                    });
+                    unit_price: selectedVariation?.base_sp || base_sale_price,
+                    sale_price: selectedVariation?.base_sp || base_sale_price,
+                    total_addon_price: selectedAddons.reduce(
+                        (sum, addon) => sum + addon.base_sale_price,
+                        0
+                    ),
+                    gst: 0, // Add appropriate GST calculation if needed
+                };
+
+                guestCart.push(cartItem);
+                updateGuestCart(guestCart);
+
+                Swal.fire({
+                    icon: "success",
+                    title: "Added to cart!",
+                    showConfirmButton: false,
+                    timer: 1500,
                 });
+            } else {
+                // Existing logged-in user flow
+                axios
+                    .post("/cart/add", {
+                        product_id,
+                        variation_id,
+                        addon_ids,
+                        quantity,
+                    })
+                    .then((response) => {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Added to cart!",
+                            showConfirmButton: false,
+                            timer: 1500,
+                        });
+                    })
+                    .catch((error) => {
+                        console.error("Error adding to cart:", error);
+                        Swal.fire({
+                            icon: "error",
+                            title: "Oops...",
+                            text:
+                                error.response?.data?.error ||
+                                "Failed to add to cart",
+                        });
+                    });
+            }
         }
     });
 };

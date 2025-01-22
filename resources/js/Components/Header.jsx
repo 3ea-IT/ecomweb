@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, usePage } from "@inertiajs/react";
+import {
+    getGuestCart,
+    updateGuestCart,
+    mergeGuestCart,
+} from "../utils/cart_model";
+import axios from "axios";
 function Header({ isDrawer1Open, setDrawer1Open }) {
     const { cartCount, auth } = usePage().props;
     const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -35,6 +41,14 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
             } catch (error) {
                 console.error("Error fetching cart count:", error);
             }
+        } else {
+            // Fallback: sum the quantity in localStorage guestCart
+            const guestCart = getGuestCart();
+            const totalQty = guestCart.reduce(
+                (acc, item) => acc + (item.quantity || 0),
+                0
+            );
+            setLocalCartCount(totalQty);
         }
     };
 
@@ -62,11 +76,13 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
         setIsLoading(true);
 
         try {
+            // 1) CSRF
             await fetch(`${import.meta.env.VITE_API_URL}/sanctum/csrf-cookie`, {
                 method: "GET",
                 credentials: "include",
             });
 
+            // 2) POST login
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/UserLogin`,
                 {
@@ -87,20 +103,26 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
 
             const result = await response.json();
 
+            // 3) If success
             if (result.token) {
                 localStorage.setItem("authToken", result.token);
             }
 
             if (result.user && result.user.name) {
+                // Store user info in localStorage
                 localStorage.setItem("user", result.user.name);
                 localStorage.setItem("userId", result.user.LogId);
                 setUser(result.user.name);
                 setUserID(result.user.LogId);
                 setIsLoggedIn(true);
                 setUserName(result.user.name);
-                await fetchCartCount();
             }
 
+            // 4) Merge guest cart with user's cart
+            await mergeGuestCart();
+
+            // 5) Refresh the cart count, close drawer, reload
+            await fetchCartCount();
             setDrawer1Open(false);
             window.location.reload();
         } catch (error) {
@@ -187,10 +209,10 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                                     Blogs
                                 </Link>
                                 <Link
-                                    href="/contact"
+                                    href="/reservations"
                                     className="hover:text-primary transition-colors"
                                 >
-                                    Contact Us
+                                    Reserve Your Table
                                 </Link>
                             </nav>
 
@@ -339,22 +361,24 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                                     Outlets
                                 </Link>
                                 <Link
-                                    href="/about"
-                                    className="block py-2 hover:text-primary transition-colors"
-                                >
-                                    About
-                                </Link>
-                                <Link
                                     href="/menu"
                                     className="block py-2 hover:text-primary transition-colors"
                                 >
                                     Menu
                                 </Link>
+                                {isLoggedIn && (
+                                    <Link
+                                        href="/OrderHistory"
+                                        className="block py-2 hover:text-primary transition-colors"
+                                    >
+                                        Orders
+                                    </Link>
+                                )}
                                 <Link
-                                    href="/OrderHistory"
+                                    href="/reviews"
                                     className="block py-2 hover:text-primary transition-colors"
                                 >
-                                    Orders
+                                    Reviews
                                 </Link>
                                 <Link
                                     href="/blogs"
@@ -363,10 +387,10 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                                     Blogs
                                 </Link>
                                 <Link
-                                    href="/contact"
+                                    href="/reservations"
                                     className="block py-2 hover:text-primary transition-colors"
                                 >
-                                    Contact Us
+                                    Reserve Your Table
                                 </Link>
                             </nav>
 

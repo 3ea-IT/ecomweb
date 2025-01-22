@@ -22,6 +22,9 @@ class Address extends Model
         'country',
         'postal_code',
         'phone_number',
+        'drop_landmark',
+        'drop_lat',
+        'drop_lng',
         'is_default',
     ];
 

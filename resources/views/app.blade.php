@@ -59,8 +59,8 @@
     </div> -->
 
     <!-- Pointer ring -->
-    <div id="cursor" class="sm:block hidden"></div>
-    <div id="cursor-border" class="sm:block hidden"></div>
+    <!-- <div id="cursor" class="sm:block hidden"></div>
+    <div id="cursor-border" class="sm:block hidden"></div> -->
 
     <!-- Scrolltop Progress -->
     <div class="progress-wrap">

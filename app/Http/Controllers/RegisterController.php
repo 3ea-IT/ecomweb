@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class RegisterController extends Controller
 {
@@ -36,14 +37,17 @@ class RegisterController extends Controller
             'state'            => 'required|string|max:100',
             'country'          => 'required|string|max:100',
             'postal_code'      => 'required|string|max:50',
+            'drop_landmark'    => 'nullable|string|max:255',
+            'drop_lat'         => 'nullable|numeric',
+            'drop_lng'         => 'nullable|numeric',
         ]);
 
         // Check for validation failures
         if ($validator->fails()) {
             // Redirect back with validation errors
             return redirect()->back()
-                             ->withErrors($validator)
-                             ->withInput();
+                ->withErrors($validator)
+                ->withInput();
         }
 
         // Begin Transaction
@@ -71,14 +75,22 @@ class RegisterController extends Controller
                 'state'            => $request->state,
                 'country'          => $request->country,
                 'postal_code'      => $request->postal_code,
-                'is_default'       => 1, // Adjust as needed
+                'phone_number'     => $request->phone,
+                'drop_landmark'    => $request->drop_landmark,
+                'drop_lat'         => $request->drop_lat,
+                'drop_lng'        => $request->drop_lng,
+                'is_default'       => 1,
             ]);
 
             // Commit Transaction
             DB::commit();
 
             // Redirect to the home page with a success flash message
-            return redirect()->route('home')->with('success', 'Registration successful! Welcome aboard.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Registration successful! Welcome aboard.',
+                'redirect' => route('home')
+            ], 200);
         } catch (\Exception $e) {
             // Rollback Transaction
             DB::rollBack();
@@ -87,7 +99,17 @@ class RegisterController extends Controller
             Log::error('Registration Error: ' . $e->getMessage());
 
             // Redirect back with an error flash message
-            return redirect()->back()->with('error', 'An error occurred during registration. Please try again.');
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during registration. Please try again.'
+            ], 500);
         }
+    }
+
+    public function showRegisterForm()
+    {
+        return Inertia::render('Register', [
+            'googleMapsApiKey' => config('services.google.maps_api_key')
+        ]);
     }
 }
