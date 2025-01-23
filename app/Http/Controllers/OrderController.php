@@ -14,6 +14,7 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 
 class OrderController extends Controller
@@ -176,6 +177,93 @@ class OrderController extends Controller
         }
     }
 
+    public function getPorterQuote(Request $request)
+    {
+        $pickupLat = $request->input('pickup_details.lat');
+        $pickupLng = $request->input('pickup_details.lng');
+        $dropLat   = $request->input('drop_details.lat');
+        $dropLng   = $request->input('drop_details.lng');
+        $customerName  = $request->input('customer.name');
+        $customerPhone = $request->input('customer.mobile.number');
+        $countryCode   = $request->input('customer.mobile.country_code');
+
+        // The Porter token (header X-API-KEY).
+        $porterToken = env('PORTER_API_KEY'); // or config('services.porter.api_key');
+
+        $payload = [
+            'pickup_details' => [
+                'lat' => (float) $pickupLat,
+                'lng' => (float) $pickupLng,
+            ],
+            'drop_details' => [
+                'lat' => (float) $dropLat,
+                'lng' => (float) $dropLng,
+            ],
+            'customer' => [
+                'name' => $customerName,
+                'mobile' => [
+                    'country_code' => $countryCode,
+                    'number'       => $customerPhone,
+                ],
+            ],
+        ];
+
+        try {
+            $response = Http::withHeaders([
+                'X-API-KEY'    => $porterToken,
+                'Content-Type' => 'application/json',
+            ])
+                ->withBody(
+                    json_encode($payload),
+                    'application/json'
+                )
+                ->get('https://pfe-apigw-uat.porter.in/v1/get_quote');
+
+            if ($response->failed()) {
+                return response()->json([
+                    'error'   => true,
+                    'message' => 'Failed to fetch Porter quote',
+                    'details' => $response->json(),
+                ], $response->status());
+            }
+
+            // Get the raw JSON
+            $originalData = $response->json();
+
+            // Filter for only the 2 Wheeler
+            $vehicles = $originalData['vehicles'] ?? [];
+            $onlyTwoWheeler = array_filter($vehicles, function ($v) {
+                return isset($v['type']) && $v['type'] === '2 Wheeler';
+            });
+
+            // If you only expect one 2-Wheeler entry, you could grab the first match:
+            $twoWheeler = array_values($onlyTwoWheeler);
+            $twoWheelerData = count($twoWheeler) > 0 ? $twoWheeler[0] : null;
+
+            // If you just need the minor_amount from the 2 Wheeler:
+            if ($twoWheelerData) {
+                // e.g. return only its fare info
+                // $fareInPaise = $twoWheelerData['fare']['minor_amount'];
+                // $fareInRupees = $fareInPaise / 100;
+                // return response()->json(['2_wheeler_fare' => $fareInRupees]);
+
+                // Or return the entire 2W object
+                return response()->json($twoWheelerData, 200);
+            }
+
+            // If no 2 Wheeler was found, return something else
+            return response()->json([
+                'error' => true,
+                'message' => 'No 2 Wheeler option available',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error'   => true,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
     public function createRazorpayOrder(Request $request)
     {
@@ -184,44 +272,46 @@ class OrderController extends Controller
 
             // Create Razorpay order
             $razorpayOrder = $api->order->create([
-                'amount' => intval($request->amount), // Amount in paise
+                'amount' => intval($request->amount), // in paise
                 'currency' => 'INR',
                 'payment_capture' => 1,
             ]);
 
-            // Create a pending order in our database
+            // Generate an internal order_number
             $randomNumber = rand(10000, 99999);
             $orderNumber = 'KPT_O' . $randomNumber;
             $orderId = uniqid('order_', true);
 
             DB::beginTransaction();
-
             try {
-                // Create initial order record
+                // Insert into orders table with status = Pending
                 $order = Order::create([
-                    'order_id' => $orderId,
-                    'order_type' => $request->OrderType,
-                    'user_id' => $request->user_id,
+                    'order_id'            => $orderId,
+                    'order_type'          => $request->OrderType,
+                    'user_id'             => $request->user_id,
                     'shipping_address_id' => $request->shipping_address_id,
-                    'shipping_charges' => $request->shipping_charges,
-                    'tax_amount' => $request->tax_amount,
-                    'discount_amount' => $request->coupon_amount,
-                    'subtotal_amount' => $request->subtotal_amount,
-                    'total_amount' => $request->total_amount,
-                    'payment_method' => $request->payment_method,
-                    'order_number' => $orderNumber,
-                    'order_status' => 'Pending',
-                    'payment_status' => 'Pending',
-                    'razorpay_order_id' => $razorpayOrder->id
+
+                    // store new columns
+                    'porter_estimated_fare' => $request->porter_estimated_fare ?? 0,
+                    'user_delivery_charge'  => $request->user_delivery_charge ?? 0,
+
+                    'shipping_charges'    => $request->shipping_charges,
+                    'tax_amount'          => $request->tax_amount,
+                    'discount_amount'     => $request->coupon_amount,
+                    'subtotal_amount'     => $request->subtotal_amount,
+                    'total_amount'        => $request->total_amount,
+                    'payment_method'      => $request->payment_method,
+                    'order_number'        => $orderNumber,
+                    // Make sure order_status is 'Pending'
+                    'order_status'        => 'Pending',
+                    'payment_status'      => 'Pending',
+                    'razorpay_order_id'   => $razorpayOrder->id
                 ]);
 
-                // Suppose $order has been created with an auto-increment primary key (order_id)
-                $orderId = $order->order_id; // This is an integer, e.g. 123
-
-                // Then create the payment record with that integer:
+                // Also create a Payment record with status=Pending
                 Payment::create([
-                    'order_id'           => $orderId,              // numeric
-                    'razorpay_order_id'  => $razorpayOrder->id,    // or whatever
+                    'order_id'           => $order->order_id,    // numeric PK
+                    'razorpay_order_id'  => $razorpayOrder->id,
                     'payment_status'     => 'Pending'
                 ]);
 
@@ -229,7 +319,7 @@ class OrderController extends Controller
 
                 return response()->json([
                     'razorpay_order_id' => $razorpayOrder->id,
-                    'order_id' => $orderId
+                    'order_id'          => $order->order_id,
                 ], 201);
             } catch (\Exception $e) {
                 DB::rollBack();
@@ -239,10 +329,11 @@ class OrderController extends Controller
             \Log::error('Error creating Razorpay order:', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Failed to create Razorpay order.',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
+
 
 
     public function confirmPayment(Request $request)
@@ -339,7 +430,7 @@ class OrderController extends Controller
                 // Update order status
                 $order->update([
                     'payment_status' => 'Paid',
-                    'order_status' => 'Confirmed',
+                    'order_status' => 'pending',
                     'razorpay_payment_id' => $request->razorpay_payment_id
                 ]);
 

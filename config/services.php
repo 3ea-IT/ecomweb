@@ -33,5 +33,8 @@ return [
     'google' => [
         'maps_api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
+    'porter' => [
+        'api_key' => env('PORTER_API_KEY'),
+    ],
 
 ];

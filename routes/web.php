@@ -38,6 +38,8 @@ Route::get('/check-out', [OrderController::class, 'index'])
   ->middleware('auth:sanctum')
   ->name('checkout');
 
+Route::get('/porter/get-quote', [OrderController::class, 'getPorterQuote']);
+
 Route::get('/orders/{orderId}', [OrderController::class, 'show'])
   ->middleware('auth:sanctum')
   ->name('orders.show');

@@ -22,15 +22,15 @@ class Order extends Model
         'tax_amount',
         'discount_amount',
         'shipping_charges',
-        'coupon_amount',
         'total_amount',
         'payment_method',
-        'payment_status',
         'order_type',
         'razorpay_order_id',
-        'razorpay_payment_id', // Add this if missing
-        'tax_amount',
-        'status',
+        'razorpay_payment_id',
+
+        // new columns:
+        'porter_estimated_fare',
+        'user_delivery_charge',
     ];
 
     // Define the relationship between Order and OrderItems

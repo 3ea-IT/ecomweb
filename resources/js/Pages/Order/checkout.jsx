@@ -4,7 +4,8 @@ import MainLayout from "../../Layouts/MainLayout";
 import axios from "axios";
 
 // Simple summary component
-const OrderSummary = ({ cartItems }) => {
+// Accept userDeliveryCharge and orderType so we can show the final total properly
+const OrderSummary = ({ cartItems, userDeliveryCharge, orderType }) => {
     const calculateSubtotal = () => {
         return cartItems.reduce((total, item) => {
             const price = item.sale_price || item.unit_price;
@@ -48,7 +49,12 @@ const OrderSummary = ({ cartItems }) => {
     const addonTotal = calculateAddonTotal();
     const gstTotal = calculateGST();
     const discount = calculateDiscount();
-    const finalTotal = subtotal + addonTotal + gstTotal - discount;
+    let finalTotal = subtotal + addonTotal + gstTotal - discount;
+
+    // If it's Delivery, add the user delivery charge
+    if (orderType === "Delivery") {
+        finalTotal += parseFloat(userDeliveryCharge || 0);
+    }
 
     return (
         <div className="bg-white p-6 rounded-lg shadow-md mb-6">
@@ -72,6 +78,15 @@ const OrderSummary = ({ cartItems }) => {
                     <div className="flex justify-between text-green-600">
                         <span>Discount Applied</span>
                         <span>-₹{discount.toFixed(2)}</span>
+                    </div>
+                )}
+                {/* Show delivery charge row only if it's Delivery */}
+                {orderType === "Delivery" && (
+                    <div className="flex justify-between text-gray-600">
+                        <span>Delivery Charge</span>
+                        <span>
+                            ₹{parseFloat(userDeliveryCharge || 0).toFixed(2)}
+                        </span>
                     </div>
                 )}
                 <div className="border-t pt-3 mt-3">
@@ -125,6 +140,103 @@ const Checkout = ({ CartList = [] }) => {
     // For controlling whether we show the address section:
     const [orderType, setOrderType] = useState("");
 
+    // Hard-coded or from DB: restaurant lat/lng
+    const [pickupLat, setPickupLat] = useState(26.896308);
+    const [pickupLng, setPickupLng] = useState(80.951643);
+
+    // The user’s selected address lat/lng
+    const [dropLat, setDropLat] = useState(null);
+    const [dropLng, setDropLng] = useState(null);
+
+    // We'll store the Porter estimate in state
+    const [porterEstimatedFare, setPorterEstimatedFare] = useState(0);
+    // We'll store how much user is charged (0 if within 4 km)
+    const [userDeliveryCharge, setUserDeliveryCharge] = useState(0);
+
+    // new piece of state to handle success
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
+
+    // A small function to compute distance in km
+    const getDistanceKm = (lat1, lon1, lat2, lon2) => {
+        const R = 6371; // Earth radius in km
+        const toRad = (v) => (v * Math.PI) / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) *
+                Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) *
+                Math.sin(dLon / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
+    // 1) call Porter /v1/get_quote + 2) check distance
+    const fetchPorterQuote = async (userAddress) => {
+        try {
+            setDropLat(userAddress.drop_lat);
+            setDropLng(userAddress.drop_lng);
+
+            const payload = {
+                pickup_details: {
+                    lat: pickupLat,
+                    lng: pickupLng,
+                },
+                drop_details: {
+                    lat: userAddress.drop_lat,
+                    lng: userAddress.drop_lng,
+                },
+                customer: {
+                    name: "CustomerName",
+                    mobile: {
+                        country_code: "+91",
+                        number: "9999999999",
+                    },
+                },
+            };
+
+            // Call your Laravel endpoint, passing payload as query params
+            const resp = await axios.get(
+                "http://127.0.0.1:8000/porter/get-quote",
+                {
+                    params: payload,
+                }
+            );
+
+            // Now the response is a single object: { type, fare, ... }, not { vehicles: [...] }
+            if (resp.data && resp.data.type === "2 Wheeler") {
+                const minorAmount = resp.data.fare?.minor_amount || 0;
+                const estimateInInr = minorAmount / 100; // convert paise to rupees
+                setPorterEstimatedFare(estimateInInr);
+
+                // distance check
+                const distance = getDistanceKm(
+                    pickupLat,
+                    pickupLng,
+                    userAddress.drop_lat,
+                    userAddress.drop_lng
+                );
+
+                let userCharge = 0;
+                // By your logic, if distance <= 4 km, the user sees 0. Otherwise use full fare.
+                if (distance > 4) {
+                    userCharge = estimateInInr;
+                }
+                setUserDeliveryCharge(userCharge.toFixed(2));
+            } else {
+                // No 2 Wheeler found (or an error)
+                // Reset to 0 or handle how you wish
+                setPorterEstimatedFare(0);
+                setUserDeliveryCharge(0);
+            }
+        } catch (error) {
+            console.error("Error fetching Porter quote:", error);
+            setPorterEstimatedFare(0);
+            setUserDeliveryCharge(0);
+        }
+    };
+
     // ----------------------------------------------
     // A) LOAD GOOGLE MAPS SCRIPT ONCE
     // ----------------------------------------------
@@ -135,7 +247,6 @@ const Checkout = ({ CartList = [] }) => {
             setGoogleScriptLoaded(true);
             return;
         }
-        // If we haven't appended yet, do so now
         if (!googleScriptLoaded) {
             const script = document.createElement("script");
             script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}`;
@@ -170,8 +281,12 @@ const Checkout = ({ CartList = [] }) => {
             );
             if (defaultAddress) {
                 setSelectedAddress(defaultAddress.address_id);
+                // Optionally fetch the Porter quote right away for the default address
+                fetchPorterQuote(defaultAddress);
             } else if (response.data.length) {
                 setSelectedAddress(response.data[0].address_id);
+                // You could also auto-call fetchPorterQuote here if you want
+                // fetchPorterQuote(response.data[0]);
             }
         } catch (error) {
             console.error("Error fetching addresses:", error);
@@ -250,6 +365,7 @@ const Checkout = ({ CartList = [] }) => {
             addonTotal,
             gstTotal,
             discountTotal,
+            // finalTotal just for cart-level sums (no delivery yet)
             finalTotal: subtotal + addonTotal + gstTotal - discountTotal,
         };
     };
@@ -266,24 +382,32 @@ const Checkout = ({ CartList = [] }) => {
         }
 
         setLoading(true);
-        const userId = localStorage.getItem("userId");
-        const OrderType = localStorage.getItem("orderType");
+
+        const totals = calculateOrderTotals();
+        // Add the userDeliveryCharge if it's Delivery
+        const finalTotal =
+            totals.finalTotal + parseFloat(userDeliveryCharge || 0);
 
         try {
-            const totals = calculateOrderTotals();
             const createOrderResp = await axios.post(
                 `${import.meta.env.VITE_API_URL}/create-razorpay-order`,
                 {
-                    amount: Math.round(totals.finalTotal * 100), // in paise
-                    total_amount: totals.finalTotal,
+                    // Razorpay needs amount in paise
+                    amount: Math.round(finalTotal * 100),
+                    total_amount: finalTotal,
+
+                    // Pass your new fields:
+                    user_delivery_charge: userDeliveryCharge,
+                    porter_estimated_fare: porterEstimatedFare,
+
                     shipping_address_id: selectedAddress,
-                    shipping_charges: 0,
+                    shipping_charges: userDeliveryCharge, // you can store the same
                     tax_amount: totals.gstTotal,
                     coupon_amount: totals.discountTotal,
                     subtotal_amount: totals.subtotal,
                     payment_method: paymentMethod,
-                    user_id: userId,
-                    OrderType: OrderType,
+                    user_id: localStorage.getItem("userId"),
+                    OrderType: localStorage.getItem("orderType"),
                 }
             );
 
@@ -292,7 +416,7 @@ const Checkout = ({ CartList = [] }) => {
 
                 const options = {
                     key: import.meta.env.VITE_RAZORPAY_KEY,
-                    amount: Math.round(totals.finalTotal * 100),
+                    amount: Math.round(finalTotal * 100),
                     currency: "INR",
                     name: "Pizza Port",
                     description: "Order Payment",
@@ -317,8 +441,11 @@ const Checkout = ({ CartList = [] }) => {
                                 verificationResponse.data.message ===
                                 "Payment verified and order updated successfully."
                             ) {
-                                alert("Order placed successfully!");
-                                window.location.href = "/";
+                                setSuccessMessage(
+                                    "Your order is confirmed and payment is successful!"
+                                );
+                                setShowSuccessModal(true);
+                                // window.location.href = "/OrderHistory";
                             }
                         } catch (error) {
                             console.error(
@@ -381,9 +508,9 @@ const Checkout = ({ CartList = [] }) => {
         }
     }, [showAddressModal, googleScriptLoaded]);
 
-    // Add these console logs to your useEffect for script loading:
+    // Debug logs
     useEffect(() => {
-        console.log("Google Maps API Key:", googleMapsApiKey); // Will only show if key exists
+        console.log("Google Maps API Key:", googleMapsApiKey);
         if (!googleMapsApiKey) {
             console.error("No Google Maps API key found");
             return;
@@ -412,7 +539,6 @@ const Checkout = ({ CartList = [] }) => {
         }
     }, [googleMapsApiKey, googleScriptLoaded]);
 
-    // Replace your existing initMap function with this updated version:
     const initMap = () => {
         console.log("Initializing map...");
         if (!window.google) {
@@ -426,7 +552,7 @@ const Checkout = ({ CartList = [] }) => {
             return;
         }
 
-        // Ensure the map container has the correct styles
+        // Ensure the map container has correct styles
         mapDiv.style.width = "100%";
         mapDiv.style.height = "300px";
         mapDiv.style.position = "relative";
@@ -436,21 +562,21 @@ const Checkout = ({ CartList = [] }) => {
         searchInput.setAttribute("type", "text");
         searchInput.setAttribute("placeholder", "Search for your location");
         searchInput.style.cssText = `
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        width: calc(100% - 60px);
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        font-size: 14px;
-        z-index: 1;
-        background: white;
-    `;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 60px);
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 14px;
+            z-index: 1;
+            background: white;
+        `;
         mapDiv.appendChild(searchInput);
 
-        // Lucknow coordinates
+        // Lucknow center
         const lucknowCenter = { lat: 26.8467, lng: 80.9462 };
 
         try {
@@ -461,24 +587,26 @@ const Checkout = ({ CartList = [] }) => {
                 streetViewControl: true,
                 fullscreenControl: true,
                 zoomControl: true,
-                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                mapTypeId: window.google.maps.MapTypeId.ROADMAP,
             };
 
-            const mapObj = new google.maps.Map(mapDiv, mapOptions);
+            const mapObj = new window.google.maps.Map(mapDiv, mapOptions);
             setMap(mapObj);
 
-            const markerObj = new google.maps.Marker({
+            const markerObj = new window.google.maps.Marker({
                 position: lucknowCenter,
                 map: mapObj,
                 draggable: true,
-                animation: google.maps.Animation.DROP,
+                animation: window.google.maps.Animation.DROP,
             });
             setMarker(markerObj);
 
             // Initialize the Places service
-            const searchBox = new google.maps.places.SearchBox(searchInput);
+            const searchBox = new window.google.maps.places.SearchBox(
+                searchInput
+            );
 
-            // Bias the SearchBox results towards current map's viewport
+            // Bias the SearchBox results
             mapObj.addListener("bounds_changed", () => {
                 searchBox.setBounds(mapObj.getBounds());
             });
@@ -486,18 +614,15 @@ const Checkout = ({ CartList = [] }) => {
             // Listen for the event when a user selects a prediction
             searchBox.addListener("places_changed", () => {
                 const places = searchBox.getPlaces();
-
                 if (places.length === 0) {
                     return;
                 }
-
                 const place = places[0];
                 if (!place.geometry || !place.geometry.location) {
                     console.log("Returned place contains no geometry");
                     return;
                 }
 
-                // If the place has a geometry, then present it on a map
                 if (place.geometry.viewport) {
                     mapObj.fitBounds(place.geometry.viewport);
                 } else {
@@ -534,20 +659,19 @@ const Checkout = ({ CartList = [] }) => {
                 }));
             });
 
-            // Update coordinates when marker is dragged
+            // Update coords when marker is dragged
             markerObj.addListener("dragend", () => {
                 const pos = markerObj.getPosition();
                 if (!pos) return;
 
-                // Update form with new coordinates
                 setAddressForm((prev) => ({
                     ...prev,
                     drop_lat: pos.lat(),
                     drop_lng: pos.lng(),
                 }));
 
-                // Reverse geocode the coordinates to get address details
-                const geocoder = new google.maps.Geocoder();
+                // Reverse geocode
+                const geocoder = new window.google.maps.Geocoder();
                 geocoder.geocode({ location: pos }, (results, status) => {
                     if (status === "OK" && results[0]) {
                         const place = results[0];
@@ -626,9 +750,12 @@ const Checkout = ({ CartList = [] }) => {
             if (response.status === 201 || response.status === 200) {
                 // Refresh address list
                 await fetchAddresses();
-                // Select the newly added address
+
+                // If the server returns the new address_id, select it
                 if (response.data?.address_id) {
                     setSelectedAddress(response.data.address_id);
+                    // Optionally call fetchPorterQuote(response.data)
+                    // if the lat/lng are in the response
                 }
                 setShowAddressModal(false);
             }
@@ -852,8 +979,14 @@ const Checkout = ({ CartList = [] }) => {
                                     </table>
                                 </div>
                             </div>
+
                             {/* Order Summary Component */}
-                            <OrderSummary cartItems={cartItems} />
+                            {/* Pass userDeliveryCharge & orderType so we display final total properly */}
+                            <OrderSummary
+                                cartItems={cartItems}
+                                userDeliveryCharge={userDeliveryCharge}
+                                orderType={orderType}
+                            />
                         </div>
 
                         {/* Right Column - Checkout Form */}
@@ -874,11 +1007,15 @@ const Checkout = ({ CartList = [] }) => {
                                                     <div
                                                         key={address.address_id}
                                                         className="border rounded-lg p-4 mb-3 cursor-pointer hover:border-primary"
-                                                        onClick={() =>
+                                                        onClick={() => {
                                                             setSelectedAddress(
                                                                 address.address_id
-                                                            )
-                                                        }
+                                                            );
+                                                            // IMPORTANT: fetch the Porter quote
+                                                            fetchPorterQuote(
+                                                                address
+                                                            );
+                                                        }}
                                                         style={{
                                                             borderColor:
                                                                 selectedAddress ===
@@ -895,11 +1032,14 @@ const Checkout = ({ CartList = [] }) => {
                                                                     selectedAddress ===
                                                                     address.address_id
                                                                 }
-                                                                onChange={() =>
+                                                                onChange={() => {
                                                                     setSelectedAddress(
                                                                         address.address_id
-                                                                    )
-                                                                }
+                                                                    );
+                                                                    fetchPorterQuote(
+                                                                        address
+                                                                    );
+                                                                }}
                                                                 className="w-4 h-4 text-primary"
                                                             />
                                                             <div>
@@ -1009,10 +1149,9 @@ const Checkout = ({ CartList = [] }) => {
 
             {/* Address Modal */}
             {showAddressModal && (
-                // 1) Add a margin-top or a top offset to avoid going behind the header
                 <div
                     className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto"
-                    style={{ marginTop: "80px" }} // or use a tailwind class like "mt-20"
+                    style={{ marginTop: "80px" }} // to avoid going behind a fixed header
                 >
                     <div
                         className="fixed inset-0 bg-black opacity-50"
@@ -1245,6 +1384,30 @@ const Checkout = ({ CartList = [] }) => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-black opacity-50" />
+                    <div className="bg-white w-full max-w-md p-6 rounded-md z-10">
+                        <h2 className="text-xl font-semibold mb-4">
+                            Order Confirmed!
+                        </h2>
+                        <p>{successMessage}</p>
+                        <div className="mt-4 flex justify-end">
+                            <button
+                                className="bg-primary text-white px-4 py-2 rounded"
+                                onClick={() => {
+                                    setShowSuccessModal(false);
+                                    // If you want to redirect to home
+                                    window.location.href = "/OrderHistory";
+                                }}
+                            >
+                                OK
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
