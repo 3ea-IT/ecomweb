@@ -36,31 +36,50 @@ class CartController extends Controller
             ->leftJoin('coupons', 'cart_items.applied_coupon_id', '=', 'coupons.coupon_id')
             ->select(
                 'carts.cart_id as cart_id',
-                'cart_items.*',
-                'products.product_id as product_id',
-                'products.product_name as product_name',
-                'products.product_description as product_description',
+                'cart_items.cart_item_id',
+                'cart_items.product_id',
+                'cart_items.quantity',
+                'cart_items.unit_price',
+                'cart_items.sale_price',
+                'cart_items.total_addon_price',
+                'cart_items.total_price',
+                'cart_items.addon_ids',
+                'products.product_name',
+                'products.product_description',
                 'products.base_mrp as product_price',
                 'products.main_image_url as product_image_url',
                 'tax_slabs.gst as gst',
                 'coupons.discount_value as cou_discount_value',
                 'coupons.coupon_code as coupon_code',
                 'variations.variation_name',
-                DB::raw("(
-                SELECT GROUP_CONCAT(product_name SEPARATOR ', ')
-                FROM products
-                WHERE FIND_IN_SET(
-                    products.product_id,
-                    REPLACE(REPLACE(REPLACE(cart_items.addon_ids, '\"', ''), '[', ''), ']', '')
-                )
-            ) AS addon_names")
             )
             ->where('carts.user_id', $userId)
             ->get();
 
         // Multiply addon price by quantity for each item
+        // For each $item, fetch detailed add-on data
         foreach ($CartList as $item) {
-            $item->total_addon_price = $item->total_addon_price * $item->quantity;
+            // Convert JSON to array
+            $addonIDs = json_decode($item->addon_ids, true) ?: [];
+            $addonDetails = [];
+
+            if (!empty($addonIDs)) {
+                $addons = DB::table('products')
+                    ->whereIn('product_id', $addonIDs)
+                    ->select('product_id', 'product_name', 'base_sale_price')
+                    ->get();
+
+                foreach ($addons as $addon) {
+                    $addonDetails[] = [
+                        'addon_id' => $addon->product_id,
+                        'name' => $addon->product_name,
+                        'price' => $addon->base_sale_price,
+                    ];
+                }
+            }
+
+            // Return them as an array
+            $item->addon_details = $addonDetails;
         }
 
         return response()->json([
@@ -215,38 +234,44 @@ class CartController extends Controller
         return response()->json($addons, 200);
     }
 
-    public function updateQuantityInDatabase(Request $request, $productId)
+    public function updateQuantityInDatabase(Request $request, $cartItemId)
     {
-        // Validate the incoming request data
         $validated = $request->validate([
-            'action' => 'required|in:increase,decrease', // Validate action is present and valid
+            'action' => 'required|in:increase,decrease,set',
+            'quantity' => 'integer|min:1|nullable',
         ]);
 
         try {
-            // Retrieve the cart item based on productId
-            $cartItem = Cart::where('product_id', $productId)->first();
-
+            $cartItem = CartItem::find($cartItemId);
             if (!$cartItem) {
                 return response()->json(['message' => 'Item not found in cart'], 404);
             }
 
-            // Update quantity based on the action
             if ($validated['action'] === 'increase') {
-                $cartItem->qty += 1;
-            } else if ($validated['action'] === 'decrease') {
-                $cartItem->qty = max($cartItem->qty - 1, 0);
+                $cartItem->quantity++;
+            } elseif ($validated['action'] === 'decrease') {
+                $cartItem->quantity = max($cartItem->quantity - 1, 1);
+            } elseif ($validated['action'] === 'set' && isset($validated['quantity'])) {
+                $cartItem->quantity = $validated['quantity'];
             }
 
-            // Save the updated cart item
+            // Recalc total
+            $basePrice = $cartItem->sale_price ?? $cartItem->unit_price;
+            $cartItem->total_price =
+                ($basePrice * $cartItem->quantity) +
+                ($cartItem->total_addon_price * $cartItem->quantity);
+
             $cartItem->save();
 
-            // Return success response
-            return response()->json(['message' => 'Quantity updated successfully', 'cartItem' => $cartItem]);
+            return response()->json([
+                'message' => 'Quantity updated successfully',
+                'cartItem' => $cartItem
+            ]);
         } catch (\Exception $e) {
-            // Handle any unexpected errors
             return response()->json(['error' => 'Server error: ' . $e->getMessage()], 500);
         }
     }
+
 
     // Remove Cart Item
     public function removeCartItem(Request $request)

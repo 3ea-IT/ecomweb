@@ -49,7 +49,7 @@ function Footer() {
 
                         {/* Our Links */}
                         <div className="xl:w-3/12 lg:w-2/12 sm:w-6/12 w-full px-4">
-                            <div className="mb-8">
+                            <div className="mb-8 ml-12">
                                 <h5 className="text-2xl font-bold text-white mb-6 pb-2 border-b-2 border-primary inline-block">
                                     Our Links
                                 </h5>
@@ -85,11 +85,7 @@ function Footer() {
                                 </h5>
                                 <ul className="space-y-3">
                                     {[
-                                        { name: "Shop", path: "/outlets" },
-                                        {
-                                            name: "Testimonials",
-                                            path: "/reviews",
-                                        },
+                                        { name: "FAQs", path: "/faqs" },
                                         {
                                             name: "Contact Us",
                                             path: "/contact",
@@ -102,6 +98,45 @@ function Footer() {
                                             >
                                                 {item.name}
                                             </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/*Also Available On */}
+                        <div className="xl:w-3/12 lg:w-3/12 sm:w-6/12 w-full px-4">
+                            <div className="mb-8">
+                                <h5 className="text-2xl font-bold text-white mb-6 pb-2 border-b-2 border-primary inline-block">
+                                    Also Available On
+                                </h5>
+                                <ul className="space-y-3">
+                                    {[
+                                        {
+                                            name: "Swiggy",
+                                            path: "https://www.swiggy.com/city/lucknow/pizzaport-and-cafe-aliganj-rest388991",
+                                            icon: "/assets/icons/swiggy.svg",
+                                        },
+                                        {
+                                            name: "Zomato",
+                                            path: "https://www.zomato.com/lucknow/pizzaport-cafe-aliganj",
+                                            icon: "/assets/icons/zomato.svg",
+                                        },
+                                    ].map((item) => (
+                                        <li key={item.name}>
+                                            <a
+                                                href={item.path}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-gray-300 hover:text-white hover:translate-x-2 transform transition-all duration-300 inline-flex items-center gap-2"
+                                            >
+                                                <img
+                                                    src={item.icon}
+                                                    alt={item.name}
+                                                    className="w-6 h-6"
+                                                />
+                                                {item.name}
+                                            </a>
                                         </li>
                                     ))}
                                 </ul>

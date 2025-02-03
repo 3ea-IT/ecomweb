@@ -6,6 +6,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import toast styles
 import { Link } from "@inertiajs/react";
 import ReviewCarousel from "../Components/ReviewCarousel";
+import OffersCarousel from "../Components/OffersCarousel";
 
 const SpecialMenu = ({ data, reviews }) => {
     const { flash } = usePage().props;
@@ -106,8 +107,11 @@ const SpecialMenu = ({ data, reviews }) => {
                 </div>
             </div>
             {/* Banner End */}
+
+            <OffersCarousel />
+
             {/* Special Menu Start */}
-            <section className="lg:pt-[100px] pt-[50px] lg:pb-[70px] pb-[40px] bg-white relative overflow-hidden section-wrapper-2">
+            <section className="lg:pt-[50px] pt-[25px] lg:pb-[70px] pb-[40px] bg-white relative overflow-hidden section-wrapper-2">
                 <div className="container">
                     <div className="2xl:mb-[50px] mb-[25px] relative mx-auto text-center">
                         <h2 className="font-lobster">Best Selling Items</h2>

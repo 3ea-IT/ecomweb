@@ -136,7 +136,8 @@ export const mergeGuestCart = async () => {
  */
 export const handleAddToCartClick = async (
     productId,
-    setDrawer1OpenFromParent
+    setDrawer1OpenFromParent,
+    onAddToCartSuccess
 ) => {
     const userId = localStorage.getItem("userId");
 
@@ -435,6 +436,11 @@ export const OpenCart = (title, product, isGuest = false) => {
                 guestCart.push(cartItem);
                 updateGuestCart(guestCart);
 
+                // Call the callback so parent can setCartItems
+                if (typeof onAddToCartSuccess === "function") {
+                    onAddToCartSuccess(guestCart);
+                }
+
                 Swal.fire({
                     icon: "success",
                     title: "Added to cart!",
@@ -451,6 +457,10 @@ export const OpenCart = (title, product, isGuest = false) => {
                         quantity,
                     })
                     .then((response) => {
+                        // Then call the callback to re-fetch cart
+                        if (typeof onAddToCartSuccess === "function") {
+                            onAddToCartSuccess();
+                        }
                         Swal.fire({
                             icon: "success",
                             title: "Added to cart!",

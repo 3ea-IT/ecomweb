@@ -33,7 +33,7 @@ const ReviewCarousel = ({ reviews }) => {
             case "google":
                 return "bg-blue-500";
             case "zomato":
-                return "bg-red-500";
+                return "bg-white-500";
             case "swiggy":
                 return "bg-orange-500";
             default:
@@ -42,56 +42,59 @@ const ReviewCarousel = ({ reviews }) => {
     };
 
     return (
-        <section className="py-8 sm:py-16 bg-gradient-to-b from-gray-900 to-gray-800">
-            <div className="container mx-auto px-4 max-w-[320px] sm:max-w-none">
-                <div className="text-center mb-8 sm:mb-12">
-                    <h2 className="font-lobster text-3xl sm:text-4xl text-white mb-4">
+        <section className="py-12 sm:py-20 bg-gradient-to-b from-gray-900 to-gray-800 min-h-screen flex items-center">
+            <div className="container mx-auto px-4">
+                <div className="text-center mb-12 sm:mb-16">
+                    <h2 className="font-lobster text-4xl sm:text-5xl text-white mb-6 relative inline-block">
                         Customer Reviews
+                        <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-red-500 to-orange-500"></div>
                     </h2>
-                    <div className="w-16 sm:w-24 h-1 bg-red-500 mx-auto"></div>
                 </div>
 
                 <div className="relative max-w-7xl mx-auto">
+                    {/* Navigation Buttons */}
                     <button
                         onClick={prevSlide}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:-translate-x-12 z-10 p-2 sm:p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/20"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 sm:-translate-x-16 z-10 p-4 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/20 group"
                     >
-                        <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                        <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8 text-white group-hover:scale-110 transition-transform" />
                     </button>
                     <button
                         onClick={nextSlide}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:translate-x-12 z-10 p-2 sm:p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/20"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 sm:translate-x-16 z-10 p-4 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all border border-white/20 group"
                     >
-                        <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                        <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8 text-white group-hover:scale-110 transition-transform" />
                     </button>
 
-                    <div className="rounded-lg sm:rounded-2xl bg-gray-800/50 backdrop-blur-lg shadow-2xl">
+                    {/* Review Cards */}
+                    <div className="rounded-2xl bg-gray-800/50 backdrop-blur-lg shadow-2xl overflow-hidden">
                         {reviews.map((review, index) => (
                             <div
                                 key={index}
-                                className={`transition-opacity duration-500 ${
+                                className={`transition-all duration-700 ease-in-out transform ${
                                     currentIndex === index
-                                        ? "opacity-100 relative"
-                                        : "opacity-0 absolute inset-0"
+                                        ? "opacity-100 translate-x-0 relative"
+                                        : "opacity-0 translate-x-full absolute inset-0"
                                 }`}
                             >
-                                <div className="p-4 sm:p-8">
-                                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
-                                        <div className="w-full sm:w-1/2">
-                                            <div className="relative group">
-                                                <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg sm:rounded-2xl -rotate-6 scale-105 opacity-20 group-hover:opacity-30 transition-opacity"></div>
-                                                <div className="relative bg-white rounded-lg sm:rounded-2xl overflow-hidden shadow-xl">
+                                <div className="p-6 sm:p-10">
+                                    <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+                                        {/* Image Section */}
+                                        <div className="w-full lg:w-2/5">
+                                            <div className="relative group transform transition-transform duration-500 hover:scale-105">
+                                                <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl -rotate-6 scale-105 opacity-20 group-hover:opacity-30 transition-all duration-500"></div>
+                                                <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl">
                                                     <img
                                                         src={
                                                             review.reviewer_image
                                                         }
                                                         alt={`Review by ${review.reviewer_name}`}
-                                                        className="w-full h-auto"
+                                                        className="w-full h-auto object-cover"
                                                     />
                                                     <div
-                                                        className={`absolute top-2 sm:top-4 right-2 sm:right-4 p-1.5 sm:p-2 rounded-lg ${getPlatformColor(
+                                                        className={`absolute top-4 right-4 p-2.5 rounded-xl ${getPlatformColor(
                                                             review.platform
-                                                        )} shadow-lg`}
+                                                        )} shadow-lg transform transition-transform duration-500 hover:scale-110`}
                                                     >
                                                         <img
                                                             src={
@@ -100,18 +103,19 @@ const ReviewCarousel = ({ reviews }) => {
                                                             alt={
                                                                 review.platform
                                                             }
-                                                            className="w-4 h-4 sm:w-6 sm:h-6"
+                                                            className="w-6 h-6 sm:w-8 sm:h-8"
                                                         />
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="w-full sm:w-1/2 relative px-2 sm:px-0">
-                                            <Quote className="hidden sm:block absolute top-0 left-0 w-8 sm:w-12 h-8 sm:h-12 text-gray-400/30 -translate-x-4 sm:-translate-x-6 -translate-y-4 sm:-translate-y-6" />
-                                            <div className="space-y-3 sm:space-y-6">
-                                                <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-                                                    <h4 className="font-semibold text-lg sm:text-xl text-white text-center sm:text-left">
+                                        {/* Content Section */}
+                                        <div className="w-full lg:w-3/5 relative px-4 sm:px-6">
+                                            <Quote className="absolute top-0 left-0 w-12 h-12 text-gray-400/20 -translate-x-6 -translate-y-6" />
+                                            <div className="space-y-6">
+                                                <div className="flex flex-col sm:flex-row items-center gap-4">
+                                                    <h4 className="font-semibold text-2xl text-white">
                                                         {review.reviewer_name}
                                                     </h4>
                                                     <div className="flex items-center gap-1">
@@ -120,7 +124,7 @@ const ReviewCarousel = ({ reviews }) => {
                                                         }).map((_, i) => (
                                                             <Star
                                                                 key={i}
-                                                                className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                                                                className={`w-5 h-5 sm:w-6 sm:h-6 ${
                                                                     i <
                                                                     review.rating
                                                                         ? "text-yellow-400 fill-current"
@@ -130,11 +134,11 @@ const ReviewCarousel = ({ reviews }) => {
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <p className="text-gray-300 text-base sm:text-lg leading-relaxed italic text-center sm:text-left">
+                                                <p className="text-gray-300 text-lg sm:text-xl leading-relaxed italic">
                                                     {review.review_text}
                                                 </p>
                                             </div>
-                                            <Quote className="hidden sm:block absolute bottom-0 right-0 w-8 sm:w-12 h-8 sm:h-12 text-gray-400/30 translate-x-4 sm:translate-x-6 translate-y-4 sm:translate-y-6 rotate-180" />
+                                            <Quote className="absolute bottom-0 right-0 w-12 h-12 text-gray-400/20 translate-x-6 translate-y-6 rotate-180" />
                                         </div>
                                     </div>
                                 </div>
@@ -142,24 +146,26 @@ const ReviewCarousel = ({ reviews }) => {
                         ))}
                     </div>
 
-                    <div className="flex justify-center mt-4 sm:mt-8 gap-2">
+                    {/* Pagination Dots */}
+                    <div className="flex justify-center mt-8 gap-3">
                         {reviews.map((_, index) => (
                             <button
                                 key={index}
                                 onClick={() => setCurrentIndex(index)}
-                                className={`h-2 sm:h-2 rounded-full transition-all ${
+                                className={`transition-all duration-300 rounded-full ${
                                     currentIndex === index
-                                        ? "bg-red-500 w-6 sm:w-8"
-                                        : "bg-gray-600 w-2 hover:bg-gray-500"
+                                        ? "bg-gradient-to-r from-red-500 to-orange-500 w-8 h-2"
+                                        : "bg-gray-600 w-2 h-2 hover:bg-gray-500"
                                 }`}
                             />
                         ))}
                     </div>
 
-                    <div className="mt-8 text-center">
+                    {/* CTA Button */}
+                    <div className="mt-12 text-center">
                         <a
                             href="/reviews"
-                            className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-gradient-to-r from-red-500 to-orange-500 rounded-full hover:from-red-600 hover:to-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                            className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-gradient-to-r from-red-500 to-orange-500 rounded-full hover:from-red-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                         >
                             See All Reviews
                         </a>

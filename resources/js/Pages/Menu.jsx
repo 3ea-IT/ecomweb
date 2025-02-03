@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
 import MainLayout from "../Layouts/MainLayout";
 import { Link, usePage } from "@inertiajs/react";
-import { handleAddToCartClick } from "../utils/cart_model";
+import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import { Search, Menu as MenuIcon } from "lucide-react";
 import "react-toastify/dist/ReactToastify.css";
+import {
+    getGuestCart,
+    updateGuestCart,
+    handleAddToCartClick as showModalAddToCart,
+} from "../utils/cart_model";
 
 function Menu({ categories, setDrawer1Open }) {
     const [activeCategory, setActiveCategory] = useState("bestselling");
@@ -14,6 +19,9 @@ function Menu({ categories, setDrawer1Open }) {
     const { flash } = usePage().props;
     const [hasReachedEnd, setHasReachedEnd] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
+
+    // New: cart state
+    const [cartItems, setCartItems] = useState([]); // This will hold the array of cart items
 
     // Specific product IDs for best selling items (from IndexController)
     const bestSellingIds = [165, 135, 179, 50, 203, 30, 290, 231];
@@ -36,14 +44,53 @@ function Menu({ categories, setDrawer1Open }) {
         bestSellingIds.includes(product.product_id)
     );
 
+    // --------------------------------
+    // 1A) On mount, fetch the cart
+    // --------------------------------
     useEffect(() => {
-        if (flash.success) {
-            toast.success(flash.success);
-        }
-        if (flash.error) {
-            toast.error(flash.error);
-        }
+        const userId = localStorage.getItem("userId");
 
+        if (userId) {
+            // Logged in: fetch from server
+            fetchUserCart(userId);
+        } else {
+            // Guest: read from localStorage
+            const guestCart = getGuestCart();
+            setCartItems(guestCart);
+        }
+    }, []);
+
+    // Helper function to fetch user cart
+    const fetchUserCart = async (userId) => {
+        try {
+            const { data } = await axios.get("/cart-items", {
+                params: { user_id: userId },
+            });
+
+            // The response structure is:
+            // {
+            //   countCart: <number>,
+            //   CartList: [ ... array of items ... ]
+            // }
+            setCartItems(data.CartList || []);
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to load cart items");
+        }
+    };
+
+    // --------------------------------
+    // 1B) React to success/error flashes
+    // --------------------------------
+    useEffect(() => {
+        if (flash.success) toast.success(flash.success);
+        if (flash.error) toast.error(flash.error);
+    }, [flash]);
+
+    // --------------------------------
+    // Intersection Observer for category highlighting
+    // --------------------------------
+    useEffect(() => {
         const observerOptions = {
             root: null,
             rootMargin: "-50% 0px",
@@ -89,9 +136,11 @@ function Menu({ categories, setDrawer1Open }) {
             observer.disconnect();
             window.removeEventListener("scroll", handleScroll);
         };
-    }, [flash, categories]);
+    }, [categories]);
 
-    // Search functionality
+    // --------------------------------
+    // 1C) Search handling
+    // --------------------------------
     useEffect(() => {
         const filtered = allProducts.filter(
             (product) =>
@@ -105,6 +154,7 @@ function Menu({ categories, setDrawer1Open }) {
         setFilteredProducts(filtered);
     }, [searchTerm]);
 
+    // Sidebar categories
     const sidebarCategories = [
         {
             id: "bestselling",
@@ -130,7 +180,6 @@ function Menu({ categories, setDrawer1Open }) {
             const elementPosition = section.getBoundingClientRect().top;
             const offsetPosition =
                 elementPosition + window.pageYOffset - offset;
-
             window.scrollTo({
                 top: offsetPosition,
                 behavior: "smooth",
@@ -142,6 +191,139 @@ function Menu({ categories, setDrawer1Open }) {
         setSearchTerm(e.target.value);
         setIsSearching(true);
         window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    // --------------------------------
+    // 1D) Handler: Direct add to cart (no modal)
+    // --------------------------------
+    const handleDirectAdd = async (product) => {
+        const userId = localStorage.getItem("userId");
+
+        if (!product) return;
+
+        try {
+            // If user is not logged in, handle guest cart
+            if (!userId) {
+                const guestCart = getGuestCart();
+                // We only add if the EXACT configuration doesn't already exist
+                // For "no variations/addons" => variation_id = null, addon_ids = []
+                const existingItem = guestCart.find((item) => {
+                    return (
+                        item.product_id === product.product_id &&
+                        !item.variation_id && // null or undefined
+                        (!item.addon_ids || item.addon_ids.length === 0)
+                    );
+                });
+
+                if (existingItem) {
+                    // Already in cart, increment
+                    existingItem.quantity += 1;
+                } else {
+                    // Create new cart item
+                    const newItem = {
+                        cart_item_id: Date.now(), // or any unique ID
+                        product_id: product.product_id,
+                        product_name: product.product_name,
+                        product_description: product.product_description,
+                        product_image_url: product.main_image_url,
+                        variation_id: null,
+                        variation_name: null,
+                        addon_ids: [],
+                        addon_names: "",
+                        quantity: 1,
+                        unit_price: product.base_sale_price || product.base_mrp,
+                        sale_price: product.base_sale_price || product.base_mrp,
+                        total_addon_price: 0,
+                        gst: 0,
+                    };
+                    guestCart.push(newItem);
+                }
+
+                updateGuestCart(guestCart);
+                setCartItems([...guestCart]); // re-render
+                toast.success("Item added to cart!");
+            } else {
+                // Logged in user => call the /cart/add endpoint
+                const payload = {
+                    product_id: product.product_id,
+                    quantity: 1,
+                };
+
+                await axios.post("/cart/add", payload);
+                toast.success("Item added to cart!");
+                // Re-fetch user’s cart so the local UI is updated
+                fetchUserCart(userId);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to add to cart.");
+        }
+    };
+
+    // --------------------------------
+    // 1E) Handler: Increment/Decrement
+    // --------------------------------
+    const handleChangeQuantity = async (product, action) => {
+        if (!product) return;
+
+        const userId = localStorage.getItem("userId");
+
+        if (!userId) {
+            // Guest logic
+            const guestCart = getGuestCart();
+
+            // Find the item (variation=null, no addons)
+            const cartIndex = guestCart.findIndex(
+                (item) =>
+                    item.product_id === product.product_id &&
+                    !item.variation_id &&
+                    (!item.addon_ids || item.addon_ids.length === 0)
+            );
+
+            if (cartIndex >= 0) {
+                if (action === "increase") {
+                    guestCart[cartIndex].quantity += 1;
+                } else if (action === "decrease") {
+                    guestCart[cartIndex].quantity -= 1;
+                    if (guestCart[cartIndex].quantity <= 0) {
+                        // remove item if quantity is 0
+                        guestCart.splice(cartIndex, 1);
+                    }
+                }
+                updateGuestCart(guestCart);
+                setCartItems([...guestCart]); // re-render
+            }
+        } else {
+            // Logged in => call a new route or reuse /cart/add with quantity +1?
+            // Usually you'd have an endpoint like /cart/updateQuantity or similar
+            // We'll do a simple approach: if "increase", call /cart/add? If "decrease", custom endpoint
+            if (action === "increase") {
+                try {
+                    await axios.post("/cart/add", {
+                        product_id: product.product_id,
+                        quantity: 1,
+                    });
+                    toast.success("Quantity updated!");
+                    fetchUserCart(userId);
+                } catch (error) {
+                    toast.error("Failed to increase quantity.");
+                }
+            } else {
+                // decrease
+                // Either you have a dedicated endpoint, e.g. /cartItem/{cart_item_id}/decrement
+                // or build your own logic. For demo, let's assume you have /cart/removeOne
+                try {
+                    await axios.post("/cart/add", {
+                        product_id: product.product_id,
+                        quantity: -1, // or your API can handle negative quantity as a decrement
+                    });
+                    toast.success("Quantity updated!");
+                    fetchUserCart(userId);
+                } catch (error) {
+                    toast.error("Failed to decrease quantity.");
+                }
+            }
+        }
     };
 
     return (
@@ -315,6 +497,15 @@ function Menu({ categories, setDrawer1Open }) {
                                                             setDrawer1Open={
                                                                 setDrawer1Open
                                                             }
+                                                            cartItems={
+                                                                cartItems
+                                                            }
+                                                            handleDirectAdd={
+                                                                handleDirectAdd
+                                                            }
+                                                            handleChangeQuantity={
+                                                                handleChangeQuantity
+                                                            }
                                                         />
                                                     )
                                                 )}
@@ -330,6 +521,7 @@ function Menu({ categories, setDrawer1Open }) {
                                     </section>
                                 ) : (
                                     <>
+                                        {/* Best selling section */}
                                         <section
                                             id="bestselling"
                                             className="mb-12"
@@ -346,12 +538,22 @@ function Menu({ categories, setDrawer1Open }) {
                                                             setDrawer1Open={
                                                                 setDrawer1Open
                                                             }
+                                                            cartItems={
+                                                                cartItems
+                                                            }
+                                                            handleDirectAdd={
+                                                                handleDirectAdd
+                                                            }
+                                                            handleChangeQuantity={
+                                                                handleChangeQuantity
+                                                            }
                                                         />
                                                     )
                                                 )}
                                             </div>
                                         </section>
 
+                                        {/* Category sections */}
                                         {sortedCategories.map((category) => (
                                             <section
                                                 key={category.category_id}
@@ -374,6 +576,15 @@ function Menu({ categories, setDrawer1Open }) {
                                                                 setDrawer1Open={
                                                                     setDrawer1Open
                                                                 }
+                                                                cartItems={
+                                                                    cartItems
+                                                                }
+                                                                handleDirectAdd={
+                                                                    handleDirectAdd
+                                                                }
+                                                                handleChangeQuantity={
+                                                                    handleChangeQuantity
+                                                                }
                                                             />
                                                         )
                                                     )}
@@ -391,19 +602,73 @@ function Menu({ categories, setDrawer1Open }) {
     );
 }
 
-const ProductCard = ({ product, setDrawer1Open }) => {
+const ProductCard = ({
+    product,
+    setDrawer1Open,
+    cartItems,
+    handleDirectAdd,
+    handleChangeQuantity,
+}) => {
     const [isExpanded, setIsExpanded] = useState(false);
+
+    const hasVariations = product.variations && product.variations.length > 0;
+    const hasAddons = product.addons && product.addons.length > 0;
+    const hasVariationsOrAddons = hasVariations || hasAddons;
+
     const description = product.product_description || "";
-    const shortDescription = description.split(" ").slice(0, 10).join(" ");
-    const hasLongDescription = description.split(" ").length > 10;
+    const charLimit = 105;
+    const shortDescription =
+        description.length > charLimit
+            ? description.substring(0, charLimit) + "..."
+            : description;
+    const hasLongDescription = description.length > charLimit;
+
+    const totalQuantity = cartItems
+        .filter(
+            (item) => String(item.product_id) === String(product.product_id)
+        )
+        .reduce((acc, item) => acc + item.quantity, 0);
 
     const handleReadMore = (e) => {
         e.preventDefault();
-        handleAddToCartClick(product.product_id, setDrawer1Open);
+        setIsExpanded(true);
+    };
+
+    const handleModalAddToCart = async () => {
+        const userId = localStorage.getItem("userId");
+        try {
+            showModalAddToCart(
+                product.product_id,
+                setDrawer1Open,
+                async (guestCart) => {
+                    if (!userId) {
+                        if (Array.isArray(guestCart)) {
+                            setCartItems(guestCart);
+                        }
+                    } else {
+                        fetchUserCart(userId);
+                    }
+                }
+            );
+        } catch (error) {
+            console.error("Error in handleModalAddToCart:", error);
+        }
+    };
+
+    const fetchUserCart = async (userId) => {
+        try {
+            const { data } = await axios.get("/cart-items", {
+                params: { user_id: userId },
+            });
+            setCartItems(data.CartList || []);
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     return (
         <div className="group rounded-lg bg-white border border-gray-200 hover:border-red-500 h-full flex duration-500 flex-col relative overflow-hidden shadow-sm hover:shadow-xl">
+            {/* Product Image */}
             <div className="w-full aspect-[4/3] overflow-hidden">
                 <img
                     src={`https://console.pizzaportindia.com/${product.main_image_url}`}
@@ -412,6 +677,7 @@ const ProductCard = ({ product, setDrawer1Open }) => {
                 />
             </div>
 
+            {/* Product Content */}
             <div className="p-4 flex flex-col flex-grow">
                 <h4 className="text-lg font-semibold mb-2 line-clamp-2 group-hover:text-red-600">
                     <Link href={`/product-detail/${product.product_id}`}>
@@ -419,20 +685,29 @@ const ProductCard = ({ product, setDrawer1Open }) => {
                     </Link>
                 </h4>
 
-                <p className="text-gray-600 text-sm mb-3 flex-grow">
-                    {shortDescription}
-                    {hasLongDescription && (
-                        <button
-                            onClick={handleReadMore}
-                            className="text-red-600 ml-1 hover:underline font-medium"
-                        >
-                            Read more →
-                        </button>
+                {/* Description with Read More */}
+                <div className="text-gray-600 text-xs mb-3 flex-grow">
+                    {isExpanded ? (
+                        description
+                    ) : (
+                        <>
+                            {shortDescription}
+                            {hasLongDescription && (
+                                <button
+                                    onClick={handleReadMore}
+                                    className="text-red-600 ml-1 hover:underline font-medium"
+                                >
+                                    Read more →
+                                </button>
+                            )}
+                        </>
                     )}
-                </p>
+                </div>
 
+                {/* Bottom row: Price + Add or - total + */}
                 <div className="mt-auto">
                     <div className="flex items-center justify-between mb-3">
+                        {/* Price display */}
                         <div>
                             {product.base_sale_price &&
                             parseFloat(product.base_sale_price) <
@@ -451,17 +726,54 @@ const ProductCard = ({ product, setDrawer1Open }) => {
                                 </span>
                             )}
                         </div>
-                        <button
-                            onClick={() =>
-                                handleAddToCartClick(
-                                    product.product_id,
-                                    setDrawer1Open
-                                )
-                            }
-                            className="bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 transition duration-200"
-                        >
-                            Add
-                        </button>
+
+                        {/* Quantity Controls */}
+                        {totalQuantity > 0 ? (
+                            <div className="flex items-center">
+                                <button
+                                    onClick={() =>
+                                        handleChangeQuantity(
+                                            product,
+                                            "decrease"
+                                        )
+                                    }
+                                    className="bg-gray-200 w-8 h-8 flex items-center justify-center rounded-l-md"
+                                >
+                                    -
+                                </button>
+                                <div className="w-8 h-8 flex items-center justify-center border-t border-b border-gray-200">
+                                    {totalQuantity}
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        if (hasVariationsOrAddons) {
+                                            handleModalAddToCart();
+                                        } else {
+                                            handleChangeQuantity(
+                                                product,
+                                                "increase"
+                                            );
+                                        }
+                                    }}
+                                    className="bg-gray-200 w-8 h-8 flex items-center justify-center rounded-r-md"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    if (hasVariationsOrAddons) {
+                                        handleModalAddToCart();
+                                    } else {
+                                        handleDirectAdd(product);
+                                    }
+                                }}
+                                className="bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 transition duration-200"
+                            >
+                                Add
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

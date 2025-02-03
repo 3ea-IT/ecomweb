@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Tag, Badge, ChevronLeft, ChevronRight, Scissors } from "lucide-react";
 import axios from "axios";
 
-const CouponSection = ({ appliedCoupon }) => {
+const CouponSection = ({ appliedCoupon, onCouponApplied }) => {
     const [availableCoupons, setAvailableCoupons] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState("");
@@ -10,6 +10,7 @@ const CouponSection = ({ appliedCoupon }) => {
 
     useEffect(() => {
         fetchAvailableCoupons();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [appliedCoupon]);
 
     const fetchAvailableCoupons = async () => {
@@ -21,8 +22,7 @@ const CouponSection = ({ appliedCoupon }) => {
                     params: { user_id: userId },
                 }
             );
-
-            setAvailableCoupons(response.data.coupons);
+            setAvailableCoupons(response.data.coupons || []);
         } catch (error) {
             console.error("Error fetching coupons:", error);
             setAvailableCoupons([]);
@@ -55,8 +55,10 @@ const CouponSection = ({ appliedCoupon }) => {
                     type: "success",
                     text: "Coupon applied successfully!",
                 });
-                // Optionally, you can trigger a refresh or update state here instead of reloading
-                window.location.reload();
+                // Instead of reloading, call parent's callback to re-fetch
+                if (onCouponApplied) {
+                    onCouponApplied();
+                }
             } else {
                 setMessage({
                     type: "error",
@@ -73,7 +75,7 @@ const CouponSection = ({ appliedCoupon }) => {
 
     const scroll = (direction) => {
         const container = document.getElementById("coupons-container");
-        const scrollAmount = 220; // Adjusted for smaller cards
+        const scrollAmount = 220; // Adjust to match your card size
         if (container) {
             const newPosition =
                 direction === "right"
@@ -87,7 +89,7 @@ const CouponSection = ({ appliedCoupon }) => {
         }
     };
 
-    // Function to format date
+    // Format date
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         return date.toLocaleDateString("en-US", {

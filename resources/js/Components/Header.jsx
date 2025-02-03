@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, usePage } from "@inertiajs/react";
+import { Download, User, History, LogOut, ChevronDown } from "lucide-react";
 import {
     getGuestCart,
     updateGuestCart,
@@ -21,6 +22,20 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
     const [user, setUser] = useState(null);
     const [userId, setUserID] = useState(null);
     const [localCartCount, setLocalCartCount] = useState(0);
+    const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (!event.target.closest(".user-dropdown")) {
+                setShowUserDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const handleDrawerOpen = (value) => {
         setDrawer1Open(value);
@@ -151,14 +166,16 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                 <div className="main-bar">
                     <div className="container mx-auto px-4">
                         <div className="flex items-center justify-between h-16 md:h-20">
-                            {/* Logo */}
-                            <div className="w-[120px] md:w-[140px] lg:w-[180px]">
+                            {/* Logo with hanging effect */}
+                            <div className="relative -mb-8 z-[1000]">
                                 <Link href="/">
-                                    <img
-                                        src="/asset/image/Logo-4.png"
-                                        alt="Pizza Port Cafe Logo"
-                                        className="w-16 h-16 md:w-20 md:h-20"
-                                    />
+                                    <div className="relative transform hover:-translate-y-1 transition-transform duration-300 ease-in-out">
+                                        <img
+                                            src="/asset/image/Logo-4.png"
+                                            alt="Pizza Port Cafe Logo"
+                                            className="w-24 h-24 md:w-32 md:h-32 drop-shadow-xl"
+                                        />
+                                    </div>
                                 </Link>
                             </div>
 
@@ -171,91 +188,105 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                                     Home
                                 </Link>
                                 <Link
-                                    href="/outlets"
-                                    className="hover:text-primary transition-colors"
-                                >
-                                    Outlets
-                                </Link>
-                                {/* <Link
-                                    href="/about"
-                                    className="hover:text-primary transition-colors"
-                                >
-                                    About
-                                </Link> */}
-                                <Link
                                     href="/menu"
                                     className="hover:text-primary transition-colors"
                                 >
-                                    Menu
-                                </Link>
-                                {isLoggedIn && (
-                                    <Link
-                                        href="/OrderHistory"
-                                        className="hover:text-primary transition-colors"
-                                    >
-                                        Orders
-                                    </Link>
-                                )}
-                                <Link
-                                    href="/reviews"
-                                    className="hover:text-primary transition-colors"
-                                >
-                                    Reviews
-                                </Link>
-                                <Link
-                                    href="/blogs"
-                                    className="hover:text-primary transition-colors"
-                                >
-                                    Blogs
+                                    Order Online
                                 </Link>
                                 <Link
                                     href="/reservations"
                                     className="hover:text-primary transition-colors"
                                 >
-                                    Reserve Your Table
+                                    Book Your Table
                                 </Link>
+
+                                {/* Creative Download App Button */}
+                                <a
+                                    href="#"
+                                    className="relative group px-6 py-2 rounded-full bg-[#EE2737] text-white font-medium transform hover:scale-105 transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl"
+                                >
+                                    <span className="absolute inset-0 rounded-full bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
+                                    <span className="relative flex items-center space-x-2">
+                                        <Download className="w-4 h-4 animate-bounce" />
+                                        <span>Download App</span>
+                                    </span>
+                                </a>
                             </nav>
 
                             {/* User Actions */}
                             <div className="flex items-center space-x-2 md:space-x-4">
-                                {/* Modified to show login button on mobile */}
+                                {/* User Profile Section */}
                                 {userName ? (
-                                    <div className="flex items-center space-x-2">
-                                        <span className="md:inline text-sm md:text-base font-medium">
-                                            {userName}
-                                        </span>
+                                    <div className="relative user-dropdown">
                                         <button
-                                            className="p-2 rounded-md bg-white shadow-md hover:bg-gray-50 transition-colors"
                                             onClick={() =>
-                                                setShowLogoutDialog(true)
+                                                setShowUserDropdown(
+                                                    !showUserDropdown
+                                                )
                                             }
+                                            className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
                                         >
-                                            <i className="fa fa-sign-out text-sm md:text-base"></i>
+                                            <div className="w-8 h-8 rounded-full bg-[#EE2737] text-white flex items-center justify-center">
+                                                <User className="w-4 h-4" />
+                                            </div>
+                                            <span className="hidden md:inline font-medium">
+                                                {userName}
+                                            </span>
+                                            <ChevronDown className="w-4 h-4" />
                                         </button>
+
+                                        {/* Dropdown Menu */}
+                                        {showUserDropdown && (
+                                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-50">
+                                                <Link
+                                                    href="/OrderHistory"
+                                                    className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <History className="w-4 h-4" />
+                                                    <span>Order History</span>
+                                                </Link>
+                                                <button
+                                                    onClick={() => {
+                                                        setShowUserDropdown(
+                                                            false
+                                                        );
+                                                        setShowLogoutDialog(
+                                                            true
+                                                        );
+                                                    }}
+                                                    className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors w-full"
+                                                >
+                                                    <LogOut className="w-4 h-4" />
+                                                    <span>Logout</span>
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <button
                                         className="p-2 rounded-md bg-white shadow-md hover:bg-gray-50 transition-colors"
                                         onClick={() => setDrawer1Open(true)}
                                     >
-                                        <i className="flaticon-user text-lg md:text-xl"></i>
+                                        <User className="w-6 h-6" />
                                     </button>
                                 )}
 
+                                {/* Cart Button */}
                                 <Link href="/ShopCart" className="relative">
                                     <button className="p-2 rounded-md bg-white shadow-md hover:bg-gray-50 transition-colors">
                                         <i className="flaticon-shopping-bag-1 text-lg md:text-xl"></i>
                                         {(cartCount > 0 ||
                                             localCartCount > 0) && (
-                                            <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                                            <span className="absolute -top-1 -right-1 bg-[#EE2737] text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                                                 {cartCount || localCartCount}
                                             </span>
                                         )}
                                     </button>
                                 </Link>
 
+                                {/* Mobile Menu Button */}
                                 <button
-                                    className="lg:hidden flex flex-col justify-center items-center w-8 h-8 md:w-10 md:h-10 rounded-md bg-primary text-white"
+                                    className="lg:hidden flex flex-col justify-center items-center w-8 h-8 md:w-10 md:h-10 rounded-md bg-[#EE2737] text-white"
                                     onClick={() =>
                                         setMobileMenuOpen(!isMobileMenuOpen)
                                     }
@@ -315,35 +346,35 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                                 </button>
                             </div>
 
-                            {/* Mobile User Info */}
-                            {userName ? (
+                            {/* Mobile User Info with Order History */}
+                            {userName && (
                                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-medium">
-                                            {userName}
-                                        </span>
+                                    <div className="flex flex-col space-y-3">
+                                        <div className="flex items-center space-x-2">
+                                            <div className="w-8 h-8 rounded-full bg-[#EE2737] text-white flex items-center justify-center">
+                                                <User className="w-4 h-4" />
+                                            </div>
+                                            <span className="font-medium">
+                                                {userName}
+                                            </span>
+                                        </div>
+                                        <Link
+                                            href="/OrderHistory"
+                                            className="flex items-center space-x-2 text-gray-600 hover:text-[#EE2737] transition-colors"
+                                        >
+                                            <History className="w-4 h-4" />
+                                            <span>Order History</span>
+                                        </Link>
                                         <button
                                             onClick={() =>
                                                 setShowLogoutDialog(true)
                                             }
-                                            className="text-sm text-gray-600 hover:text-primary transition-colors"
+                                            className="flex items-center space-x-2 text-gray-600 hover:text-[#EE2737] transition-colors"
                                         >
-                                            <i className="fa fa-sign-out"></i>{" "}
-                                            Logout
+                                            <LogOut className="w-4 h-4" />
+                                            <span>Logout</span>
                                         </button>
                                     </div>
-                                </div>
-                            ) : (
-                                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                                    <button
-                                        onClick={() => {
-                                            setMobileMenuOpen(false);
-                                            setDrawer1Open(true);
-                                        }}
-                                        className="w-full text-center py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-                                    >
-                                        Sign In
-                                    </button>
                                 </div>
                             )}
 
@@ -354,27 +385,27 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                                 >
                                     Home
                                 </Link>
-                                <Link
+                                {/* <Link
                                     href="/outlets"
                                     className="block py-2 hover:text-primary transition-colors"
                                 >
                                     Outlets
-                                </Link>
+                                </Link> */}
                                 <Link
                                     href="/menu"
                                     className="block py-2 hover:text-primary transition-colors"
                                 >
-                                    Menu
+                                    Order Online
                                 </Link>
-                                {isLoggedIn && (
+                                {/* {isLoggedIn && (
                                     <Link
                                         href="/OrderHistory"
                                         className="block py-2 hover:text-primary transition-colors"
                                     >
                                         Orders
                                     </Link>
-                                )}
-                                <Link
+                                )} */}
+                                {/* <Link
                                     href="/reviews"
                                     className="block py-2 hover:text-primary transition-colors"
                                 >
@@ -385,19 +416,26 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                                     className="block py-2 hover:text-primary transition-colors"
                                 >
                                     Blogs
-                                </Link>
+                                </Link> */}
                                 <Link
                                     href="/reservations"
                                     className="block py-2 hover:text-primary transition-colors"
                                 >
-                                    Reserve Your Table
+                                    Book Your Table
                                 </Link>
+                                <a
+                                    href="#"
+                                    className="flex items-center space-x-2 px-4 py-2 bg-[#EE2737] text-white rounded-lg hover:bg-opacity-90 transition-colors"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    <span>Download App</span>
+                                </a>
                             </nav>
 
                             <div className="mt-8 border-t pt-4">
                                 <div className="flex space-x-4">
                                     <a
-                                        href="https://www.facebook.com/"
+                                        href="https://www.facebook.com/Pizza-Port-107753144824113"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-gray-600 hover:text-primary transition-colors"
@@ -405,7 +443,7 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                                         <i className="fab fa-facebook-f"></i>
                                     </a>
                                     <a
-                                        href="https://twitter.com/"
+                                        href="https://twitter.com/PizzaPortcafe"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-gray-600 hover:text-primary transition-colors"
@@ -413,20 +451,20 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                                         <i className="fab fa-twitter"></i>
                                     </a>
                                     <a
-                                        href="https://www.linkedin.com/"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-gray-600 hover:text-primary transition-colors"
-                                    >
-                                        <i className="fab fa-linkedin-in"></i>
-                                    </a>
-                                    <a
-                                        href="https://www.instagram.com/"
+                                        href="https://www.instagram.com/pizzaportcafe/"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-gray-600 hover:text-primary transition-colors"
                                     >
                                         <i className="fab fa-instagram"></i>
+                                    </a>
+                                    <a
+                                        href="https://www.youtube.com/@pizzaportcafe2000/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-gray-600 hover:text-primary transition-colors"
+                                    >
+                                        <i className="fab fa-youtube"></i>
                                     </a>
                                 </div>
                             </div>

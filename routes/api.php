@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cart/add', [CartController::class, 'addToCart']);
     // Route::get('/check-out', [OrderController::class, 'index']);
 });
-Route::post('/update-quantity/{productId}', [CartController::class, 'updateQuantityInDatabase']);
+Route::post('/update-quantity/{cart_item_id}', [CartController::class, 'updateQuantityInDatabase']);
 Route::get('/products/{product}/variations', [CartController::class, 'getVariations']);
 Route::get('/products/{product}/addons', [CartController::class, 'getAddons']);
 

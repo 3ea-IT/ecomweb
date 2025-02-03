@@ -43,12 +43,16 @@ class IndexController extends Controller
 
     public function showMenu()
     {
-        // Fetch active categories with their products
         $categories = Category::where('is_active', 1)
-            ->with(['products' => function ($query) {
-                $query->where('is_active', 1)
-                    ->where('isaddon', 0);
-            }])
+            ->with([
+                'products' => function ($query) {
+                    // Only fetch active, non-addon products
+                    $query->where('is_active', 1)
+                        ->where('isaddon', 0)
+                        // IMPORTANT: Eager-load variations & addons
+                        ->with(['variations', 'addons']);
+                }
+            ])
             ->get();
 
         return Inertia::render('Menu', [
