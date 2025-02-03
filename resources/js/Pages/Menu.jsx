@@ -3,13 +3,14 @@ import MainLayout from "../Layouts/MainLayout";
 import { Link, usePage } from "@inertiajs/react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
-import { Search, Menu as MenuIcon } from "lucide-react";
+import { Search, Menu as MenuIcon, ChevronRight } from "lucide-react";
 import "react-toastify/dist/ReactToastify.css";
 import {
     getGuestCart,
     updateGuestCart,
     handleAddToCartClick as showModalAddToCart,
 } from "../utils/cart_model";
+import OrderTypeToggle from "../Components/OrderTypeToggle";
 
 function Menu({ categories, setDrawer1Open }) {
     const [activeCategory, setActiveCategory] = useState("bestselling");
@@ -407,38 +408,45 @@ function Menu({ categories, setDrawer1Open }) {
             </style>
 
             <section className="relative bg-white pt-[calc(var(--header-height)+1rem)]">
-                <div className="container mx-auto px-4">
-                    <div className="py-6">
-                        <div className="flex flex-col lg:flex-row relative gap-6">
-                            {/* Desktop Sidebar */}
-                            <div className="hidden lg:block lg:w-1/4 xl:w-1/5">
-                                <div
-                                    id="category-sidebar"
-                                    className={`
-                                        ${
-                                            hasReachedEnd
-                                                ? "fixed sidebar-sticky"
-                                                : "relative"
-                                        }
-                                        w-[270px] bg-gray-50 p-4 rounded-xl
-                                        max-h-[calc(100vh-var(--header-height)-2rem)] overflow-y-auto
-                                        transition-all duration-300 shadow-md
-                                        border border-gray-100
-                                    `}
-                                >
-                                    <ul className="space-y-2">
+                <div className="container mx-auto">
+                    <div className="flex flex-col lg:flex-row relative">
+                        {/* Enhanced Desktop Sidebar */}
+                        <div className="hidden lg:block w-64 fixed left-[max(0px,calc(50%-680px))] top-36">
+                            <style jsx>{`
+                                /* Custom scrollbar styles */
+                                .thin-scrollbar::-webkit-scrollbar {
+                                    width: 1px;
+                                }
+                                .thin-scrollbar::-webkit-scrollbar-track {
+                                    background: transparent;
+                                }
+                                .thin-scrollbar::-webkit-scrollbar-thumb {
+                                    background: rgb(252, 165, 165);
+                                }
+                                .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+                                    background: rgb(248, 113, 113);
+                                }
+                            `}</style>
+                            <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100">
+                                <div className="max-h-[550px] overflow-y-auto thin-scrollbar">
+                                    <div className="px-4 pb-4 sticky top-0 bg-gray-50 z-10">
+                                        <h3 className="text-lg font-bold text-gray-800 mb-2 mt-4">
+                                            Menu Categories
+                                        </h3>
+                                    </div>
+                                    <ul className="space-y-2 px-3 mb-4">
                                         {sidebarCategories.map((cat) => (
                                             <li key={cat.id}>
                                                 <button
                                                     className={`
-                                                        flex items-center w-full px-4 py-3 rounded-lg
+                                                        flex items-center w-full px-4 py-3 rounded-xl
                                                         ${
                                                             activeCategory ===
                                                             cat.id
                                                                 ? "bg-red-600 text-white shadow-md transform scale-105"
                                                                 : "bg-white text-gray-700 hover:bg-red-50 hover:text-red-600"
                                                         }
-                                                        transition-all duration-300 ease-in-out
+                                                        transition-all duration-300 hover:shadow-md
                                                     `}
                                                     onClick={() =>
                                                         handleCategoryClick(
@@ -446,94 +454,136 @@ function Menu({ categories, setDrawer1Open }) {
                                                         )
                                                     }
                                                 >
-                                                    <i
-                                                        className={`${cat.iconClass} text-[25px] mr-3`}
+                                                    <div className="flex items-center flex-1">
+                                                        <i
+                                                            className={`${cat.iconClass} text-[20px] mr-3`}
+                                                        />
+                                                        <span className="text-sm font-semibold">
+                                                            {cat.name}
+                                                        </span>
+                                                    </div>
+                                                    <ChevronRight
+                                                        className={`ml-2 transition-transform duration-200 ${
+                                                            activeCategory ===
+                                                            cat.id
+                                                                ? "text-white transform rotate-90"
+                                                                : "text-gray-400"
+                                                        }`}
+                                                        size={16}
                                                     />
-                                                    {cat.name}
                                                 </button>
                                             </li>
                                         ))}
                                     </ul>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Main Content */}
-                            <div className="lg:w-3/4 xl:w-4/5 w-full">
-                                {/* Desktop Search Bar */}
-                                <div className="hidden lg:block sticky search-bar-sticky z-40 mb-8 bg-white pb-2.5">
-                                    <div className="relative max-w-xl ml-auto">
-                                        <input
-                                            type="text"
-                                            placeholder="Search for dishes..."
-                                            value={searchTerm}
-                                            onChange={handleSearch}
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-200
-                                                     focus:outline-none focus:ring-2 focus:ring-red-500
-                                                     shadow-sm"
-                                        />
-                                        <Search
-                                            className="absolute right-3 top-3 text-gray-400"
-                                            size={20}
-                                        />
+                        {/* Main Content - Adjusted for 5 columns */}
+                        <div className="lg:ml-56 w-full p-4">
+                            {/* Desktop Search Bar */}
+                            <div className="hidden lg:block sticky top-20 z-40 bg-white pb-4">
+                                <div className="relative max-w-4xl">
+                                    <div className="flex items-center w-full pt-8">
+                                        <div className="w-1/2">
+                                            {" "}
+                                            {/* Reduced width to make space for toggle */}
+                                            <input
+                                                type="text"
+                                                placeholder="Search for dishes..."
+                                                value={searchTerm}
+                                                onChange={handleSearch}
+                                                className="w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-red-500 shadow-sm"
+                                            />
+                                            <Search
+                                                className="absolute right-[55%] top-11 text-gray-400"
+                                                size={20}
+                                            />
+                                        </div>
+                                        <OrderTypeToggle />
                                     </div>
                                 </div>
-
-                                {/* Content Sections */}
-                                {isSearching && searchTerm ? (
-                                    <section
-                                        className="mb-8"
-                                        id="searchResults"
-                                    >
+                            </div>
+                            {/* Content Sections with Updated Grid */}
+                            {isSearching && searchTerm ? (
+                                <div className="mt-6">
+                                    <h2 className="text-2xl font-bold mb-6">
+                                        Search Results
+                                    </h2>
+                                    {filteredProducts.length > 0 ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                            {filteredProducts.map((product) => (
+                                                <ProductCard
+                                                    key={`search-${product.product_id}`}
+                                                    product={product}
+                                                    setDrawer1Open={
+                                                        setDrawer1Open
+                                                    }
+                                                    cartItems={cartItems}
+                                                    handleDirectAdd={
+                                                        handleDirectAdd
+                                                    }
+                                                    handleChangeQuantity={
+                                                        handleChangeQuantity
+                                                    }
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8 bg-gray-50 rounded-xl">
+                                            <p className="text-gray-500">
+                                                No items found matching your
+                                                search
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Best selling section */}
+                                    <div className="mt-6">
                                         <h2 className="text-2xl font-bold mb-6">
-                                            Search Results
+                                            Best Selling Items
                                         </h2>
-                                        {filteredProducts.length > 0 ? (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                                {filteredProducts.map(
-                                                    (product) => (
-                                                        <ProductCard
-                                                            key={`search-${product.product_id}`}
-                                                            product={product}
-                                                            setDrawer1Open={
-                                                                setDrawer1Open
-                                                            }
-                                                            cartItems={
-                                                                cartItems
-                                                            }
-                                                            handleDirectAdd={
-                                                                handleDirectAdd
-                                                            }
-                                                            handleChangeQuantity={
-                                                                handleChangeQuantity
-                                                            }
-                                                        />
-                                                    )
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-8 bg-gray-50 rounded-xl">
-                                                <p className="text-gray-500 text-lg">
-                                                    No items found matching your
-                                                    search
-                                                </p>
-                                            </div>
-                                        )}
-                                    </section>
-                                ) : (
-                                    <>
-                                        {/* Best selling section */}
-                                        <section
-                                            id="bestselling"
-                                            className="mb-12"
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                            {bestSellingProducts.map(
+                                                (product) => (
+                                                    <ProductCard
+                                                        key={`bestselling-${product.product_id}`}
+                                                        product={product}
+                                                        setDrawer1Open={
+                                                            setDrawer1Open
+                                                        }
+                                                        cartItems={cartItems}
+                                                        handleDirectAdd={
+                                                            handleDirectAdd
+                                                        }
+                                                        handleChangeQuantity={
+                                                            handleChangeQuantity
+                                                        }
+                                                    />
+                                                )
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Category sections */}
+                                    {sortedCategories.map((category) => (
+                                        <div
+                                            key={category.category_id}
+                                            id={category.category_id.toString()}
+                                            className="mt-12"
                                         >
                                             <h2 className="text-2xl font-bold mb-6">
-                                                Best Selling Items
+                                                {category.category_name}
                                             </h2>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                                {bestSellingProducts.map(
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                                {category.products.map(
                                                     (product) => (
                                                         <ProductCard
-                                                            key={`bestselling-${product.product_id}`}
+                                                            key={
+                                                                product.product_id
+                                                            }
                                                             product={product}
                                                             setDrawer1Open={
                                                                 setDrawer1Open
@@ -551,49 +601,10 @@ function Menu({ categories, setDrawer1Open }) {
                                                     )
                                                 )}
                                             </div>
-                                        </section>
-
-                                        {/* Category sections */}
-                                        {sortedCategories.map((category) => (
-                                            <section
-                                                key={category.category_id}
-                                                id={category.category_id.toString()}
-                                                className="mb-12"
-                                            >
-                                                <h2 className="text-2xl font-bold mb-6">
-                                                    {category.category_name}
-                                                </h2>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                                    {category.products.map(
-                                                        (product) => (
-                                                            <ProductCard
-                                                                key={
-                                                                    product.product_id
-                                                                }
-                                                                product={
-                                                                    product
-                                                                }
-                                                                setDrawer1Open={
-                                                                    setDrawer1Open
-                                                                }
-                                                                cartItems={
-                                                                    cartItems
-                                                                }
-                                                                handleDirectAdd={
-                                                                    handleDirectAdd
-                                                                }
-                                                                handleChangeQuantity={
-                                                                    handleChangeQuantity
-                                                                }
-                                                            />
-                                                        )
-                                                    )}
-                                                </div>
-                                            </section>
-                                        ))}
-                                    </>
-                                )}
-                            </div>
+                                        </div>
+                                    ))}
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -616,7 +627,7 @@ const ProductCard = ({
     const hasVariationsOrAddons = hasVariations || hasAddons;
 
     const description = product.product_description || "";
-    const charLimit = 105;
+    const charLimit = 105; // Kept at 105 as requested
     const shortDescription =
         description.length > charLimit
             ? description.substring(0, charLimit) + "..."
@@ -667,53 +678,32 @@ const ProductCard = ({
     };
 
     return (
-        <div className="group rounded-lg bg-white border border-gray-200 hover:border-red-500 h-full flex duration-500 flex-col relative overflow-hidden shadow-sm hover:shadow-xl">
-            {/* Product Image */}
-            <div className="w-full aspect-[4/3] overflow-hidden">
-                <img
-                    src={`https://console.pizzaportindia.com/${product.main_image_url}`}
-                    alt={product.product_name}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-            </div>
-
-            {/* Product Content */}
-            <div className="p-4 flex flex-col flex-grow">
-                <h4 className="text-lg font-semibold mb-2 line-clamp-2 group-hover:text-red-600">
-                    <Link href={`/product-detail/${product.product_id}`}>
-                        {product.product_name}
-                    </Link>
-                </h4>
-
-                {/* Description with Read More */}
-                <div className="text-gray-600 text-xs mb-3 flex-grow">
-                    {isExpanded ? (
-                        description
-                    ) : (
-                        <>
-                            {shortDescription}
-                            {hasLongDescription && (
-                                <button
-                                    onClick={handleReadMore}
-                                    className="text-red-600 ml-1 hover:underline font-medium"
-                                >
-                                    Read more →
-                                </button>
-                            )}
-                        </>
-                    )}
+        <div className="group bg-white border border-gray-200 hover:border-red-500 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col h-full">
+            {/* Mobile Layout (Horizontal) */}
+            <div className="lg:hidden flex">
+                <div className="w-1/3 aspect-square">
+                    <img
+                        src={`https://console.pizzaportindia.com/${product.main_image_url}`}
+                        alt={product.product_name}
+                        className="w-full h-full object-cover"
+                    />
                 </div>
-
-                {/* Bottom row: Price + Add or - total + */}
-                <div className="mt-auto">
-                    <div className="flex items-center justify-between mb-3">
-                        {/* Price display */}
-                        <div>
+                <div className="w-2/3 p-3 flex flex-col">
+                    <h4 className="font-semibold text-sm line-clamp-2 mb-1">
+                        <Link href={`/product-detail/${product.product_id}`}>
+                            {product.product_name}
+                        </Link>
+                    </h4>
+                    <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                        {shortDescription}
+                    </p>
+                    <div className="mt-auto flex items-center justify-between">
+                        <div className="text-sm">
                             {product.base_sale_price &&
                             parseFloat(product.base_sale_price) <
                                 parseFloat(product.base_mrp) ? (
                                 <div className="flex items-center gap-2">
-                                    <span className="text-gray-400 line-through text-sm">
+                                    <span className="text-gray-400 line-through">
                                         ₹{product.base_mrp}
                                     </span>
                                     <span className="text-red-600 font-semibold">
@@ -726,8 +716,6 @@ const ProductCard = ({
                                 </span>
                             )}
                         </div>
-
-                        {/* Quantity Controls */}
                         {totalQuantity > 0 ? (
                             <div className="flex items-center">
                                 <button
@@ -737,7 +725,114 @@ const ProductCard = ({
                                             "decrease"
                                         )
                                     }
-                                    className="bg-gray-200 w-8 h-8 flex items-center justify-center rounded-l-md"
+                                    className="bg-gray-100 w-7 h-7 flex items-center justify-center rounded-l"
+                                >
+                                    -
+                                </button>
+                                <div className="w-7 h-7 flex items-center justify-center border-t border-b border-gray-200">
+                                    {totalQuantity}
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        if (hasVariationsOrAddons) {
+                                            handleModalAddToCart();
+                                        } else {
+                                            handleChangeQuantity(
+                                                product,
+                                                "increase"
+                                            );
+                                        }
+                                    }}
+                                    className="bg-gray-100 w-7 h-7 flex items-center justify-center rounded-r"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => {
+                                    if (hasVariationsOrAddons) {
+                                        handleModalAddToCart();
+                                    } else {
+                                        handleDirectAdd(product);
+                                    }
+                                }}
+                                className="bg-red-600 text-white px-3 py-1.5 rounded text-sm hover:bg-red-700 transition duration-200"
+                            >
+                                Add
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Enhanced Desktop Layout */}
+            <div className="hidden lg:flex flex-col h-full">
+                <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                        src={`https://console.pizzaportindia.com/${product.main_image_url}`}
+                        alt={product.product_name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                </div>
+                <div className="p-4 flex flex-col flex-grow">
+                    <h4 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-red-600">
+                        <Link href={`/product-detail/${product.product_id}`}>
+                            {product.product_name}
+                        </Link>
+                    </h4>
+                    <div className="text-xs text-gray-600 mb-auto">
+                        {isExpanded ? (
+                            description
+                        ) : (
+                            <>
+                                {shortDescription}
+                                {hasLongDescription && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setIsExpanded(true);
+                                        }}
+                                        className="text-red-600 ml-1 hover:underline text-xs font-medium"
+                                    >
+                                        Read more →
+                                    </button>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+                {/* Price and Add Button Section - Now at bottom */}
+                <div className="px-4 pb-4 mt-auto border-t border-gray-100 pt-3">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            {product.base_sale_price &&
+                            parseFloat(product.base_sale_price) <
+                                parseFloat(product.base_mrp) ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-400 line-through text-sm">
+                                        ₹{product.base_mrp}
+                                    </span>
+                                    <span className="text-red-600 font-semibold text-lg">
+                                        ₹{product.base_sale_price}
+                                    </span>
+                                </div>
+                            ) : (
+                                <span className="text-red-600 font-semibold text-lg">
+                                    ₹{product.base_mrp}
+                                </span>
+                            )}
+                        </div>
+                        {totalQuantity > 0 ? (
+                            <div className="flex items-center">
+                                <button
+                                    onClick={() =>
+                                        handleChangeQuantity(
+                                            product,
+                                            "decrease"
+                                        )
+                                    }
+                                    className="bg-gray-100 w-8 h-8 flex items-center justify-center rounded-l-md hover:bg-gray-200"
                                 >
                                     -
                                 </button>
@@ -755,7 +850,7 @@ const ProductCard = ({
                                             );
                                         }
                                     }}
-                                    className="bg-gray-200 w-8 h-8 flex items-center justify-center rounded-r-md"
+                                    className="bg-gray-100 w-8 h-8 flex items-center justify-center rounded-r-md hover:bg-gray-200"
                                 >
                                     +
                                 </button>
@@ -769,7 +864,7 @@ const ProductCard = ({
                                         handleDirectAdd(product);
                                     }
                                 }}
-                                className="bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 transition duration-200"
+                                className="bg-red-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition duration-200"
                             >
                                 Add
                             </button>
