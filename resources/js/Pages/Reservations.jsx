@@ -56,37 +56,31 @@ const ReservationsPage = () => {
         special_requests: "",
         occasion: "",
     });
-
-    const [activeTime, setActiveTime] = useState("");
+    const [reservationType, setReservationType] = useState('table');
     const [showModal, setShowModal] = useState(false);
 
-    const timeSlots = [
-        "11:00 AM",
-        "12:00 PM",
-        "12:30 PM",
-        "1:00 PM",
-        "1:30 PM",
-        "2:00 PM",
-        "2:30 PM",
-        "6:00 PM",
-        "6:30 PM",
-        "7:00 PM",
-        "7:30 PM",
-        "8:00 PM",
-        "8:30 PM",
-        "9:00 PM",
-        "9:30 PM",
-        "10:00 PM",
-        "10:30 PM",
-        "11:00 PM",
-    ];
+    // Function to generate time slots
+    const generateTimeSlots = () => {
+        const slots = [];
+        let currentTime = new Date();
+        currentTime.setHours(11, 0, 0); // Start at 11:00 AM
+
+        while (currentTime.getHours() < 23 || (currentTime.getHours() === 23 && currentTime.getMinutes() === 0)) {
+            const timeString = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            slots.push(timeString);
+            currentTime.setMinutes(currentTime.getMinutes() + 30); // Increment by 30 minutes
+        }
+
+        return slots;
+    };
+
+    const timeSlots = generateTimeSlots();
 
     const handleSubmit = (e) => {
         e.preventDefault();
         post("/reservations", {
             onSuccess: () => {
                 reset();
-                setActiveTime("");
                 setShowModal(true);
             },
         });
@@ -171,322 +165,284 @@ const ReservationsPage = () => {
 
                 {/* Info Cards with Hover Effects */}
                 <div className="container mx-auto px-4 py-12">
-                    <div className="max-w-6xl mx-auto">
-                        <div className="grid md:grid-cols-3 gap-8">
-                            {[
-                                {
-                                    icon: Phone,
-                                    title: "Contact Us",
-                                    content: [
-                                        "+91 9839334430",
-                                        "05224238357",
-                                        "order@pizzaportindia.com",
-                                    ],
-                                },
-                                {
-                                    icon: Clock,
-                                    title: "Opening Hours",
-                                    content: ["Mon-Sun: 11:00 AM - 12:00 PM"],
-                                },
-                                {
-                                    icon: Users,
-                                    title: "Capacity",
-                                    content: ["Groups up to 20 people"],
-                                },
-                            ].map((card, index) => (
-                                <div
-                                    key={index}
-                                    className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
-                                >
-                                    <card.icon className="w-10 h-10 text-primary mb-6" />
-                                    <h3 className="text-2xl font-semibold mb-4">
-                                        {card.title}
-                                    </h3>
-                                    {card.content.map((line, i) => (
-                                        <p key={i} className="text-gray-600">
-                                            {line}
-                                        </p>
-                                    ))}
-                                </div>
-                            ))}
+            <div className="max-w-6xl mx-auto">
+                {/* Info Cards */}
+                <div className="grid md:grid-cols-3 gap-8">
+                    {[{ icon: Phone, title: "Contact Us", content: ["+91 9839334430", "05224238357", "order@pizzaportindia.com"] },
+                        { icon: Clock, title: "Opening Hours", content: ["Mon-Sun: 11:00 AM - 12:00 PM"] },
+                        { icon: Users, title: "Capacity", content: ["Groups up to 20 people"] }]
+                        .map((card, index) => (
+                            <div key={index} className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                                <card.icon className="w-10 h-10 text-red-600 mb-6" />
+                                <h3 className="text-2xl font-semibold mb-4">{card.title}</h3>
+                                {card.content.map((line, i) => (
+                                    <p key={i} className="text-gray-600">{line}</p>
+                                ))}
+                            </div>
+                        ))}
+                </div>
+
+                <div className="max-w-6xl mx-auto mt-16">
+      <div className="bg-white p-6 md:p-12 rounded-3xl shadow-lg">
+        <h2 className="text-3xl font-bold text-center mb-8">Make a Reservation</h2>
+        
+        {/* Reservation Type Toggle */}
+        <div className="flex justify-center space-x-4 mb-12">
+          <button
+            onClick={() => setReservationType('table')}
+            className={`px-8 py-4 rounded-full text-lg font-medium transition-all duration-300 transform hover:scale-105 w-64
+              ${reservationType === 'table'
+                ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            Book a Table
+          </button>
+
+          <button
+            onClick={() => setReservationType('party')}
+            className={`px-8 py-4 rounded-full text-lg font-medium transition-all duration-300 transform hover:scale-105 w-64
+              ${reservationType === 'party'
+                ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            Organize a Party
+          </button>
+        </div>
+
+        {/* Reservation Type Description */}
+        <div className="text-center mb-12">
+          {reservationType === 'table' ? (
+            <div className="space-y-2">
+              <p className="text-lg font-medium text-gray-800">Regular Table Booking</p>
+              <p className="text-gray-600">Perfect for groups up to 8 people</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-lg font-medium text-gray-800">Party & Event Planning</p>
+              <p className="text-gray-600">Ideal for large groups and special occasions</p>
+            </div>
+          )}
+        </div>
+
+        {/* Reservation Form */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Personal Details */}
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={data.name}
+                  onChange={(e) => setData({ ...data, name: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                  placeholder="Your full name"
+                />
+                {errors.name && (
+                  <div className="text-red-500 text-sm mt-1">{errors.name}</div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={data.email}
+                  onChange={(e) => setData({ ...data, email: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                  placeholder="your@email.com"
+                />
+                {errors.email && (
+                  <div className="text-red-500 text-sm mt-1">{errors.email}</div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input
+                  type="tel"
+                  value={data.phone}
+                  onChange={(e) => setData({ ...data, phone: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                  placeholder="Your phone number"
+                />
+                {errors.phone && (
+                  <div className="text-red-500 text-sm mt-1">{errors.phone}</div>
+                )}
+              </div>
+            </div>
+            {/* Reservation Details */}
+            <div className="grid grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-6">
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input
+                    type="date"
+                    value={data.date}
+                    onChange={(e) => setData({ ...data, date: e.target.value })}
+                    min={new Date().toISOString().split("T")[0]}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                />
+                {errors.date && (
+                    <div className="text-red-500 text-sm mt-1">{errors.date}</div>
+                )}
+                </div>
+
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration (Hours)</label>
+                <input
+                    type="number"
+                    value={data.duration}
+                    onChange={(e) => setData({ ...data, duration: e.target.value })}
+                    min="1"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                    placeholder="Enter duration in hours"
+                />
+                {errors.duration && (
+                    <div className="text-red-500 text-sm mt-1">{errors.duration}</div>
+                )}
+                </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-6">
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                <select
+                    value={data.time}
+                    onChange={(e) => setData({ ...data, time: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                >
+                    <option value="">Select a time</option>
+                    {timeSlots.map((time) => (
+                    <option key={time} value={time}>{time}</option>
+                    ))}
+                </select>
+                {errors.time && (
+                    <div className="text-red-500 text-sm mt-1">{errors.time}</div>
+                )}
+                </div>
+
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Number of Guests</label>
+                <input
+                    type="number"
+                    value={data.guests}
+                    onChange={(e) => setData({ ...data, guests: e.target.value })}
+                    min="1"
+                    max="20"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent text-left"
+                    placeholder="Number of guests"
+                />
+                {errors.guests && (
+                    <div className="text-red-500 text-sm mt-1">{errors.guests}</div>
+                )}
+                </div>
+            </div>
+            </div>
+            </div>
+
+          {/* Party-specific Fields */}
+          {reservationType === 'party' && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Occasion (Optional)</label>
+                <select
+                  value={data.occasion}
+                  onChange={(e) => setData({ ...data, occasion: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                >
+                  <option value="">Select an occasion</option>
+                  <option value="birthday">Birthday</option>
+                  <option value="anniversary">Anniversary</option>
+                  <option value="business">Business Meal</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Catering Required</label>
+                <select
+                  value={data.catering}
+                  onChange={(e) => setData({ ...data, catering: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                >
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </div>
+
+              {data.catering === 'yes' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Catering Address</label>
+                  <textarea
+                    value={data.catering_address}
+                    onChange={(e) => setData({ ...data, catering_address: e.target.value })}
+                    rows="4"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                    placeholder="Enter the catering address"
+                  ></textarea>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Special Requests */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Special Requests (Optional)</label>
+            <textarea
+              value={data.special_requests}
+              onChange={(e) => setData({ ...data, special_requests: e.target.value })}
+              rows="4"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent"
+              placeholder="Any special requests or dietary requirements?"
+            ></textarea>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              disabled={processing}
+              className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-full text-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50"
+            >
+              {processing ? "Submitting..." : "Reserve Table"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+                {/* Policy Section */}
+                <div className="mt-16 bg-white rounded-3xl p-12 shadow-lg">
+                    <h3 className="text-3xl font-semibold mb-8 text-center">Reservation Policy</h3>
+                    <div className="grid md:grid-cols-2 gap-12">
+                        <div className="space-y-6">
+                            <h4 className="text-2xl font-semibold mb-4">What to Know</h4>
+                            <ul className="space-y-4">
+                                {[
+                                    "Reservations are held for 15 minutes past the booking time",
+                                    "We require a minimum of 2 hours notice for cancellations",
+                                    "Special arrangements can be made for large groups",
+                                    "Children are welcome and high chairs are available",
+                                ].map((item, index) => (
+                                    <li key={index} className="flex items-start gap-3">
+                                        <div className="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full bg-primary" />
+                                        <span className="text-gray-600">{item}</span>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
-
-                        {/* Reservation Form with Enhanced UI */}
-                        <div className="mt-16 bg-white rounded-3xl shadow-xl p-8 md:p-12">
-                            <form onSubmit={handleSubmit} className="space-y-8">
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    {/* Personal Details */}
-                                    <div className="space-y-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Name
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={data.name}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "name",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                                placeholder="Your full name"
-                                            />
-                                            {errors.name && (
-                                                <div className="text-red-500 text-sm mt-1">
-                                                    {errors.name}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Email
-                                            </label>
-                                            <input
-                                                type="email"
-                                                value={data.email}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "email",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                                placeholder="your@email.com"
-                                            />
-                                            {errors.email && (
-                                                <div className="text-red-500 text-sm mt-1">
-                                                    {errors.email}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Phone
-                                            </label>
-                                            <input
-                                                type="tel"
-                                                value={data.phone}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "phone",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                                placeholder="Your phone number"
-                                            />
-                                            {errors.phone && (
-                                                <div className="text-red-500 text-sm mt-1">
-                                                    {errors.phone}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Reservation Details */}
-                                    <div className="space-y-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Date
-                                            </label>
-                                            <input
-                                                type="date"
-                                                value={data.date}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "date",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                min={
-                                                    new Date()
-                                                        .toISOString()
-                                                        .split("T")[0]
-                                                }
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                            />
-                                            {errors.date && (
-                                                <div className="text-red-500 text-sm mt-1">
-                                                    {errors.date}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Time
-                                            </label>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                {timeSlots.map((time) => (
-                                                    <button
-                                                        key={time}
-                                                        type="button"
-                                                        className={`px-3 py-2 text-sm rounded-lg border ${
-                                                            activeTime === time
-                                                                ? "bg-primary text-white border-primary"
-                                                                : "border-gray-300 hover:border-primary"
-                                                        }`}
-                                                        onClick={() => {
-                                                            setActiveTime(time);
-                                                            setData(
-                                                                "time",
-                                                                time
-                                                            );
-                                                        }}
-                                                    >
-                                                        {time}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            {errors.time && (
-                                                <div className="text-red-500 text-sm mt-1">
-                                                    {errors.time}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Number of Guests
-                                            </label>
-                                            <input
-                                                type="number"
-                                                value={data.guests}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "guests",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                min="1"
-                                                max="20"
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                                placeholder="Number of guests"
-                                            />
-                                            {errors.guests && (
-                                                <div className="text-red-500 text-sm mt-1">
-                                                    {errors.guests}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Full Width Fields */}
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Occasion (Optional)
-                                        </label>
-                                        <select
-                                            value={data.occasion}
-                                            onChange={(e) =>
-                                                setData(
-                                                    "occasion",
-                                                    e.target.value
-                                                )
-                                            }
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                        >
-                                            <option value="">
-                                                Select an occasion
-                                            </option>
-                                            <option value="birthday">
-                                                Birthday
-                                            </option>
-                                            <option value="anniversary">
-                                                Anniversary
-                                            </option>
-                                            <option value="business">
-                                                Business Meal
-                                            </option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Special Requests (Optional)
-                                        </label>
-                                        <textarea
-                                            value={data.special_requests}
-                                            onChange={(e) =>
-                                                setData(
-                                                    "special_requests",
-                                                    e.target.value
-                                                )
-                                            }
-                                            rows="4"
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                            placeholder="Any special requests or dietary requirements?"
-                                        ></textarea>
-                                    </div>
-
-                                    <div className="flex justify-center">
-                                        <button
-                                            type="submit"
-                                            disabled={processing}
-                                            className="px-8 py-4 bg-primary hover:bg-primary/90 text-white rounded-full text-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50"
-                                        >
-                                            {processing
-                                                ? "Submitting..."
-                                                : "Reserve Table"}
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                        {/* Policy Section with Enhanced Design */}
-                        <div className="mt-16 bg-white rounded-3xl p-12 shadow-lg">
-                            <h3 className="text-3xl font-semibold mb-8 text-center">
-                                Reservation Policy
-                            </h3>
-                            <div className="grid md:grid-cols-2 gap-12">
-                                <div className="space-y-6">
-                                    <h4 className="text-2xl font-semibold mb-4">
-                                        What to Know
-                                    </h4>
-                                    <ul className="space-y-4">
-                                        {[
-                                            "Reservations are held for 15 minutes past the booking time",
-                                            "We require a minimum of 2 hours notice for cancellations",
-                                            "Special arrangements can be made for large groups",
-                                            "Children are welcome and high chairs are available",
-                                        ].map((item, index) => (
-                                            <li
-                                                key={index}
-                                                className="flex items-start gap-3"
-                                            >
-                                                <div className="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full bg-primary" />
-                                                <span className="text-gray-600">
-                                                    {item}
-                                                </span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                                <div className="space-y-6">
-                                    <h4 className="text-2xl font-semibold mb-4">
-                                        Special Events
-                                    </h4>
-                                    <p className="text-gray-600 leading-relaxed">
-                                        Planning a special celebration? Our
-                                        events team can help create the perfect
-                                        experience. Contact us directly for
-                                        private dining and event inquiries.
-                                    </p>
-                                    <button
-                                        onClick={() =>
-                                            (window.location.href =
-                                                "mailto:order@pizzaportindia.com")
-                                        }
-                                        className="px-6 py-3 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors"
-                                    >
-                                        Contact Event Team
+                        <div className="space-y-6">
+                            <h4 className="text-2xl font-semibold mb-4">Special Events</h4>
+                            <p className="text-gray-600 leading-relaxed">
+                                Planning a special celebration? Our events team can help create the perfect experience. Contact us directly for private dining and event inquiries.
+                            </p>
+                            <button
+                                onClick={() => (window.location.href = "mailto:order@pizzaportindia.com")}
+                                className="px-6 py-3 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors"
+                            >
+                                Contact Event Team
                                     </button>
                                 </div>
                             </div>
