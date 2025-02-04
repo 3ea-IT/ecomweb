@@ -81,8 +81,17 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
 
     useEffect(() => {
         fetchCartCount();
+        // Listen for custom "cart-updated" event and fetch cart count immediately
+        const handleCartUpdated = () => {
+            fetchCartCount();
+        };
+        window.addEventListener("cart-updated", handleCartUpdated);
+
         const interval = setInterval(fetchCartCount, 30000);
-        return () => clearInterval(interval);
+        return () => {
+            window.removeEventListener("cart-updated", handleCartUpdated);
+            clearInterval(interval);
+        };
     }, [isLoggedIn]);
 
     const handleSubmit = async (e) => {
@@ -189,15 +198,25 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                                 </Link>
                                 <Link
                                     href="/menu"
-                                    className="hover:text-primary transition-colors"
+                                    className="relative group px-6 py-2 rounded-full bg-emerald-600 text-white font-medium transform hover:scale-105 transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl"
                                 >
-                                    Order Online
+                                    <span className="absolute inset-0 rounded-full bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
+                                    <span className="relative flex items-center space-x-2">
+                                        <i className="flaticon-pizza-slice animate-pulse"></i>
+                                        <span>Order Online</span>
+                                    </span>
                                 </Link>
                                 <Link
                                     href="/reservations"
                                     className="hover:text-primary transition-colors"
                                 >
                                     Book Your Table
+                                </Link>
+                                <Link
+                                    href="/reservations"
+                                    className="hover:text-primary transition-colors"
+                                >
+                                    Plan Event
                                 </Link>
 
                                 {/* Creative Download App Button */}

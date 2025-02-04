@@ -72,6 +72,18 @@ const SpecialMenu = ({ data, reviews }) => {
                                                             Explore Menu
                                                         </span>
                                                     </Link>
+                                                    
+                                                </div>
+                                                <div className="banner-btn flex items-center lg:mt-7 mt-[25px] gap-[30px]">
+                                                    <Link
+                                                        href="#reviews"
+                                                        className="inline-flex items-center px-8 py-3 rounded-full bg-[#FE9F10] text-white hover:bg-primary/90 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+                                                    >
+                                                        <span className="font-medium">
+                                                            Reviews
+                                                        </span>
+                                                    </Link>
+                                                    
                                                 </div>
                                             </div>
                                         </div>
@@ -86,7 +98,7 @@ const SpecialMenu = ({ data, reviews }) => {
                                         </div>
                                     </div>
                                 </div>
-                                <img
+                                {/* <img
                                     src="/asset/images/main-slider/slider1/img3.png"
                                     className="img1"
                                     alt="Background 1"
@@ -100,7 +112,7 @@ const SpecialMenu = ({ data, reviews }) => {
                                     src="/asset/images/main-slider/slider1/img2.png"
                                     className="img3 animate-motion"
                                     alt="Background 3"
-                                />
+                                /> */}
                             </div>
                         </div>
                     </div>
@@ -244,7 +256,7 @@ const SpecialMenu = ({ data, reviews }) => {
                                 Explore Full Menu
                                 <i className="fa-solid fa-arrow-right ml-2"></i>
                             </span>
-                            <span className="relative invisible">
+                            <span className="relative invisible" id="reviews">
                                 Explore Full Menu
                             </span>
                         </Link>
@@ -263,112 +275,7 @@ const SpecialMenu = ({ data, reviews }) => {
             </section>
             {/* Special Menu End */}
 
-            {/* <!-- Quality Service Start --> */}
-            <section className="bg-light relative section-wrapper-3  after:content-[''] after:h-[200px] after:w-full after:bg-white after:absolute after:bottom-0 after:left-0 after:z-[0] sm:py-[100px] py-[50px]">
-                <div className="container">
-                    <div className="2xl:mb-[50px] mb-[25px] relative mx-auto text-center">
-                        <h2 className="font-lobster">Quality Services</h2>
-                    </div>
-                    <div className="icon-wrapper1 bg-white rounded-[15px] relative z-[1]">
-                        <div className="row">
-                            <div className="lg:w-1/4 sm:w-1/2 w-full px-[15px]">
-                                <div className="bg-[url('../images/gallery/grid/pic1.jpg')] icon-box-wrapper group text-center">
-                                    <div className="inner-content relative z-[1]">
-                                        <div className="mb-[10px]">
-                                            <i className="flaticon-pizza text-7xl text-yellow"></i>
-                                        </div>
-                                        <div className="icon-content overflow-hidden text-center">
-                                            <h5 className="mb-2">
-                                                American Pizzas
-                                            </h5>
-                                            <p className="sm:text-base text-[15px] group-hover:text-white">
-                                                Savor the taste of tradition
-                                                with our hand-crafted pizzas,
-                                                made with the finest ingredients
-                                                and a passion for perfection.
-                                                Each bite promises a crispy
-                                                crust, fresh toppings, and
-                                                authentic flavors.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="lg:w-1/4 sm:w-1/2 w-full px-[15px]">
-                                <div className="bg-[url('../images/gallery/grid/pic2.jpg')] icon-box-wrapper group text-center">
-                                    <div className="inner-content relative z-[1]">
-                                        <div className="mb-[10px]">
-                                            <i className="flaticon-restaurant text-7xl text-yellow"></i>
-                                        </div>
-                                        <div className="icon-content overflow-hidden text-center">
-                                            <h5 className="mb-2">Pan Asian</h5>
-                                            <p className="sm:text-base text-[15px] group-hover:text-white">
-                                                Experience the vibrant and
-                                                diverse flavors of Asia with our
-                                                Pan-Asian cuisine, offering a
-                                                fusion of bold spices, fresh
-                                                ingredients, and traditional
-                                                cooking techniques from across
-                                                the region.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="lg:w-1/4 sm:w-1/2 w-full px-[15px]">
-                                <div className="bg-[url('../images/gallery/grid/pic3.jpg')] icon-box-wrapper group text-center">
-                                    <div className="inner-content relative z-[1]">
-                                        <div className="mb-[10px]">
-                                            <i className="flaticon-burger text-7xl text-yellow"></i>
-                                        </div>
-                                        <div className="icon-content overflow-hidden text-center">
-                                            <h5 className="mb-2">
-                                                Burger & Sandwiches
-                                            </h5>
-                                            <p className="sm:text-base text-[15px] group-hover:text-white">
-                                                Sink your teeth into our
-                                                delicious burgers and
-                                                sandwiches, made with premium
-                                                ingredients and packed with
-                                                mouthwatering flavors for the
-                                                ultimate comfort food
-                                                experience.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="lg:w-1/4 sm:w-1/2 w-full px-[15px]">
-                                <div className="bg-[url('../images/gallery/grid/pic4.jpg')] icon-box-wrapper group text-center">
-                                    <div className="inner-content relative z-[1]">
-                                        <div className="mb-[10px]">
-                                            <i className="flaticon-martini text-7xl text-yellow"></i>
-                                        </div>
-                                        <div className="icon-content overflow-hidden text-center">
-                                            <h5 className="mb-2">Beverages</h5>
-                                            <p className="sm:text-base text-[15px] group-hover:text-white">
-                                                Quench your thirst with our
-                                                refreshing selection of
-                                                beverages, from chilled soft
-                                                drinks to handcrafted juices and
-                                                signature mocktails, perfect for
-                                                every occasion.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <img
-                    src="/asset/images/background/pic3.png"
-                    alt=""
-                    className="2xl:left-[20px] 2xl:top-[20px] absolute 2xl:block hidden"
-                />
-            </section>
-            {/* <!-- Quality Service End--> */}
-
+           
             {/* <!-- Testimonial's Start  --> */}
             {/* <section
                 id="testimonials"
@@ -891,7 +798,7 @@ const Home = (props) => {
 
     return (
         <MainLayout>
-            {showModal && (
+            {/* {showModal && (
                 <div style={modalStyles.overlay}>
                     <div style={modalStyles.content}>
                         <button
@@ -933,7 +840,7 @@ const Home = (props) => {
                         </button>
                     </div>
                 </div>
-            )}
+            )} */}
             <SpecialMenu data={data} reviews={reviews} />
         </MainLayout>
     );

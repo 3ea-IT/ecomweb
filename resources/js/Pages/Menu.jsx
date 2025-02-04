@@ -242,7 +242,9 @@ function Menu({ categories, setDrawer1Open }) {
 
                 updateGuestCart(guestCart);
                 setCartItems([...guestCart]); // re-render
-                toast.success("Item added to cart!");
+                // toast.success("Item added to cart!");
+                // Dispatch global event so Header updates cart count
+                window.dispatchEvent(new Event("cart-updated"));
             } else {
                 // Logged in user => call the /cart/add endpoint
                 const payload = {
@@ -251,9 +253,12 @@ function Menu({ categories, setDrawer1Open }) {
                 };
 
                 await axios.post("/cart/add", payload);
-                toast.success("Item added to cart!");
+                // toast.success("Item added to cart!");
                 // Re-fetch user’s cart so the local UI is updated
                 fetchUserCart(userId);
+
+                // Dispatch global event so Header updates cart count
+                window.dispatchEvent(new Event("cart-updated"));
             }
         } catch (error) {
             console.error(error);
@@ -293,6 +298,7 @@ function Menu({ categories, setDrawer1Open }) {
                 }
                 updateGuestCart(guestCart);
                 setCartItems([...guestCart]); // re-render
+                window.dispatchEvent(new Event("cart-updated"));
             }
         } else {
             // Logged in => call a new route or reuse /cart/add with quantity +1?
@@ -304,8 +310,9 @@ function Menu({ categories, setDrawer1Open }) {
                         product_id: product.product_id,
                         quantity: 1,
                     });
-                    toast.success("Quantity updated!");
+                    // toast.success("Quantity updated!");
                     fetchUserCart(userId);
+                    window.dispatchEvent(new Event("cart-updated"));
                 } catch (error) {
                     toast.error("Failed to increase quantity.");
                 }
@@ -318,8 +325,9 @@ function Menu({ categories, setDrawer1Open }) {
                         product_id: product.product_id,
                         quantity: -1, // or your API can handle negative quantity as a decrement
                     });
-                    toast.success("Quantity updated!");
+                    // toast.success("Quantity updated!");
                     fetchUserCart(userId);
+                    window.dispatchEvent(new Event("cart-updated"));
                 } catch (error) {
                     toast.error("Failed to decrease quantity.");
                 }
@@ -652,12 +660,15 @@ const ProductCard = ({
                 product.product_id,
                 setDrawer1Open,
                 async (guestCart) => {
+                    const userId = localStorage.getItem("userId");
                     if (!userId) {
+                        // If it's a guest user, we have the updated cart in guestCart
                         if (Array.isArray(guestCart)) {
                             setCartItems(guestCart);
                         }
                     } else {
-                        fetchUserCart(userId);
+                        // If it's a logged-in user, fetch from the server
+                        await fetchUserCart(userId);
                     }
                 }
             );
