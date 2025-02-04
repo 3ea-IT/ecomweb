@@ -395,7 +395,7 @@ export const OpenCart = (title, product, isGuest = false) => {
 
             return { variation_id: variation, addon_ids, quantity };
         },
-    }).then((result) => {
+    }).then(async (result) => {
         if (result.isConfirmed) {
             const { variation_id, addon_ids, quantity } = result.value;
 
@@ -441,43 +441,47 @@ export const OpenCart = (title, product, isGuest = false) => {
                     onAddToCartSuccess(guestCart);
                 }
 
-                Swal.fire({
-                    icon: "success",
-                    title: "Added to cart!",
-                    showConfirmButton: false,
-                    timer: 1500,
-                });
+                // Swal.fire({
+                //     icon: "success",
+                //     title: "Added to cart!",
+                //     showConfirmButton: false,
+                //     timer: 1500,
+                // });
+
+                // Instead of success popup, just close the modal and update cart count
+                // Close the SweetAlert manually (though 'isConfirmed' usually closes it already)
+                Swal.close();
+                // Trigger Header to re-fetch count
+                window.dispatchEvent(new Event("cart-updated"));
             } else {
                 // Existing logged-in user flow
-                axios
-                    .post("/cart/add", {
+                try {
+                    // Wait for the server to add the item
+                    await axios.post("/cart/add", {
                         product_id,
                         variation_id,
                         addon_ids,
                         quantity,
-                    })
-                    .then((response) => {
-                        // Then call the callback to re-fetch cart
-                        if (typeof onAddToCartSuccess === "function") {
-                            onAddToCartSuccess();
-                        }
-                        Swal.fire({
-                            icon: "success",
-                            title: "Added to cart!",
-                            showConfirmButton: false,
-                            timer: 1500,
-                        });
-                    })
-                    .catch((error) => {
-                        console.error("Error adding to cart:", error);
-                        Swal.fire({
-                            icon: "error",
-                            title: "Oops...",
-                            text:
-                                error.response?.data?.error ||
-                                "Failed to add to cart",
-                        });
                     });
+
+                    // Now call the parent callback (which will fetch the updated cart in Menu.jsx)
+                    if (typeof onAddToCartSuccess === "function") {
+                        await onAddToCartSuccess();
+                    }
+
+                    // Close the SweetAlert modal and dispatch the "cart-updated" event
+                    Swal.close();
+                    window.dispatchEvent(new Event("cart-updated"));
+                } catch (error) {
+                    console.error("Error adding to cart:", error);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text:
+                            error.response?.data?.error ||
+                            "Failed to add to cart",
+                    });
+                }
             }
         }
     });

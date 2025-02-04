@@ -86,7 +86,7 @@ const SpecialMenu = ({ data, reviews }) => {
                                         </div>
                                     </div>
                                 </div>
-                                <img
+                                {/* <img
                                     src="/asset/images/main-slider/slider1/img3.png"
                                     className="img1"
                                     alt="Background 1"
@@ -100,7 +100,7 @@ const SpecialMenu = ({ data, reviews }) => {
                                     src="/asset/images/main-slider/slider1/img2.png"
                                     className="img3 animate-motion"
                                     alt="Background 3"
-                                />
+                                /> */}
                             </div>
                         </div>
                     </div>
@@ -891,7 +891,7 @@ const Home = (props) => {
 
     return (
         <MainLayout>
-            {showModal && (
+            {/* {showModal && (
                 <div style={modalStyles.overlay}>
                     <div style={modalStyles.content}>
                         <button
@@ -933,7 +933,7 @@ const Home = (props) => {
                         </button>
                     </div>
                 </div>
-            )}
+            )} */}
             <SpecialMenu data={data} reviews={reviews} />
         </MainLayout>
     );
