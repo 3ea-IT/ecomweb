@@ -21,7 +21,7 @@ const OrderTypeToggle = () => {
             {/* Desktop Version - Now positioned on the right */}
             <div
                 className="hidden lg:flex items-center space-x-3 absolute"
-                style={{ right: "-8rem" }}
+                style={{ top: "2rem", right: "-11rem" }}
             >
                 {orderTypes.map(({ id, label, icon: Icon }) => (
                     <button

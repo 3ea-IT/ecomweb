@@ -41,22 +41,36 @@ class IndexController extends Controller
         ]);
     }
 
-    public function showMenu()
+    public function showMenu(Request $request)
     {
-        $categories = Category::where('is_active', 1)
+        $vegOnly = $request->input('vegOnly');
+
+        $categoriesQuery = Category::where('is_active', 1)
             ->with([
-                'products' => function ($query) {
+                'products' => function ($query) use ($vegOnly) {
                     // Only fetch active, non-addon products
                     $query->where('is_active', 1)
                         ->where('isaddon', 0)
-                        // IMPORTANT: Eager-load variations & addons
+                        // Eager-load variations & addons
                         ->with(['variations', 'addons']);
+
+                    // If requested, filter only Veg
+                    if ($vegOnly) {
+                        // If your `tag` column is a JSON array like ["Veg"], 
+                        // you could do something like:
+                        // $query->where('tag', 'LIKE', '%Veg%');
+                        // or use MySQL JSON functions if properly stored as JSON
+                        $query->where('tag', 'LIKE', '%Veg%');
+                    }
                 }
-            ])
-            ->get();
+            ]);
+
+        $categories = $categoriesQuery->get();
 
         return Inertia::render('Menu', [
-            'categories' => $categories
+            'categories' => $categories,
+            // we can also pass 'vegOnly' back to the page if needed
+            'vegOnly' => $vegOnly,
         ]);
     }
 }
