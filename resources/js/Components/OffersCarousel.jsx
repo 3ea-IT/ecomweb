@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
+import { Link } from "react-router-dom";
 const OffersCarousel = ({ offers = [] }) => {
     const scrollRef = useRef(null);
     const [isHovered, setIsHovered] = useState(false);
@@ -87,11 +87,11 @@ const OffersCarousel = ({ offers = [] }) => {
                             key={`${offer.id}-${index}`}
                             className="flex-none w-[484px] transition-transform duration-300 hover:scale-[1.02]"
                         >
-                            <img
+                           <a href="/menu"><img
                                 src={offer.image}
                                 alt="Special Offer"
                                 className="w-full h-[322.73px] object-cover rounded-lg shadow-md"
-                            />
+                            /></a>
                         </div>
                     ))}
                 </div>

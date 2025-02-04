@@ -1,116 +1,233 @@
-import React from 'react'
+import React from 'react';
 import MainLayout from '../Layouts/MainLayout';
 import { Link } from '@inertiajs/react';
+import { motion } from 'framer-motion';
+import ReviewCarousel from '../Components/ReviewCarousel';
 
-function About() {
+function About({ reviews }) {
   return (
-            <MainLayout>
-                {/* <!-- Banner  --> */}
-                <section className="bg-[url('../images/banner/bnr1.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:opacity-100 after:w-full after:h-full after:top-0 after:left-0  pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] overflow-hidden bg-cover bg-center">
-                    <div className="container table h-full relative z-[1] text-center">
-                        <div className="dz-bnr-inr-entry align-middle table-cell">
-                            <h2 className="font-lobster text-white mb-5 2xl:text-[70px] md:text-[60px] text-[40px] leading-[1.2]">About Us</h2>
-                            {/* <!-- Breadcrumb Row --> */}
-                            <nav aria-label="breadcrumb" className="breadcrumb-row">
-                                <ul className="breadcrumb bg-primary shadow-[0px_10px_20px_rgba(0,0,0,0.05)] rounded-[10px] inline-block lg:py-[13px] md:py-[10px] sm:py-[5px] py-[7px] lg:px-[30px] md:px-[18px] sm:px-5 px-3.5 m-0">
-                                    <li className="breadcrumb-item p-0 inline-block text-[15px] font-normal"><Link href="/" className="text-white">Home</Link></li>
-                                    <li className="breadcrumb-item text-white p-0 inline-block text-[15px] pl-2 font-normal active">About Us</li>
-                                </ul>
-                            </nav>
-                            {/* <!-- Breadcrumb Row End --> */}
-                        </div>
-                    </div>
-                </section>
-                {/* <!-- Banner End --> */}
+    <MainLayout>
+      {/* Banner Section */}
+      <section className="bg-[url('../images/banner/bnr1.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:opacity-100 after:w-full after:h-full after:top-0 after:left-0 pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] overflow-hidden bg-cover bg-center">
+        <div className="container table h-full relative z-[1] text-center">
+          <div className="dz-bnr-inr-entry align-middle table-cell">
+            <h2 className="font-lobster text-white mb-5 2xl:text-[70px] md:text-[60px] text-[40px] leading-[1.2]">About Us</h2>
+            {/* Breadcrumb Row */}
+            <nav aria-label="breadcrumb" className="breadcrumb-row">
+              <ul className="breadcrumb bg-primary shadow-[0px_10px_20px_rgba(0,0,0,0.05)] rounded-[10px] inline-block lg:py-[13px] md:py-[10px] sm:py-[5px] py-[7px] lg:px-[30px] md:px-[18px] sm:px-5 px-3.5 m-0">
+                <li className="breadcrumb-item p-0 inline-block text-[15px] font-normal"><Link href="/" className="text-white">Home</Link></li>
+                <li className="breadcrumb-item text-white p-0 inline-block text-[15px] pl-2 font-normal active">About Us</li>
+              </ul>
+            </nav>
+            {/* End Breadcrumb Row */}
+          </div>
+        </div>
+      </section>
+      {/* End Banner Section */}
 
-                {/* <!-- Visit Restaurant --> */}
-                <section className="lg:pt-[100px] sm:pt-[70px] pt-[50px] overflow-hidden pb-0">
-                    <div className="container">
-                        <div className="2xl:mb-[50px] mb-[35px] relative mx-auto text-center">
-                            <h2 className="font-lobster max-xl:leading-[50px]">We Invite you to Visit Our Restaurant</h2>
-                            <p className="max-w-[815px] m-auto lg:text-base text-sm lg:leading-[1.6rem]">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
-                        </div>
+      {/* Story Section Start */}
+      <section className="relative py-20 overflow-hidden bg-white">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="container mx-auto px-4"
+        >
+          <div className="flex flex-col lg:flex-row items-center gap-12">
+            {/* Left Content */}
+            <motion.div
+              initial={{ x: -50, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="lg:w-1/2"
+            >
+              <div className="relative">
+                <div className="rounded-2xl overflow-hidden shadow-xl">
+                  <img
+                    src="/assets/images/extras/burger_main.png" // Make sure this path is correct
+                    alt="Restaurant Interior"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-lg shadow-lg">
+                  <p className="text-4xl font-bold text-yellow-500">25+</p>
+                  <p className="text-gray-600">Years of Excellence</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right Content */}
+            <motion.div
+              initial={{ x: 50, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="lg:w-1/2"
+            >
+              <div className="space-y-6">
+                <h3 className="text-sm font-medium text-yellow-500 tracking-wider uppercase">Our Journey</h3>
+                <h2 className="text-4xl font-bold font-lobster text-gray-900">A Story of the Best Restaurant</h2>
+                <h3 className="text-2xl font-semibold text-gray-800">Pizzaport & Cafe</h3>
+
+                <p className="text-gray-600 leading-relaxed">
+                  Pizzaport & Cafe was conceptualized in 2000 and is currently serving delicious cuisine in Lucknow and Andheri(W) Mumbai. The restaurant is known for delivering the best Pan Asian and Continental cuisine, which tastes divine with every bite, in addition to our signature pizzas.
+                </p>
+
+                <p className="text-gray-600 leading-relaxed">
+                  Since we only work with the most reputable vendors, the ingredients we utilize to make our toppings are always fresh and delectable. We're driven to be the best at creating innovative recipes.
+                </p>
+
+                <div className="grid grid-cols-2 gap-6 mt-8">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="w-12 h-12 flex items-center justify-center bg-yellow-100 rounded-full">
+                      <i className="flaticon-pizza text-2xl text-yellow-500"></i> {/* Ensure Flaticon is loaded */}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">Premium Quality</h4>
+                      <p className="text-sm text-gray-500">Fresh Ingredients</p>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="w-12 h-12 flex items-center justify-center bg-yellow-100 rounded-full">
+                      <i className="flaticon-restaurant text-2xl text-yellow-500"></i> {/* Ensure Flaticon is loaded */}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">25+ Years</h4>
+                      <p className="text-sm text-gray-500">Of Experience</p>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+      </section>
+      {/* Story Section End */}
+
+      {/* Quality Service Section */}
+       {/* <!-- Quality Service Start --> */}
+       <section className="bg-light relative section-wrapper-3  after:content-[''] after:h-[200px] after:w-full after:bg-white after:absolute after:bottom-0 after:left-0 after:z-[0] sm:py-[100px] py-[50px]">
+                <div className="container">
+                    <div className="2xl:mb-[50px] mb-[25px] relative mx-auto text-center">
+                        <h2 className="font-lobster">Quality Services</h2>
+                    </div>
+                    <div className="icon-wrapper1 bg-white rounded-[15px] relative z-[1]">
                         <div className="row">
-                            <div className="w-full px-[15px]">
-                                <div className="about-media dz-media relative overflow-hidden rounded-[10px]">
-                                    <img src="/asset/images/background/pic11.jpg" alt="/" className="lg:h-[430px] sm:h-[380px] h-[300px]" />
-                                    <a className="video video-btn popup-youtube absolute top-[50%] left-[50%] 2xl:w-[87px] md:w-[70px] w-[55px] 2xl:h-[87px] md:h-[70px] h-[55px] bg-primary text-white rounded-full 2xl:text-2xl md:text-lg text-base flex items-center justify-center translate-x-[-50%]  translate-y-[-50%] duration-500 hover:scale-125" href="https://www.youtube.com/watch?v=XJb1G9iRoL4">
-                                        <i className="fa-solid fa-play"></i>
-                                    </a>
+                            <div className="lg:w-1/4 sm:w-1/2 w-full px-[15px]">
+                                <div className="bg-[url('../images/gallery/grid/pic1.jpg')] icon-box-wrapper group text-center">
+                                    <div className="inner-content relative z-[1]">
+                                        <div className="mb-[10px]">
+                                            <i className="flaticon-pizza text-7xl text-yellow"></i>
+                                        </div>
+                                        <div className="icon-content overflow-hidden text-center">
+                                            <h5 className="mb-2">
+                                                American Pizzas
+                                            </h5>
+                                            <p className="sm:text-base text-[15px] group-hover:text-white">
+                                                Savor the taste of tradition
+                                                with our hand-crafted pizzas,
+                                                made with the finest ingredients
+                                                and a passion for perfection.
+                                                Each bite promises a crispy
+                                                crust, fresh toppings, and
+                                                authentic flavors.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-
+                            </div>
+                            <div className="lg:w-1/4 sm:w-1/2 w-full px-[15px]">
+                                <div className="bg-[url('../images/gallery/grid/pic2.jpg')] icon-box-wrapper group text-center">
+                                    <div className="inner-content relative z-[1]">
+                                        <div className="mb-[10px]">
+                                            <i className="flaticon-restaurant text-7xl text-yellow"></i>
+                                        </div>
+                                        <div className="icon-content overflow-hidden text-center">
+                                            <h5 className="mb-2">Pan Asian</h5>
+                                            <p className="sm:text-base text-[15px] group-hover:text-white">
+                                                Experience the vibrant and
+                                                diverse flavors of Asia with our
+                                                Pan-Asian cuisine, offering a
+                                                fusion of bold spices, fresh
+                                                ingredients, and traditional
+                                                cooking techniques from across
+                                                the region.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="lg:w-1/4 sm:w-1/2 w-full px-[15px]">
+                                <div className="bg-[url('../images/gallery/grid/pic3.jpg')] icon-box-wrapper group text-center">
+                                    <div className="inner-content relative z-[1]">
+                                        <div className="mb-[10px]">
+                                            <i className="flaticon-burger text-7xl text-yellow"></i>
+                                        </div>
+                                        <div className="icon-content overflow-hidden text-center">
+                                            <h5 className="mb-2">
+                                                Burger & Sandwiches
+                                            </h5>
+                                            <p className="sm:text-base text-[15px] group-hover:text-white">
+                                                Sink your teeth into our
+                                                delicious burgers and
+                                                sandwiches, made with premium
+                                                ingredients and packed with
+                                                mouthwatering flavors for the
+                                                ultimate comfort food
+                                                experience.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="lg:w-1/4 sm:w-1/2 w-full px-[15px]">
+                                <div className="bg-[url('../images/gallery/grid/pic4.jpg')] icon-box-wrapper group text-center">
+                                    <div className="inner-content relative z-[1]">
+                                        <div className="mb-[10px]">
+                                            <i className="flaticon-martini text-7xl text-yellow"></i>
+                                        </div>
+                                        <div className="icon-content overflow-hidden text-center">
+                                            <h5 className="mb-2">Beverages</h5>
+                                            <p className="sm:text-base text-[15px] group-hover:text-white">
+                                                Quench your thirst with our
+                                                refreshing selection of
+                                                beverages, from chilled soft
+                                                drinks to handcrafted juices and
+                                                signature mocktails, perfect for
+                                                every occasion.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </section>
-                {/* <!-- Visit Restaurant --> */}
+                </div>
+                <img
+                    src="/asset/images/background/pic3.png"
+                    alt=""
+                    className="2xl:left-[20px] 2xl:top-[20px] absolute 2xl:block hidden"
+                />
+            </section>
+            {/* <!-- Quality Service End--> */}
 
-                {/* <!-- Service Section --> */}
-                <section className="lg:pt-[100px] sm:pt-[70px] pt-[50px] overflow-hidden lg:pb-[70px] sm:pb-10 pb-5">
-                    <div className="container">
-                        <div className="2xl:mb-[50px] mb-[35px] relative mx-auto text-center">
-                            <h2 className="font-lobster max-xl:leading-[50px]">What We Do</h2>
-                        </div>
-                        <div className="row">
-                            <div className="lg:w-1/4 sm:w-1/2 w-full mb-[30px] px-[15px]">
-                                <div className="icon-bx-wraper style-3 rounded-[10px] bg-[#2222220d] text-center h-full py-[30px] px-3 border-[2px] border-transparent flex flex-col duration-500 hover:bg-white hover:border-primary hover:shadow-[0px_15px_55px_rgba(34,34,34,0.15)] hover:translate-y-[-10px]">
-                                    <div className="icon-bx w-[95px] h-[95px] rounded-full bg-primary mx-auto mb-5 flex items-center justify-center">
-                                        <div className="icon-cell">
-                                            <i className="flaticon-vegetable text-[50px] text-white leading-[50px]"></i>
-                                        </div>
-                                    </div>
-                                    <div className="icon-content">
-                                        <h5 className="mb-2"><a href="service-detail.html">Fresh Products</a></h5>
-                                        <p>Lorem Ipsum is simply dummy text of the printing and </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="lg:w-1/4 sm:w-1/2 w-full mb-[30px] px-[15px]">
-                                <div className="icon-bx-wraper style-3 rounded-[10px] bg-[#2222220d] text-center h-full py-[30px] px-3 border-[2px] border-transparent flex flex-col duration-500 hover:bg-white hover:border-primary hover:shadow-[0px_15px_55px_rgba(34,34,34,0.15)] hover:translate-y-[-10px]">
-                                    <div className="icon-bx w-[95px] h-[95px] rounded-full bg-primary mx-auto mb-5 flex items-center justify-center">
-                                        <div className="icon-cell">
-                                            <i className="flaticon-chef-hat text-[50px] text-white leading-[50px]"></i>
-                                        </div>
-                                    </div>
-                                    <div className="icon-content">
-                                        <h5 className="mb-2"><a href="service-detail.html">Skilled Chefs</a></h5>
-                                        <p>Lorem Ipsum is simply dummy text of the printing and </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="lg:w-1/4 sm:w-1/2 w-full mb-[30px] px-[15px]">
-                                <div className="icon-bx-wraper style-3 rounded-[10px] bg-[#2222220d] text-center h-full py-[30px] px-3 border-[2px] border-transparent flex flex-col duration-500 hover:bg-white hover:border-primary hover:shadow-[0px_15px_55px_rgba(34,34,34,0.15)] hover:translate-y-[-10px]">
-                                    <div className="icon-bx w-[95px] h-[95px] rounded-full bg-primary mx-auto mb-5 flex items-center justify-center">
-                                        <div className="icon-cell">
-                                            <i className="flaticon-cocktail text-[50px] text-white leading-[50px]"></i>
-                                        </div>
-                                    </div>
-                                    <div className="icon-content">
-                                        <h5 className="mb-2"><a href="service-detail.html">Best Bar</a></h5>
-                                        <p>Lorem Ipsum is simply dummy text of the printing and </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="lg:w-1/4 sm:w-1/2 w-full mb-[30px] px-[15px]">
-                                <div className="icon-bx-wraper style-3 rounded-[10px] bg-[#2222220d] text-center h-full py-[30px] px-3 border-[2px] border-transparent flex flex-col duration-500 hover:bg-white hover:border-primary hover:shadow-[0px_15px_55px_rgba(34,34,34,0.15)] hover:translate-y-[-10px]">
-                                    <div className="icon-bx w-[95px] h-[95px] rounded-full bg-primary mx-auto mb-5 flex items-center justify-center">
-                                        <div className="icon-cell">
-                                            <i className="flaticon-cuisine text-[50px] text-white leading-[50px]"></i>
-                                        </div>
-                                    </div>
-                                    <div className="icon-content">
-                                        <h5 className="mb-2"><a href="service-detail.html">Vegan Cuisine</a></h5>
-                                        <p>Lorem Ipsum is simply dummy text of the printing and </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                {/* <!-- Service Section --> */}
+        
 
-            </MainLayout>
-  )
+      {/* End Quality Service Section */}
+       {/* <!-- Reviews --> */}
+       <ReviewCarousel reviews={reviews} />
+            {/* <!-- Reviews End --> */}
+    </MainLayout>
+  );
 }
 
-export default About
+export default About;

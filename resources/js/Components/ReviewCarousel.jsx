@@ -24,9 +24,9 @@ const ReviewCarousel = ({ reviews }) => {
     };
 
     useEffect(() => {
-        const timer = setInterval(nextSlide, 5000);
+        const timer = setInterval(nextSlide, 4000);
         return () => clearInterval(timer);
-    }, [currentIndex]);
+    }, []);
 
     const getPlatformColor = (platform) => {
         switch (platform.toLowerCase()) {
@@ -112,7 +112,7 @@ const ReviewCarousel = ({ reviews }) => {
 
                                         {/* Content Section */}
                                         <div className="w-full lg:w-3/5 relative px-4 sm:px-6">
-                                            <Quote className="absolute top-0 left-0 w-12 h-12 text-gray-400/20 -translate-x-6 -translate-y-6" />
+                                            <Quote className="absolute top-0 rotate-180 left-0 w-12 h-12 text-gray-400/20 -translate-x-6 -translate-y-6" />
                                             <div className="space-y-6">
                                                 <div className="flex flex-col sm:flex-row items-center gap-4">
                                                     <h4 className="font-semibold text-2xl text-white">
@@ -138,7 +138,7 @@ const ReviewCarousel = ({ reviews }) => {
                                                     {review.review_text}
                                                 </p>
                                             </div>
-                                            <Quote className="absolute bottom-0 right-0 w-12 h-12 text-gray-400/20 translate-x-6 translate-y-6 rotate-180" />
+                                            <Quote className="absolute bottom-0 right-0 w-12 h-12 text-gray-400/20 translate-x-6 translate-y-6" />
                                         </div>
                                     </div>
                                 </div>

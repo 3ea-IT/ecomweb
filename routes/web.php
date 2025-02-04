@@ -13,7 +13,7 @@ use App\Http\Controllers\BlogController;
 
 Route::get('/', [IndexController::class, 'index'])->name('home');
 
-Route::inertia('/about-us', 'About');
+Route::get('/about-us', [IndexController::class, 'aboutReview'])->name('About');
 Route::inertia('/outlets', 'Outlets');
 Route::get('/menu', [IndexController::class, 'showMenu'])->name('menu');
 Route::inertia('/productDetail', 'ProductDetail');

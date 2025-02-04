@@ -170,7 +170,7 @@ const ReservationsPage = () => {
                 <div className="grid md:grid-cols-3 gap-8">
                     {[{ icon: Phone, title: "Contact Us", content: ["+91 9839334430", "05224238357", "order@pizzaportindia.com"] },
                         { icon: Clock, title: "Opening Hours", content: ["Mon-Sun: 11:00 AM - 12:00 PM"] },
-                        { icon: Users, title: "Capacity", content: ["Groups up to 20 people"] }]
+                        { icon: Users, title: "Capacity", content: ["Groups up to 30 people"] }]
                         .map((card, index) => (
                             <div key={index} className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
                                 <card.icon className="w-10 h-10 text-red-600 mb-6" />
@@ -205,7 +205,7 @@ const ReservationsPage = () => {
                 ? 'bg-red-600 text-white shadow-lg hover:bg-red-700'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
           >
-            Organize a Party
+            Plan an Event
           </button>
         </div>
 
@@ -424,7 +424,6 @@ const ReservationsPage = () => {
                                     "Reservations are held for 15 minutes past the booking time",
                                     "We require a minimum of 2 hours notice for cancellations",
                                     "Special arrangements can be made for large groups",
-                                    "Children are welcome and high chairs are available",
                                 ].map((item, index) => (
                                     <li key={index} className="flex items-start gap-3">
                                         <div className="flex-shrink-0 w-1.5 h-1.5 mt-2 rounded-full bg-primary" />

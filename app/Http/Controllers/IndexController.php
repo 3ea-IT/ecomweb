@@ -73,4 +73,19 @@ class IndexController extends Controller
             'vegOnly' => $vegOnly,
         ]);
     }
+
+    function aboutReview()
+    {
+        $reviews = Review::where(function ($query) {
+            $query->where('display_section', 'about')
+                ->orWhere('display_section', 'both');
+        })
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return Inertia::render('About', [
+            'reviews' => $reviews
+        ]);
+    }
 }
