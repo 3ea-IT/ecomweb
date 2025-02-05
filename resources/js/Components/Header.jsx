@@ -176,7 +176,7 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                     <div className="container mx-auto px-4">
                         <div className="flex items-center justify-between h-16 md:h-20">
                             {/* Logo with hanging effect */}
-                            <div className="relative -mb-8 z-[1000]">
+                            <div className="relative -mb-14 z-[1000]">
                                 <Link href="/">
                                     <div className="relative transform hover:-translate-y-1 transition-transform duration-300 ease-in-out">
                                         <img
