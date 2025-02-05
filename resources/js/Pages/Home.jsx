@@ -24,7 +24,7 @@ const SpecialMenu = ({ data, reviews }) => {
     return (
         <>
             {/* Banner */}
-            <div className="main-bnr-one overflow-hidden relative">
+            <div className="main-bnr-one overflow-hidden relative mt-12">
                 <div className="main-slider-1 overflow-hidden z-[1]">
                     <div className="swiper-wrapper">
                         <div className="swiper-slide">
@@ -72,7 +72,6 @@ const SpecialMenu = ({ data, reviews }) => {
                                                             Explore Menu
                                                         </span>
                                                     </Link>
-                                                    
                                                 </div>
                                                 <div className="banner-btn flex items-center lg:mt-7 mt-[25px] gap-[30px]">
                                                     <Link
@@ -83,7 +82,6 @@ const SpecialMenu = ({ data, reviews }) => {
                                                             Reviews
                                                         </span>
                                                     </Link>
-                                                    
                                                 </div>
                                             </div>
                                         </div>
@@ -275,7 +273,6 @@ const SpecialMenu = ({ data, reviews }) => {
             </section>
             {/* Special Menu End */}
 
-           
             {/* <!-- Testimonial's Start  --> */}
             {/* <section
                 id="testimonials"

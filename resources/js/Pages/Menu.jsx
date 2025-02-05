@@ -22,21 +22,17 @@ function Menu({ categories, setDrawer1Open }) {
     const { flash } = usePage().props;
     const [hasReachedEnd, setHasReachedEnd] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
-
     // [* ADDED *] State to toggle Veg-only filter
     const [vegOnly, setVegOnly] = useState(false);
-
     // cart state
     const [cartItems, setCartItems] = useState([]);
 
     // Hard-coded best-selling product IDs
     const bestSellingIds = [165, 135, 179, 50, 203, 30, 290, 231];
-
     // Sort categories alphabetically
     const sortedCategories = [...categories].sort((a, b) =>
         a.category_name.localeCompare(b.category_name)
     );
-
     // Flatten all products for search
     const allProducts = categories.flatMap((cat) =>
         cat.products.map((product) => ({
@@ -44,14 +40,13 @@ function Menu({ categories, setDrawer1Open }) {
             category_name: cat.category_name,
         }))
     );
-
     // Get best selling products
     const bestSellingProducts = allProducts.filter((product) =>
         bestSellingIds.includes(product.product_id)
     );
 
     // -----------------------------------------------------------------------
-    // Fetch cart on mount (either for guest or for logged-in user)
+    // Global: Fetch cart on mount (guest or logged‑in)
     // -----------------------------------------------------------------------
     useEffect(() => {
         const userId = localStorage.getItem("userId");
@@ -63,7 +58,24 @@ function Menu({ categories, setDrawer1Open }) {
         }
     }, []);
 
-    // Helper to fetch user cart
+    // -----------------------------------------------------------------------
+    // Global: Listen for "cart-updated" events to refresh cart state
+    // -----------------------------------------------------------------------
+    useEffect(() => {
+        const updateCartHandler = () => {
+            const userId = localStorage.getItem("userId");
+            if (userId) {
+                fetchUserCart(userId);
+            } else {
+                setCartItems(getGuestCart());
+            }
+        };
+        window.addEventListener("cart-updated", updateCartHandler);
+        return () =>
+            window.removeEventListener("cart-updated", updateCartHandler);
+    }, []);
+
+    // Helper to fetch user cart from the server
     const fetchUserCart = async (userId) => {
         try {
             const { data } = await axios.get("/cart-items", {
@@ -76,13 +88,17 @@ function Menu({ categories, setDrawer1Open }) {
         }
     };
 
+    // -----------------------------------------------------------------------
     // Flash messages
+    // -----------------------------------------------------------------------
     useEffect(() => {
         if (flash.success) toast.success(flash.success);
         if (flash.error) toast.error(flash.error);
     }, [flash]);
 
+    // -----------------------------------------------------------------------
     // Intersection Observer to highlight active category in sidebar
+    // -----------------------------------------------------------------------
     useEffect(() => {
         const observerOptions = {
             root: null,
@@ -124,7 +140,6 @@ function Menu({ categories, setDrawer1Open }) {
         };
 
         window.addEventListener("scroll", handleScroll);
-
         return () => {
             observer.disconnect();
             window.removeEventListener("scroll", handleScroll);
@@ -132,22 +147,18 @@ function Menu({ categories, setDrawer1Open }) {
     }, [categories]);
 
     // -----------------------------------------------------------------------
-    // Search Handling — we will also apply Veg filtering in the render
+    // Search Handling — filtering by name/description (Veg filter applied later)
     // -----------------------------------------------------------------------
     useEffect(() => {
-        // We keep the full search result in filteredProducts
         const filtered = allProducts.filter((product) => {
-            // Basic search check
             const matchesName = product.product_name
                 .toLowerCase()
                 .includes(searchTerm.toLowerCase());
             const matchesDesc = product.product_description
                 ?.toLowerCase()
                 .includes(searchTerm.toLowerCase());
-
             return matchesName || matchesDesc;
         });
-
         setFilteredProducts(filtered);
     }, [searchTerm]);
 
@@ -170,7 +181,6 @@ function Menu({ categories, setDrawer1Open }) {
         setIsMobileMenuOpen(false);
         setSearchTerm("");
         setIsSearching(false);
-
         const section = document.getElementById(categoryId);
         if (section) {
             const offset = 100;
@@ -191,15 +201,14 @@ function Menu({ categories, setDrawer1Open }) {
     };
 
     // -----------------------------------------------------------------------
-    // Cart functions: direct add, increment/decrement
+    // Cart functions: direct add and quantity update
     // -----------------------------------------------------------------------
     const handleDirectAdd = async (product) => {
         const userId = localStorage.getItem("userId");
         if (!product) return;
-
         try {
             if (!userId) {
-                // Guest
+                // Guest: update localStorage cart
                 const guestCart = getGuestCart();
                 const existingItem = guestCart.find(
                     (item) =>
@@ -228,12 +237,11 @@ function Menu({ categories, setDrawer1Open }) {
                     };
                     guestCart.push(newItem);
                 }
-
                 updateGuestCart(guestCart);
                 setCartItems([...guestCart]);
                 window.dispatchEvent(new Event("cart-updated"));
             } else {
-                // Logged in
+                // Logged in: call /cart/add endpoint for simple product
                 const payload = {
                     product_id: product.product_id,
                     quantity: 1,
@@ -248,12 +256,18 @@ function Menu({ categories, setDrawer1Open }) {
         }
     };
 
+    // -----------------------------------------------------------------------
+    // Updated handleChangeQuantity:
+    // For guests, update localStorage.
+    // For logged-in users, find the matching cart item from state;
+    // if decreasing and quantity is 1, remove the item; otherwise, update quantity.
+    // -----------------------------------------------------------------------
     const handleChangeQuantity = async (product, action) => {
         if (!product) return;
         const userId = localStorage.getItem("userId");
 
         if (!userId) {
-            // Guest logic
+            // Guest logic remains unchanged.
             const guestCart = getGuestCart();
             const cartIndex = guestCart.findIndex(
                 (item) =>
@@ -275,23 +289,67 @@ function Menu({ categories, setDrawer1Open }) {
                 window.dispatchEvent(new Event("cart-updated"));
             }
         } else {
-            // Logged in
+            // Logged in user logic.
+            // Use improved matching criteria:
+            const cartItem = cartItems.find((item) => {
+                // Check if addon_ids is empty.
+                const addonEmpty =
+                    item.addon_ids == null ||
+                    (typeof item.addon_ids === "string" &&
+                        item.addon_ids.trim() === "[]") ||
+                    (Array.isArray(item.addon_ids) &&
+                        item.addon_ids.length === 0);
+
+                // For variation_id, we use == null so that null or undefined passes.
+                return (
+                    item.product_id === product.product_id &&
+                    item.variation_id == null &&
+                    addonEmpty
+                );
+            });
+
+            console.log("handleChangeQuantity:", { action, cartItem });
             try {
                 if (action === "increase") {
-                    await axios.post("/cart/add", {
-                        product_id: product.product_id,
-                        quantity: 1,
-                    });
-                } else {
-                    // "Decrease" => send quantity -1
-                    await axios.post("/cart/add", {
-                        product_id: product.product_id,
-                        quantity: -1,
-                    });
+                    if (!cartItem) {
+                        // Not in cart yet; add the product.
+                        await axios.post("/cart/add", {
+                            product_id: product.product_id,
+                            quantity: 1,
+                        });
+                    } else {
+                        // Increase quantity via update endpoint.
+                        await axios.post(
+                            `/update-quantity/${cartItem.cart_item_id}`,
+                            { action: "increase" }
+                        );
+                    }
+                } else if (action === "decrease") {
+                    if (cartItem) {
+                        if (cartItem.quantity === 1) {
+                            console.log(
+                                "Quantity is 1, calling remove-item for cart_item_id:",
+                                cartItem.cart_item_id
+                            );
+                            await axios.post("/remove-item", {
+                                cart_item_id: cartItem.cart_item_id,
+                            });
+                        } else {
+                            await axios.post(
+                                `/update-quantity/${cartItem.cart_item_id}`,
+                                { action: "decrease" }
+                            );
+                        }
+                    } else {
+                        console.log(
+                            "No matching cartItem found for decrease action"
+                        );
+                    }
                 }
                 fetchUserCart(userId);
                 window.dispatchEvent(new Event("cart-updated"));
             } catch (error) {
+                console.error("Error in handleChangeQuantity:", error);
                 toast.error("Failed to update quantity.");
             }
         }
@@ -319,7 +377,6 @@ function Menu({ categories, setDrawer1Open }) {
                         size={20}
                     />
                 </div>
-
                 {/* Veg Toggle for Mobile */}
                 <div className="mr-2">
                     <MobileVegToggle
@@ -327,7 +384,6 @@ function Menu({ categories, setDrawer1Open }) {
                         onToggle={() => setVegOnly(!vegOnly)}
                     />
                 </div>
-
                 <button
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     className="bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700 transition-all duration-300"
@@ -337,12 +393,12 @@ function Menu({ categories, setDrawer1Open }) {
             </div>
 
             <style>{`
-                @media (max-width: 1023px) {
-                    .progress-wrap.active-progress {
-                        display: none;
-                    }
-                }
-            `}</style>
+        @media (max-width: 1023px) {
+          .progress-wrap.active-progress {
+            display: none;
+          }
+        }
+      `}</style>
 
             {/* Mobile Categories Dropdown */}
             {isMobileMenuOpen && (
@@ -352,14 +408,14 @@ function Menu({ categories, setDrawer1Open }) {
                             <li key={cat.id} className="px-2">
                                 <button
                                     className={`
-                                        flex items-center w-full px-3 py-2 rounded
-                                        ${
-                                            activeCategory === cat.id
-                                                ? "bg-red-600 text-white"
-                                                : "bg-white text-black hover:text-red-600"
-                                        }
-                                        transition-all duration-300
-                                    `}
+                    flex items-center w-full px-3 py-2 rounded
+                    ${
+                        activeCategory === cat.id
+                            ? "bg-red-600 text-white"
+                            : "bg-white text-black hover:text-red-600"
+                    }
+                    transition-all duration-300
+                  `}
                                     onClick={() => handleCategoryClick(cat.id)}
                                 >
                                     <i
@@ -373,22 +429,18 @@ function Menu({ categories, setDrawer1Open }) {
                 </div>
             )}
 
-            <style>
-                {`
-                    :root {
-                        --header-height: 80px;
-                    }
-                    
-                    .search-bar-sticky {
-                        top: calc(var(--header-height));
-                        padding-top: 10px;
-                    }
-                    
-                    .sidebar-sticky {
-                        top: calc(var(--header-height) + 1.3rem);
-                    }
-                `}
-            </style>
+            <style>{`
+        :root {
+          --header-height: 80px;
+        }
+        .search-bar-sticky {
+          top: calc(var(--header-height));
+          padding-top: 10px;
+        }
+        .sidebar-sticky {
+          top: calc(var(--header-height) + 1.3rem);
+        }
+      `}</style>
 
             <section className="relative bg-white pt-[calc(var(--header-height)+1rem)]">
                 <div className="container mx-auto">
@@ -399,7 +451,6 @@ function Menu({ categories, setDrawer1Open }) {
                             className="hidden lg:block w-64 fixed left-[max(0px,calc(50%-680px))] top-36"
                         >
                             <style jsx>{`
-                                /* Custom scrollbar styles */
                                 .thin-scrollbar::-webkit-scrollbar {
                                     width: 1px;
                                 }
@@ -425,15 +476,14 @@ function Menu({ categories, setDrawer1Open }) {
                                             <li key={cat.id}>
                                                 <button
                                                     className={`
-                                                        flex items-center w-full px-4 py-3 rounded-xl
-                                                        ${
-                                                            activeCategory ===
-                                                            cat.id
-                                                                ? "bg-red-600 text-white shadow-md transform scale-105"
-                                                                : "bg-white text-gray-700 hover:bg-red-50 hover:text-red-600"
-                                                        }
-                                                        transition-all duration-300 hover:shadow-md
-                                                    `}
+                            flex items-center w-full px-4 py-3 rounded-xl
+                            ${
+                                activeCategory === cat.id
+                                    ? "bg-red-600 text-white shadow-md transform scale-105"
+                                    : "bg-white text-gray-700 hover:bg-red-50 hover:text-red-600"
+                            }
+                            transition-all duration-300 hover:shadow-md
+                          `}
                                                     onClick={() =>
                                                         handleCategoryClick(
                                                             cat.id
@@ -471,7 +521,6 @@ function Menu({ categories, setDrawer1Open }) {
                             <div className="hidden lg:block sticky top-20 z-40 bg-white pb-4">
                                 <div className="relative max-w-4xl">
                                     <div className="flex items-center w-full pt-8">
-                                        {/* Search box */}
                                         <div className="relative w-1/2">
                                             <input
                                                 type="text"
@@ -485,13 +534,9 @@ function Menu({ categories, setDrawer1Open }) {
                                                 size={20}
                                             />
                                         </div>
-
-                                        {/* Existing OrderTypeToggle */}
                                         <div className="ml-4">
                                             <OrderTypeToggle />
                                         </div>
-
-                                        {/* [* ADDED *] Veg-only Toggle */}
                                         <div className="ml-4 flex items-center space-x-2">
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
@@ -504,10 +549,10 @@ function Menu({ categories, setDrawer1Open }) {
                                                 />
                                                 <div
                                                     className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-300 rounded-full peer
-                                                peer-checked:bg-red-600 peer-checked:after:translate-x-full
-                                                after:content-[''] after:absolute after:top-0.5 after:left-[2px] 
-                                                after:bg-white after:border-gray-300 after:border after:rounded-full
-                                                after:h-5 after:w-5 after:transition-all"
+                          peer-checked:bg-red-600 peer-checked:after:translate-x-full
+                          after:content-[''] after:absolute after:top-0.5 after:left-[2px] 
+                          after:bg-white after:border-gray-300 after:border after:rounded-full
+                          after:h-5 after:w-5 after:transition-all"
                                                 ></div>
                                             </label>
                                             <span className="text-sm font-medium text-gray-700">
@@ -518,26 +563,20 @@ function Menu({ categories, setDrawer1Open }) {
                                 </div>
                             </div>
 
-                            {/* If searching => show search results, else show best-selling & categories */}
+                            {/* Render Search Results or Full Menu */}
                             {isSearching && searchTerm ? (
                                 <div className="mt-6">
                                     <h2 className="text-2xl font-bold mb-6">
                                         Search Results
                                     </h2>
-
-                                    {/*
-                                      Apply the Veg filter to filteredProducts
-                                    */}
                                     {filteredProducts.filter((product) => {
                                         if (!vegOnly) return true;
-                                        // parse the tag (if JSON)
                                         try {
                                             const tags = product.tag
                                                 ? JSON.parse(product.tag)
                                                 : [];
                                             return tags.includes("Veg");
                                         } catch {
-                                            // If not JSON, fallback:
                                             return product.tag?.includes("Veg");
                                         }
                                     }).length > 0 ? (
@@ -545,7 +584,6 @@ function Menu({ categories, setDrawer1Open }) {
                                             {filteredProducts
                                                 .filter((product) => {
                                                     if (!vegOnly) return true;
-                                                    // parse the tag (if JSON)
                                                     try {
                                                         const tags = product.tag
                                                             ? JSON.parse(
@@ -601,7 +639,6 @@ function Menu({ categories, setDrawer1Open }) {
                                             {bestSellingProducts
                                                 .filter((product) => {
                                                     if (!vegOnly) return true;
-                                                    // parse the tag (if JSON)
                                                     try {
                                                         const tags = product.tag
                                                             ? JSON.parse(
@@ -651,7 +688,6 @@ function Menu({ categories, setDrawer1Open }) {
                                                     .filter((product) => {
                                                         if (!vegOnly)
                                                             return true;
-                                                        // parse the tag (if JSON)
                                                         try {
                                                             const tags =
                                                                 product.tag
@@ -701,7 +737,9 @@ function Menu({ categories, setDrawer1Open }) {
     );
 }
 
-//vegnonveg
+// -----------------------------------------------------------------------
+// Veg/Non-Veg Indicator Component
+// -----------------------------------------------------------------------
 const VegNonVegIndicator = ({ isVeg }) => {
     return (
         <div className="min-w-[18px] h-[18px] border border-gray-200 rounded flex items-center justify-center p-0.5 ml-2">
@@ -715,7 +753,7 @@ const VegNonVegIndicator = ({ isVeg }) => {
 };
 
 // -----------------------------------------------------------------------
-// Product Card
+// ProductCard Component
 // -----------------------------------------------------------------------
 const ProductCard = ({
     product,
@@ -739,19 +777,17 @@ const ProductCard = ({
             : description;
     const hasLongDescription = description.length > charLimit;
 
-    // Parse the product.tag column (assuming it might be JSON string like ["Veg"])
+    // Parse product.tag (may be JSON or plain string)
     let tags = [];
     try {
         tags = product.tag ? JSON.parse(product.tag) : [];
     } catch {
-        // fallback if not JSON
         tags = product.tag ? [product.tag] : [];
     }
     const isVeg = tags.includes("Veg");
-
-    // For the little colored dot
     const vegNonVegDot = <VegNonVegIndicator isVeg={isVeg} />;
 
+    // Compute total quantity for this product (matching by product_id only)
     const totalQuantity = cartItems
         .filter(
             (item) => String(item.product_id) === String(product.product_id)
@@ -760,9 +796,15 @@ const ProductCard = ({
 
     const imageUrl = `https://console.pizzaportindia.com/${product.main_image_url}`;
 
-    // Customizable Label Component
+    // Label for customizable (if product has variations/addons)
     const CustomizableLabel = ({ isMobile }) => (
-        <div
+        <button
+            onClick={(e) => {
+                // Prevent other click handlers from firing.
+                e.preventDefault();
+                e.stopPropagation();
+                handleModalAddToCart();
+            }}
             className={`absolute ${
                 isMobile ? "top-1 left-1" : "top-2 right-2"
             } bg-white/90 backdrop-blur-sm ${
@@ -783,7 +825,7 @@ const ProductCard = ({
                 </svg>
                 Customizable
             </span>
-        </div>
+        </button>
     );
 
     const handleReadMore = (e) => {
@@ -791,35 +833,16 @@ const ProductCard = ({
         setIsExpanded(true);
     };
 
+    // -----------------------------------------------------------------------
+    // Updated handleModalAddToCart: after successful modal add, simply dispatch the event.
+    // -----------------------------------------------------------------------
     const handleModalAddToCart = async () => {
         try {
-            showModalAddToCart(
-                product.product_id,
-                setDrawer1Open,
-                async (guestCart) => {
-                    const userId = localStorage.getItem("userId");
-                    if (!userId) {
-                        if (Array.isArray(guestCart)) {
-                            setCartItems(guestCart);
-                        }
-                    } else {
-                        await fetchUserCart(userId);
-                    }
-                }
-            );
+            showModalAddToCart(product.product_id, setDrawer1Open, () => {
+                window.dispatchEvent(new Event("cart-updated"));
+            });
         } catch (error) {
             console.error("Error in handleModalAddToCart:", error);
-        }
-    };
-
-    const fetchUserCart = async (userId) => {
-        try {
-            const { data } = await axios.get("/cart-items", {
-                params: { user_id: userId },
-            });
-            setCartItems(data.CartList || []);
-        } catch (error) {
-            console.error(error);
         }
     };
 
@@ -851,12 +874,9 @@ const ProductCard = ({
                     </div>
                     <div className="w-2/3 p-3 flex flex-col">
                         <h4 className="font-semibold text-sm line-clamp-2 mb-1 flex items-start">
-                            <span className="flex-1">
-                                <Link
-                                    href={`/product-detail/${product.product_id}`}
-                                >
-                                    {product.product_name}
-                                </Link>
+                            {/* Product name as plain text, not a Link */}
+                            <span className="flex-1 cursor-default">
+                                {product.product_name}
                             </span>
                             <div className="min-w-[18px] h-[18px] border border-gray-200 rounded flex items-center justify-center p-0.5 ml-2">
                                 <span
@@ -866,8 +886,22 @@ const ProductCard = ({
                                 ></span>
                             </div>
                         </h4>
-                        <p className="text-xs text-gray-600 line-clamp-2 mb-2">
-                            {shortDescription}
+                        <p className="text-xs text-gray-600 mb-2">
+                            {isExpanded ? (
+                                description
+                            ) : (
+                                <>
+                                    {shortDescription}
+                                    {hasLongDescription && (
+                                        <button
+                                            onClick={handleReadMore}
+                                            className="text-red-600 ml-1 hover:underline text-xs font-medium"
+                                        >
+                                            Read more →
+                                        </button>
+                                    )}
+                                </>
+                            )}
                         </p>
                         <div className="mt-auto flex items-center justify-between">
                             <div className="text-sm">
@@ -955,14 +989,10 @@ const ProductCard = ({
                         <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity" />
                     </div>
                     <div className="p-4 flex flex-col flex-grow">
-                        {/* [* ADDED smaller text-lg or text-sm + Veg/NonVeg icon *] */}
                         <h4 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-red-600 flex items-start">
-                            <span className="flex-1">
-                                <Link
-                                    href={`/product-detail/${product.product_id}`}
-                                >
-                                    {product.product_name}
-                                </Link>
+                            {/* Product name as plain text */}
+                            <span className="flex-1 cursor-default">
+                                {product.product_name}
                             </span>
                             {vegNonVegDot}
                         </h4>
