@@ -515,7 +515,10 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                 {/* Rest of the components (Login Drawer and Logout Dialog) remain unchanged */}
                 {/* Login Drawer */}
                 {isDrawer1Open && (
-                    <div className="fixed inset-0 z-[1001] bg-black bg-opacity-50">
+                    <div
+                        className="fixed inset-0 z-[1001] bg-black bg-opacity-50"
+                        id="login-drawer"
+                    >
                         <div className="fixed inset-y-0 right-0 max-w-md w-full bg-white transform transition-transform duration-300 ease-in-out">
                             <div className="h-full overflow-y-auto">
                                 <button
