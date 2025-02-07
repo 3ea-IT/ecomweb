@@ -1,0 +1,230 @@
+/* Default styles for larger screens */
+.arrow-container {
+  position: absolute;
+  top: 6rem;
+  right: 12rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: bounce 1s infinite;
+}
+
+.arrow-icon {
+  width: 3rem;
+  height: 3rem;
+}
+
+.modal-content {
+  max-width: 24rem;
+  padding: 2rem;
+}
+
+/* Animation for bouncing arrow */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Mobile responsiveness (small screens) */
+@media (max-width: 640px) {
+  .arrow-container {
+    top: 4rem;
+    left: 6rem;  /* Adjusted left position for mobile */
+    right: unset; /* Unset the right positioning */
+  }
+
+  .arrow-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .modal-content {
+    max-width: 18rem;
+    padding: 1.5rem;
+  }
+
+  .arrow-container p {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+  }
+
+  .modal-content h3 {
+    font-size: 1.5rem;
+  }
+
+  .modal-content p {
+    font-size: 1rem;
+  }
+
+  .modal-content button {
+    padding: 1rem 1.5rem;
+  }
+}
+
+/* Tablet view (medium screens) */
+@media (max-width: 768px) {
+  .arrow-container {
+    top: 5rem;
+    left: 13rem;  /* Adjust for tablet view */
+    right: unset;
+  }
+
+  .arrow-icon {
+    width: 2.8rem;
+    height: 2.8rem;
+  }
+
+  .modal-content {
+    max-width: 22rem;
+    padding: 1.75rem;
+  }
+}
+
+/* Screen width: 900px to 1023px */
+@media (max-width: 1023px) {
+  .arrow-container {
+    top: 5.5rem;
+    right: 10rem;
+  }
+
+  .arrow-icon {
+    width: 2.9rem;
+    height: 2.9rem;
+  }
+
+  .modal-content {
+    max-width: 23rem;
+    padding: 1.9rem;
+  }
+}
+
+/* Screen width: 800px to 899px */
+@media (max-width: 899px) {
+  .arrow-container {
+    top: 5.2rem;
+    right: 9rem;
+  }
+
+  .arrow-icon {
+    width: 2.8rem;
+    height: 2.8rem;
+  }
+
+  .modal-content {
+    max-width: 22rem;
+    padding: 1.8rem;
+  }
+}
+
+/* Screen width: 700px to 799px */
+@media (max-width: 799px) {
+  .arrow-container {
+    top: 5rem;
+    right: 8rem;
+  }
+
+  .arrow-icon {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+
+  .modal-content {
+    max-width: 21rem;
+    padding: 1.7rem;
+  }
+}
+
+/* Screen width: 600px to 699px */
+@media (max-width: 699px) {
+  .arrow-container {
+    top: 4.8rem;
+    right: 7.5rem;
+  }
+
+  .arrow-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+
+  .modal-content {
+    max-width: 20rem;
+    padding: 1.6rem;
+  }
+}
+
+/* Screen width: 500px to 599px */
+@media (max-width: 599px) {
+  .arrow-container {
+    top: 4.5rem;
+    right: 6.5rem;
+  }
+
+  .arrow-icon {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .modal-content {
+    max-width: 18rem;
+    padding: 1.4rem;
+  }
+}
+
+/* Screen width: 400px to 499px */
+@media (max-width: 499px) {
+  .arrow-container {
+    top: 4rem;
+    right: -2rem;
+  }
+
+  .arrow-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .modal-content {
+    max-width: 17rem;
+    padding: 1.3rem;
+  }
+}
+
+/* Screen width: 300px to 399px */
+@media (max-width: 399px) {
+  .arrow-container {
+    top: 3.8rem;
+    right: 4.5rem;
+    left: 0.5rem;
+  }
+
+  .arrow-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+  }
+
+  .modal-content {
+    max-width: 16rem;
+    padding: 1.2rem;
+  }
+}
+
+/* Large screen adjustments */
+@media (min-width: 1024px) {
+  .arrow-container {
+    top: 6rem;
+    right: 12rem;
+  }
+
+  .arrow-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .modal-content {
+    max-width: 28rem;
+    padding: 2rem;
+  }
+}

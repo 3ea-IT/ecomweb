@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import MainLayout from "../Layouts/MainLayout";
 import { Link, useForm, usePage } from "@inertiajs/react";
 import { CheckCircle, X } from "lucide-react";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function Register() {
     const autocompleteInitialized = useRef(false);
@@ -171,7 +173,51 @@ function Register() {
     // Add success notification handling
     const handleSubmit = (e) => {
         e.preventDefault();
-        post("/register");
+        post("/register", {
+            onSuccess: (response) => {
+                // Show success toast
+                toast.success('🎉 Registration Successful!', {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "light",
+                    style: {
+                        background: "#4CAF50",
+                        color: "#fff",
+                        borderRadius: "10px",
+                        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                    },
+                });
+
+                // Optional: Redirect after successful registration
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            },
+            onError: (errors) => {
+                // Show error toast if there are any errors
+                toast.error('Registration failed. Please check your inputs.', {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "light",
+                    style: {
+                        background: "#f44336",
+                        color: "#fff",
+                        borderRadius: "10px",
+                        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                    },
+                });
+            },
+        });
     };
 
     const showNotification = () => {
@@ -181,7 +227,7 @@ function Register() {
 
     return (
         <MainLayout>
-            {showSuccess && (
+            {/* {showSuccess && (
                 <div
                     className="fixed top-4 right-4 z-50 max-w-md bg-white rounded-lg shadow-lg border-l-4 border-green-500 p-4"
                     role="alert"
@@ -216,7 +262,19 @@ function Register() {
                         </div>
                     </div>
                 </div>
-            )}
+            )} */}
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+            />
             {/* Banner Section */}
             <section
                 className="relative z-[1] pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] bg-cover bg-center overflow-hidden"
@@ -625,44 +683,41 @@ function Register() {
 
                                     {/* Submit Button */}
                                     <div className="w-full px-[15px]">
-                                        <button
-                                            type="submit"
-                                            className={`py-[10px] px-[30px] mt-4 bg-primary text-white rounded-md text-sm font-medium flex items-center justify-center ${
-                                                processing
-                                                    ? "opacity-50 cursor-not-allowed"
-                                                    : ""
-                                            }`}
-                                            disabled={processing}
-                                        >
-                                            {processing && (
-                                                <svg
-                                                    className="animate-spin h-5 w-5 mr-3 text-white"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <circle
-                                                        className="opacity-25"
-                                                        cx="12"
-                                                        cy="12"
-                                                        r="10"
-                                                        stroke="currentColor"
-                                                        strokeWidth="4"
-                                                    ></circle>
-                                                    <path
-                                                        className="opacity-75"
-                                                        fill="currentColor"
-                                                        d="M4 12a8 8 0 018-8v8H4z"
-                                                    ></path>
-                                                </svg>
-                                            )}
-                                            {processing
-                                                ? "Submitting..."
-                                                : "Submit"}
-                                        </button>
+          <button
+            type="submit"
+            className={`py-[10px] px-[30px] mt-4 bg-primary text-white rounded-md text-sm font-medium flex items-center justify-center ${
+              processing ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            disabled={processing}
+          >
+            {processing && (
+              <svg
+                className="animate-spin h-5 w-5 mr-3 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                ></path>
+              </svg>
+            )}
+            {processing ? 'Submitting...' : 'Submit'}
+          </button>
                                     </div>
                                 </div>
                             </form>
+                            <ToastContainer />
                         </div>
                     </div>
                 </div>

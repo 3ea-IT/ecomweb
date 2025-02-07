@@ -23,6 +23,23 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
     const [userId, setUserID] = useState(null);
     const [localCartCount, setLocalCartCount] = useState(0);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 0) {
+                setScrolled(true);
+            } else {
+                setScrolled(false);
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll);
+
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, []);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -176,9 +193,13 @@ function Header({ isDrawer1Open, setDrawer1Open }) {
                     <div className="container mx-auto px-4">
                         <div className="flex items-center justify-between h-16 md:h-20">
                             {/* Logo with hanging effect */}
-                            <div className="relative -mb-14 z-[1000]">
+                            <div className="relative -mb-8 z-[1000]">
                                 <Link href="/">
-                                    <div className="relative transform hover:-translate-y-1 transition-transform duration-300 ease-in-out">
+                                    <div
+                                        className={`relative transform hover:-translate-y-1 transition-transform duration-300 ease-in-out ${
+                                            scrolled ? "pt-4" : ""
+                                        }`}
+                                    >
                                         <img
                                             src="/asset/image/Logo-4.png"
                                             alt="Pizza Port Cafe Logo"

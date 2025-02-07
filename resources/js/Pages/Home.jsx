@@ -24,7 +24,7 @@ const SpecialMenu = ({ data, reviews }) => {
     return (
         <>
             {/* Banner */}
-            <div className="main-bnr-one overflow-hidden relative">
+            <div className="main-bnr-one overflow-hidden relative mt-12">
                 <div className="main-slider-1 overflow-hidden z-[1]">
                     <div className="swiper-wrapper">
                         <div className="swiper-slide">
@@ -63,7 +63,7 @@ const SpecialMenu = ({ data, reviews }) => {
                                                     to be the best at creating
                                                     innovative recipes.
                                                 </p>
-                                                <div className="banner-btn flex items-center lg:mt-10 mt-[25px] gap-[30px]">
+                                                <div className="banner-btn flex items-center lg:mt-10 mt-[20px] gap-[30px]">
                                                     <Link
                                                         href="/menu"
                                                         className="inline-flex items-center px-8 py-3 rounded-full bg-primary text-white hover:bg-primary/90 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
@@ -72,30 +72,55 @@ const SpecialMenu = ({ data, reviews }) => {
                                                             Explore Menu
                                                         </span>
                                                     </Link>
-                                                    
                                                 </div>
                                                 <div className="banner-btn flex items-center lg:mt-7 mt-[25px] gap-[30px]">
                                                     <Link
                                                         href="#reviews"
-                                                        className="inline-flex items-center px-8 py-3 rounded-full bg-[#FE9F10] text-white hover:bg-primary/90 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+                                                        className="inline-flex items-center px-8 py-3 rounded-full bg-black text-white hover:bg-primary/90 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
                                                     >
                                                         <span className="font-medium">
                                                             Reviews
                                                         </span>
                                                     </Link>
-                                                    
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="md:w-5/12 px-[15px]">
-                                            <div className="banner-media">
-                                                <img
-                                                    src="/assets/images/extras/burger_main.png"
-                                                    alt="Main Slider 1"
-                                                    className="xl:w-[600px] lg:w-[500px] md:w-[100%] sm:w-[350px] w-[300px]"
-                                                />
-                                            </div>
-                                        </div>
+                                        <div className="inline-block">
+                                        <style jsx>{`
+                                                    .responsive-image {
+                                                        display: inline-block;
+                                                        width: 150px; /* Mobile default */
+                                                    }
+
+                                                    /* Small tablets */
+                                                    @media (min-width: 640px) {
+                                                        .responsive-image {
+                                                            width: 250px;
+                                                        }
+                                                    }
+
+                                                    /* iPads and tablets */
+                                                    @media (min-width: 821px) {
+                                                        .responsive-image {
+                                                            width: 350px;
+                                                        }
+                                                    }
+
+                                                    /* Desktop */
+                                                    @media (min-width: 1280px) {
+                                                        .responsive-image {
+                                                            width: 500px;
+                                                        }
+                                                    }
+                                                `}</style>
+                                        
+                                        <img
+                                            src="/assets/images/extras/burger_main.png"
+                                            alt="Main Slider 1"
+                                            className="responsive-image"
+                                        />
+                                    </div>
+
                                     </div>
                                 </div>
                                 {/* <img
@@ -275,7 +300,6 @@ const SpecialMenu = ({ data, reviews }) => {
             </section>
             {/* Special Menu End */}
 
-           
             {/* <!-- Testimonial's Start  --> */}
             {/* <section
                 id="testimonials"

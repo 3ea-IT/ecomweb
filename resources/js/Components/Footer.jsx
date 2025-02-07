@@ -49,11 +49,11 @@ function Footer() {
 
                         {/* Our Links */}
                         <div className="xl:w-3/12 lg:w-2/12 sm:w-6/12 w-full px-4">
-                            <div className="mb-8 ml-12">
+                            <div className="mb-8 ml-1">
                                 <h5 className="text-2xl font-bold text-white mb-6 pb-2 border-b-2 border-primary inline-block">
                                     Our Links
                                 </h5>
-                                <ul className="space-y-3">
+                                <ul className="space-y-3 ">
                                     {[
                                         "Home",
                                         "Outlets",
@@ -179,12 +179,15 @@ function Footer() {
             <div className="container mx-auto px-4">
                 <div className="border-t border-gray-800 py-4">
                     <div className="text-center md:text-right">
-                        <span className="text-sm text-gray-500 hover:text-white transition-colors duration-300">
-                            Powered By 3EA
-                        </span>
+                        <a href="https://3ea.in/" target="_blank" rel="noopener noreferrer">
+                            <span className="text-sm text-gray-500 hover:text-white transition-colors duration-300">
+                                Powered By 3EA
+                            </span>
+                        </a>
                     </div>
                 </div>
             </div>
+
 
             {/* Background Images */}
             <img

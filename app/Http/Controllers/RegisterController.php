@@ -17,7 +17,7 @@ class RegisterController extends Controller
      * Handle the registration request.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function register(Request $request)
     {
@@ -44,10 +44,10 @@ class RegisterController extends Controller
 
         // Check for validation failures
         if ($validator->fails()) {
-            // Redirect back with validation errors
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         // Begin Transaction
@@ -64,7 +64,7 @@ class RegisterController extends Controller
                 'user_role_id'    => 1, // Adjust as needed
                 'is_active'       => 1,
             ]);
-
+    
             // Create the address
             Address::create([
                 'user_id'          => $user->user_id,
@@ -78,27 +78,24 @@ class RegisterController extends Controller
                 'phone_number'     => $request->phone,
                 'drop_landmark'    => $request->drop_landmark,
                 'drop_lat'         => $request->drop_lat,
-                'drop_lng'        => $request->drop_lng,
+                'drop_lng'         => $request->drop_lng,
                 'is_default'       => 1,
             ]);
-
+    
             // Commit Transaction
             DB::commit();
-
-            // Redirect to the home page with a success flash message
-            return response()->json([
-                'success' => true,
-                'message' => 'Registration successful! Welcome aboard.',
-                'redirect' => route('home')
-            ], 200);
+    
+            // Return success response
+            return back()->with('success', 'Registration successful!');
+    
         } catch (\Exception $e) {
             // Rollback Transaction
             DB::rollBack();
-
+    
             // Log the error for debugging
             Log::error('Registration Error: ' . $e->getMessage());
-
-            // Redirect back with an error flash message
+    
+            // Return error response
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred during registration. Please try again.'
