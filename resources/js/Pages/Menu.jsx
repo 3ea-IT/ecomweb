@@ -3,7 +3,7 @@ import MainLayout from "../Layouts/MainLayout";
 import { Link, usePage } from "@inertiajs/react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
-import { Search, Menu as MenuIcon, ChevronRight } from "lucide-react";
+import { Search, Menu as MenuIcon, ChevronRight, MenuSquare } from "lucide-react";
 import "react-toastify/dist/ReactToastify.css";
 import {
     getGuestCart,
@@ -388,7 +388,7 @@ function Menu({ categories, setDrawer1Open }) {
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     className="bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700 transition-all duration-300"
                 >
-                    <MenuIcon size={24} />
+                    <MenuSquare size={24} />
                 </button>
             </div>
 

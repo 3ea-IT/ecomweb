@@ -13,15 +13,18 @@ const MobileVegToggle = ({ isVegOnly, onToggle }) => {
           ${isVegOnly ? "bg-green-500" : "bg-gray-300"}
         `}
             >
-                {/* Text "Veg" - positioned to the right side */}
                 <span
-                    className={`
-          absolute right-2 text-[10px] font-medium leading-6 tracking-wide
-          ${isVegOnly ? "text-white" : "text-gray-400"}
-        `}
-                >
-                    Veg
-                </span>
+    className={`
+        absolute text-[10px] font-medium leading-6 tracking-wide
+        transition-all duration-300 ease-in-out
+        ${isVegOnly 
+            ? "right-7 text-white" // Shifts left when activated 
+            : "right-2 text-gray-400" // Original position when not activated
+            }
+            `}
+        >
+            Veg
+        </span>
 
                 {/* Sliding circle */}
                 <div

@@ -4,9 +4,11 @@ import CouponSection from "../../Components/CouponSection";
 import { getGuestCart, updateGuestCart } from "../../utils/cart_model";
 import { Link, router } from "@inertiajs/react";
 import axios from "axios";
+import LoginModal from "../../Components/LoginModal";
 // import Swal from "sweetalert2"; // if you use SweetAlert2
 
 function CartDetail() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [countCart, setCountCart] = useState(0);
@@ -415,42 +417,37 @@ function CartDetail() {
     const handleOrderNowClick = () => {
         const UserID = localStorage.getItem("userId");
         if (!UserID) {
-            alert("You must login to proceed.");
-            window.location.href = "/";
+            // Show modal instead of alert
+            setIsModalOpen(true);
             return;
         }
+        // router.push("/check-out"); // Navigate to checkout page
         router.get("/check-out");
     };
 
-    if (loading) {
-        return (
-            <MainLayout>
-                <div className="flex justify-center items-center h-screen">
-                    {/* Simple Spinner */}
-                    <svg
-                        className="animate-spin h-12 w-12 text-red-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                        ></circle>
-                        <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8v8H4z"
-                        ></path>
-                    </svg>
-                </div>
-            </MainLayout>
-        );
-    }
+    <LoginModal 
+    isOpen={isModalOpen}
+    onClose={() => setIsModalOpen(false)}
+/>
+  
+
+
+
+
+  if (loading) {
+    return (
+        <MainLayout>
+            <div className="flex justify-center items-center h-screen">
+                {/* Simple Spinner with GIF */}
+                <img 
+                    src="/assets/videos/Loader3.gif" 
+                    alt="Loading..." 
+                    className="w-24 h-24" 
+                />
+            </div>
+        </MainLayout>
+    );
+}
 
     // Format price
     const formatPrice = (price) => `₹${parseFloat(price).toFixed(2)}`;
@@ -464,6 +461,14 @@ function CartDetail() {
     }, {});
 
     return (
+        <>
+        {/* Modal */}
+        {isModalOpen && (
+            <LoginModal 
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+        />
+            )}
         <MainLayout>
             {/* Banner Section */}
             <section className="bg-[url('../images/banner/bnr1.jpg')] bg-fixed relative z-[1] after:content-[''] after:absolute after:z-[-1] after:bg-[#222222e6] after:w-full after:h-full after:top-0 after:left-0 pt-[50px] lg:h-[450px] sm:h-[400px] h-[300px] bg-cover bg-center">
@@ -591,7 +596,7 @@ function CartDetail() {
                                                                     .addon_details
                                                                     .length >
                                                                     0 && (
-                                                                    <div className="bg-gray-50 p-3 rounded-md">
+                                                                    <div className="bg-gray-50 p-3 rounded-m    d">
                                                                         <h4 className="text-xs font-medium text-blue-600 mb-2">
                                                                             Customizations
                                                                         </h4>
@@ -632,7 +637,7 @@ function CartDetail() {
                                                                         )}
                                                                     </div>
                                                                 )}
-
+          
                                                             {/* Quantity Controls */}
                                                             <div className="flex justify-between items-center">
                                                                 <div className="flex items-center space-x-1">
@@ -806,6 +811,7 @@ function CartDetail() {
                                     >
                                         Proceed to Checkout
                                     </button>
+                                    
                                 </div>
                             </div>
                         </div>
@@ -814,6 +820,7 @@ function CartDetail() {
             </section>
             {/* Cart Section End */}
         </MainLayout>
+        </>
     );
 }
 

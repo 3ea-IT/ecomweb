@@ -206,7 +206,7 @@ const ReviewsPage = ({ reviews }) => {
                             alt="Full View"
                             className="mx-auto rounded-lg shadow-lg"
                         />
-                        <button
+                        <button 
                             onClick={closeImageModal}
                             className="absolute top-2 right-2 text-white bg-black/50 p-2 rounded-full hover:bg-black"
                         >
