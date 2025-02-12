@@ -773,15 +773,15 @@ const Checkout = ({ CartList = [] }) => {
     if (initialLoading) {
         return (
             <MainLayout>
-            <div className="flex justify-center items-center h-screen">
-                {/* Simple Spinner with GIF */}
-                <img 
-                    src="/assets/videos/Loader3.gif" 
-                    alt="Loading..." 
-                    className="w-24 h-24" 
-                />
-            </div>
-        </MainLayout>
+                <div className="flex justify-center items-center h-screen">
+                    {/* Simple Spinner with GIF */}
+                    <img
+                        src="/assets/videos/Loader3.gif"
+                        alt="Loading..."
+                        className="w-24 h-24"
+                    />
+                </div>
+            </MainLayout>
         );
     }
 
